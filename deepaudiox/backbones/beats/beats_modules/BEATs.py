@@ -17,7 +17,8 @@ from torch.nn import LayerNorm
 import torchaudio.compliance.kaldi as ta_kaldi
 
 from backbone import (
-    TransformerEncoder, )
+    TransformerEncoder,
+)
 
 import logging
 from typing import Optional
@@ -26,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 
 class BEATsConfig:
-
     def __init__(self, cfg=None):
         self.input_patch_size: int = -1  # path size of patch embedding
         self.embed_dim: int = 512  # patch embedding dimension
@@ -72,7 +72,6 @@ class BEATsConfig:
 
 
 class BEATs(nn.Module):
-
     def __init__(self, cfg: BEATsConfig, preprocess_flag: bool = True) -> None:
         super().__init__()
         logger.info(f"BEATs Config: {cfg.__dict__}")
@@ -81,15 +80,14 @@ class BEATs(nn.Module):
         self.preprocess_flag: bool = preprocess_flag
 
         self.embed = cfg.embed_dim
-        self.post_extract_proj = (nn.Linear(self.embed, cfg.encoder_embed_dim)
-                                  if self.embed != cfg.encoder_embed_dim else None)
+        self.post_extract_proj = (
+            nn.Linear(self.embed, cfg.encoder_embed_dim) if self.embed != cfg.encoder_embed_dim else None
+        )
 
         self.input_patch_size = cfg.input_patch_size
-        self.patch_embedding = nn.Conv2d(1,
-                                         self.embed,
-                                         kernel_size=self.input_patch_size,
-                                         stride=self.input_patch_size,
-                                         bias=cfg.conv_bias)
+        self.patch_embedding = nn.Conv2d(
+            1, self.embed, kernel_size=self.input_patch_size, stride=self.input_patch_size, bias=cfg.conv_bias
+        )
 
         self.dropout_input = nn.Dropout(cfg.dropout_input)
 
@@ -125,11 +123,9 @@ class BEATs(nn.Module):
         fbanks = []
         for waveform in source:
             waveform = waveform.unsqueeze(0) * 2**15
-            fbank = ta_kaldi.fbank(waveform,
-                                   num_mel_bins=128,
-                                   sample_frequency=sample_frequency,
-                                   frame_length=25,
-                                   frame_shift=10)
+            fbank = ta_kaldi.fbank(
+                waveform, num_mel_bins=128, sample_frequency=sample_frequency, frame_length=25, frame_shift=10
+            )
             fbanks.append(fbank)
         fbank = torch.stack(fbanks, dim=0)
         fbank = (fbank - fbank_mean) / (2 * fbank_std)
@@ -142,7 +138,6 @@ class BEATs(nn.Module):
         fbank_mean: float = 15.41663,
         fbank_std: float = 6.55582,
     ):
-
         if self.preprocess_flag:
             fbank = self.preprocess(source, fbank_mean=fbank_mean, fbank_std=fbank_std)
         else:
@@ -191,10 +186,10 @@ class BEATs(nn.Module):
 
     def forward(self, fbank: torch.Tensor):
         """Custom forward encoder-only imlementation
-        
+
         Args:
             fbank (torch.Tensor): Fbanks of shape B x 1 x T x F, where B=Batchsize, T=timestep, F=frequencies
-            
+
         Returns:
             torch.Tensor: Embeddings of size B x N_seq x Emb Dim
         """

@@ -6,35 +6,36 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from beats_modules.BEATs import BEATsConfig, BEATs
+
+
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
-from beats_modules.BEATs import BEATsConfig, BEATs
-
 MODEL_CONFIG = {
-    'encoder_layers': 12,
-    'encoder_embed_dim': 768,
-    'encoder_ffn_embed_dim': 3072,
-    'encoder_attention_heads': 12,
-    'activation_fn': 'gelu',
-    'dropout': 0.0,
-    'attention_dropout': 0.0,
-    'activation_dropout': 0.0,
-    'encoder_layerdrop': 0.05,
-    'dropout_input': 0.0,
-    'layer_norm_first': False,
-    'conv_bias': False,
-    'conv_pos': 128,
-    'conv_pos_groups': 16,
-    'relative_position_embedding': True,
-    'num_buckets': 320,
-    'max_distance': 800,
-    'gru_rel_pos': True,
-    'deep_norm': True,
-    'input_patch_size': 16,
-    'layer_wise_gradient_decay_ratio': 0.6,
-    'embed_dim': 512,
-    'finetuned_model': False,
+    "encoder_layers": 12,
+    "encoder_embed_dim": 768,
+    "encoder_ffn_embed_dim": 3072,
+    "encoder_attention_heads": 12,
+    "activation_fn": "gelu",
+    "dropout": 0.0,
+    "attention_dropout": 0.0,
+    "activation_dropout": 0.0,
+    "encoder_layerdrop": 0.05,
+    "dropout_input": 0.0,
+    "layer_norm_first": False,
+    "conv_bias": False,
+    "conv_pos": 128,
+    "conv_pos_groups": 16,
+    "relative_position_embedding": True,
+    "num_buckets": 320,
+    "max_distance": 800,
+    "gru_rel_pos": True,
+    "deep_norm": True,
+    "input_patch_size": 16,
+    "layer_wise_gradient_decay_ratio": 0.6,
+    "embed_dim": 512,
+    "finetuned_model": False,
 }
 
 
@@ -77,11 +78,13 @@ class DivEncLayer(nn.Module):
 
 class BEATsBackbone(nn.Module):
     # Initialize BEATs Model
-    def __init__(self,
-                 backbone_config: Dict = MODEL_CONFIG,
-                 div_encoder_layer: bool = True,
-                 preprocess_flag: bool = True,
-                 sample_frequency: int = 16000) -> None:
+    def __init__(
+        self,
+        backbone_config: Dict = MODEL_CONFIG,
+        div_encoder_layer: bool = True,
+        preprocess_flag: bool = True,
+        sample_frequency: int = 16000,
+    ) -> None:
         super(BEATsBackbone, self).__init__()
         """A wrapper for BEATs model to be used as a backbone in other models.
         Args:
@@ -117,6 +120,6 @@ class BEATsBackbone(nn.Module):
         x = x.mean(1)
         # x: B x 768
         if self.div_encoder_layer:
-            return F.normalize(self.projection_head(x), p=2.)
+            return F.normalize(self.projection_head(x), p=2.0)
         else:
-            return F.normalize(x, p=2.)
+            return F.normalize(x, p=2.0)
