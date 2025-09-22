@@ -16,6 +16,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pytest>=8.4.2",
     "ruff>=0.13.1",
 ]
 
@@ -23,7 +24,7 @@ dev = [
 # Set the maximum line length to 120
 line-length = 120
 exclude = [
-    "deepaudiox/backbones/beats/beats_modules"
+    "src/deepaudiox/backbones/beats/beats_modules"
 ]
 
 [tool.ruff.lint]

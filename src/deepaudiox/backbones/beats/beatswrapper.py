@@ -1,13 +1,17 @@
-import os
-import sys
+
+import warnings
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from beats_modules.BEATs import BEATs, BEATsConfig
 
-DIR_PATH = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+from .beats_modules.BEATs import BEATs, BEATsConfig
+
+warnings.filterwarnings(
+    "ignore",
+    message="`torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`",
+    category=FutureWarning,
+)
 
 MODEL_CONFIG = {
     "encoder_layers": 12,
@@ -81,7 +85,6 @@ class BEATsBackbone(nn.Module):
         self,
         backbone_config: dict = MODEL_CONFIG,
         div_encoder_layer: bool = True,
-        preprocess_flag: bool = True,
         sample_frequency: int = 16000,
     ) -> None:
         super().__init__()
@@ -89,14 +92,12 @@ class BEATsBackbone(nn.Module):
         Args:
             backbone_config (Dict): Configuration dictionary for BEATs model.
             div_encoder_layer (bool): Whether to use DivEncLayer for dimensionality reduction.
-            preprocess_flag (bool): Whether to apply preprocessing in BEATs model.
             sample_frequency (int): Sample frequency for audio input.
         """
         # Initialize BEATs Encoder
         cfg = BEATsConfig(cfg=backbone_config)
         self.sample_frequency: int = sample_frequency
-        self.preprocess_flag: bool = preprocess_flag
-        self.encoder: BEATs = BEATs(cfg=cfg, preprocess_flag=self.preprocess_flag)
+        self.encoder: BEATs = BEATs(cfg=cfg, preprocess_flag=True)
         self.div_encoder_layer: bool = div_encoder_layer
 
         if div_encoder_layer:
@@ -110,9 +111,8 @@ class BEATsBackbone(nn.Module):
             param.requires_grad = False
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if self.preprocess_flag:
-            x = self.encoder.preprocess(x, sample_frequency=self.sample_frequency)
-            x = x.unsqueeze(1)
+        x = self.encoder.preprocess(x, sample_frequency=self.sample_frequency)
+        x = x.unsqueeze(1)
         # x: B x 1 x T x F
         x = self.encoder(x)
         # x: B x N x 768
