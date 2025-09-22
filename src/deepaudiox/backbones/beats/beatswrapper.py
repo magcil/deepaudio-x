@@ -1,13 +1,10 @@
 import os
 import sys
-from typing import Dict
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from beats_modules.BEATs import BEATsConfig, BEATs
-
+from beats_modules.BEATs import BEATs, BEATsConfig
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
@@ -41,14 +38,16 @@ MODEL_CONFIG = {
 
 class DivEncLayer(nn.Module):
     # Divided Encoder Layer for dimensionality reduction
-    def __init__(self, q: int, v: int, unit_dim: list[int] = [32, 1]) -> None:
+    def __init__(self, q: int, v: int, unit_dim: list[int] | None = None) -> None:
         """Divided Encoder Layer for dimensionality reduction.
         Args:
             q (int): Number of splits.
             v (int): Dimension of each split.
             unit_dim (list): List containing the dimensions of the two linear layers.
         """
-        super(DivEncLayer, self).__init__()
+        if unit_dim is None:
+            unit_dim = [32, 1]
+        super().__init__()
         self.split_fc_layers: nn.ModuleList = nn.ModuleList()
         self.q: int = q
         self.unit_dim: list[int] = unit_dim
@@ -56,7 +55,7 @@ class DivEncLayer(nn.Module):
         self._construct_layers()
 
     def _construct_layers(self) -> None:
-        for i in range(self.q):
+        for _i in range(self.q):
             seq = nn.Sequential()
             seq.append(nn.Linear(self.v, self.unit_dim[0]))
             seq.append(nn.ELU())
@@ -80,12 +79,12 @@ class BEATsBackbone(nn.Module):
     # Initialize BEATs Model
     def __init__(
         self,
-        backbone_config: Dict = MODEL_CONFIG,
+        backbone_config: dict = MODEL_CONFIG,
         div_encoder_layer: bool = True,
         preprocess_flag: bool = True,
         sample_frequency: int = 16000,
     ) -> None:
-        super(BEATsBackbone, self).__init__()
+        super().__init__()
         """A wrapper for BEATs model to be used as a backbone in other models.
         Args:
             backbone_config (Dict): Configuration dictionary for BEATs model.
