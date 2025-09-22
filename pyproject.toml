@@ -1,7 +1,11 @@
 [project]
 name = "deepaudio-x"
 version = "0.1.0"
-description = "Add your description here"
+description = "DeepAudio-X: Self-supervised audio toolkit for audio classification and beyond."
+authors = [
+  { name = "Christos Nikou", email = "chrisnick92@gmail.com" }
+]
+license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -40,3 +44,14 @@ select = [
     # isort
     "I",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/deepaudiox"]
+
+[project.urls]
+Homepage = "https://github.com/magcil/deepaudio-x"
+Repository = "https://github.com/magcil/deepaudio-x"
