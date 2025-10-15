@@ -43,7 +43,7 @@ select = [
     # flake8-simplify
     "SIM",
     # isort
-    "I",
+    "I"
 ]
 
 [build-system]
