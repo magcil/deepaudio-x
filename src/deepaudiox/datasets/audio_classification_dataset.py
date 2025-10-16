@@ -1,6 +1,7 @@
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import Dataset
-from utils.audio_utils import load_audio
+
+from ..utils.audio_utils import load_audio
 
 
 class AudioClassificationDataset(Dataset):
@@ -51,7 +52,7 @@ class AudioClassificationDataset(Dataset):
             idx (int): Index of the item to retrieve.
 
         Returns:
-            dict: A dictionary containing the label and the audio feature tensor.
+            dict: A dictionary containing the label and the feature tensor.
 
         """
         instance_item = self.metadata[idx]
@@ -62,6 +63,8 @@ class AudioClassificationDataset(Dataset):
             end_sample=instance_item.get("end_sample", None),
         )
 
-        instance_item["feature"] = waveform
-
-        return instance_item
+        return {
+            "feature": waveform,
+            "label": instance_item["label"],
+            "label_id": self.label_to_id[instance_item["label"]],
+        }

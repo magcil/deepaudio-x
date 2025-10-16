@@ -10,6 +10,8 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "numpy>=2.3.3",
+    "scikit-learn>=1.7.2",
+    "soundfile>=0.13.1",
     "torch>=2.8.0",
     "torchaudio>=2.8.0",
 ]
@@ -43,7 +45,9 @@ select = [
     # flake8-simplify
     "SIM",
     # isort
-    "I"
+    "I",
+    # pydocstring
+    #"D"
 ]
 
 [build-system]

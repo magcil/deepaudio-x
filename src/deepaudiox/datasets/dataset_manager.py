@@ -1,15 +1,15 @@
 from pathlib import Path
 
-from data_classes.data_config import DataConfig
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
+from ..data_classes.data_config import DataConfig
 from .audio_classification_dataset import AudioClassificationDataset
 
 
 class DatasetManager:
     """Manager for train, validation, and test audio datasets.
-    
+
     This class handles loading audio file metadata from directories,
     splitting datasets into train and validation sets, generating
     PyTorch Dataset instances, and returning PyTorch
@@ -121,6 +121,31 @@ class DatasetManager:
         self.test_dataset = AudioClassificationDataset(
             root_dir=self.test_dir, metadata=self.test_split, sample_rate=self.sample_rate
         )
+
+    def get_dataset(self, split: str) -> AudioClassificationDataset:
+        """Return the PyTorch dataset for the specified dataset split.
+
+        Args:
+            split (str): Name of the split, must be one of
+                            'train', 'validation', or 'test'.
+
+        Returns:
+            DataLoader: AudioClassificationDataset (PyTorch) Dataset for the specified split.
+
+        Raises:
+            ValueError: If an invalid split name is provided.
+
+        """
+        split_map = {
+            "train": self.train_dataset,
+            "validation": self.validation_dataset,
+            "test": self.test_dataset,
+        }
+        dataset = split_map.get(split)
+        if dataset is None:
+            raise ValueError(f"Invalid split name: {split}")
+
+        return dataset
 
     def get_dataloader(self, split: str) -> DataLoader:
         """Return a DataLoader for the specified dataset split.
