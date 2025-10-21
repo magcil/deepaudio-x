@@ -1,4 +1,3 @@
-
 import warnings
 
 import torch
@@ -44,10 +43,12 @@ class DivEncLayer(nn.Module):
     # Divided Encoder Layer for dimensionality reduction
     def __init__(self, q: int, v: int, unit_dim: list[int] | None = None) -> None:
         """Divided Encoder Layer for dimensionality reduction.
+
         Args:
             q (int): Number of splits.
             v (int): Dimension of each split.
             unit_dim (list): List containing the dimensions of the two linear layers.
+
         """
         if unit_dim is None:
             unit_dim = [32, 1]

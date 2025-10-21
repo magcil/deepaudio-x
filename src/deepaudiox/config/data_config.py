@@ -18,6 +18,6 @@ class DataConfig:
     train_dir: str
     test_dir: str
     sample_rate: int = 16000
-    batch_size: int = 8
+    batch_size: int = 16
     num_workers: int = 4
     seed: int = 42
