@@ -1,4 +1,5 @@
-from sklearn.preprocessing import LabelEncoder
+from pathlib import Path
+
 from torch.utils.data import Dataset
 
 from ..utils.audio_utils import load_audio
@@ -12,30 +13,76 @@ class AudioClassificationDataset(Dataset):
 
     Attributes:
         root_dir (str): Root directory containing the audio files.
-        metadata (list): List of dictionaries with keys including 'file_path' and 'label'.
         sample_rate (int): Target sampling rate for audio loading.
-        label_to_id (dict): Mapping from string labels to integer IDs.
+        class_mapping (dict): Mapping from string labels to integer IDs.
+        instance_paths (list): List of paths of the included instances.
+        instance_classes (list): List of classes of the included instances.
 
     """
 
-    def __init__(self, root_dir: str, metadata: list, sample_rate: int):
+    def __init__(
+        self, 
+        root_dir: str, 
+        sample_rate: int, 
+        class_mapping: dict, 
+        instance_paths: list,
+        instance_classes: list
+    ):
         """Initialize the dataset.
 
         Args:
             root_dir (str): Root directory containing the audio files.
-            metadata (list): List of dictionaries with metadata for each audio file.
             sample_rate (int): Target sampling rate for audio loading.
+            class_mapping (dict): Mapping from string labels to integer IDs.
+            instance_paths (list): List of paths of the included instances.
+            instance_classes (list): List of classes of the included instances.
 
         """
         self.root_dir = root_dir
         self.sample_rate = sample_rate
-        self.metadata = metadata
+        self.class_mapping = class_mapping
+        self.instance_paths = instance_paths if instance_paths else []
+        self.instance_classes = instance_classes if instance_classes else []
 
-        labels = [instance_dict["label"] for instance_dict in self.metadata]
-        label_encoder = LabelEncoder()
-        label_encoder.fit(labels)
-        self.label_to_id = {label: idx for idx, label in enumerate(label_encoder.classes_)}
+        # Load instance paths and classes, if not provided
+        if not self.instance_paths or not self.instance_classes:
+            self._load_instance_paths_and_classes(root_dir)
+        
 
+    def _load_instance_paths_and_classes(self, root_dir: str):
+        """Scan a given directory for class sub-folders and audio files and load metadata.
+
+        Args:
+            root_dir (str): Directory to scan for audio files.
+
+        Returns:
+            list: List of dictionaries with keys 'file_path' and 'label'.
+
+        Raises:
+            ValueError: If the given path is not a directory.
+
+        """
+        root_path = Path(root_dir)
+        instance_paths = []
+        instance_classes = []
+
+        if not root_path.is_dir():
+            raise ValueError(f"The path '{root_dir}' is not a directory")
+
+        for child_directory in root_path.iterdir():
+            if child_directory.is_dir():
+                for audio_file in child_directory.rglob("*.wav"):
+                    instance_paths.append(str(audio_file))
+                    instance_classes.append(child_directory.name)
+                for audio_file in child_directory.rglob("*.mp3"):
+                    instance_paths.append(str(audio_file))
+                    instance_classes.append(child_directory.name)
+
+        self.instance_paths = instance_paths
+        self.instance_classes = instance_classes
+
+        return
+    
     def __len__(self):
         """Return the number of items in the dataset.
 
@@ -43,7 +90,7 @@ class AudioClassificationDataset(Dataset):
             int: Total number of samples.
 
         """
-        return len(self.metadata)
+        return len(self.instance_paths)
 
     def __getitem__(self, idx):
         """Get a single dataset item by index.
@@ -55,16 +102,14 @@ class AudioClassificationDataset(Dataset):
             dict: A dictionary containing the label and the feature tensor.
 
         """
-        instance_item = self.metadata[idx]
+        instance_path = self.instance_paths[idx]
+        instance_class = self.instance_classes[idx]
+        instance_class_id = self.class_mapping[instance_class]
 
         waveform = load_audio(
-            file_path=instance_item["file_path"],
-            start_sample=instance_item.get("start_sample", 0),
-            end_sample=instance_item.get("end_sample", None),
+            file_path=instance_path,
+            start_sample=0,
+            end_sample=None
         )
 
-        return {
-            "feature": waveform,
-            "label": instance_item["label"],
-            "label_id": self.label_to_id[instance_item["label"]],
-        }
+        return waveform, instance_class_id
