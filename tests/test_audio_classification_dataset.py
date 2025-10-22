@@ -1,9 +1,11 @@
+import numpy as np
 import pytest
 import torch
 import torchaudio
+from torch.utils.data import random_split
 
 from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
-from deepaudiox.utils.training_utils import get_class_mapping_from_folder, split_folder
+from deepaudiox.utils.training_utils import get_class_mapping
 
 torchaudio.set_audio_backend("soundfile")
 
@@ -29,62 +31,32 @@ def mock_audio_dataset(tmp_path):
     return train_dir, test_dir
 
 
-def test_path_and_class_counts_consistency(mock_audio_dataset):
+def test_dataset_splits_counts(mock_audio_dataset):
     train_dir, test_dir = mock_audio_dataset
-    class_mapping = get_class_mapping_from_folder(train_dir)
+    class_mapping = get_class_mapping(train_dir)
 
     dataset = AudioClassificationDataset(
         root_dir = train_dir,
         sample_rate = 16000,
-        class_mapping = class_mapping,
-        instance_paths = [],
-        instance_classes = []
+        class_mapping = class_mapping
     )
 
-    assert len(dataset.instance_paths) == len(dataset.instance_classes)
+    train_dset, val_dset = random_split(dataset, [0.9, 0.1])
 
-
-def test_dataset_splits_counts(mock_audio_dataset):
-    train_dir, test_dir = mock_audio_dataset
-    class_mapping = get_class_mapping_from_folder(train_dir)
-
-    train_paths, train_classes, val_paths, val_classes = split_folder(
-        root_dir = train_dir, 
-        ratio = 0.1, 
-        seed = 42
-    )
-
-    train_dataset = AudioClassificationDataset(
-        root_dir = train_dir,
-        sample_rate = 16000,
-        class_mapping = class_mapping,
-        instance_paths = train_paths,
-        instance_classes = train_classes
-    )
-
-    validation_dataset = AudioClassificationDataset(
-        root_dir = train_dir,
-        sample_rate = 16000,
-        class_mapping = class_mapping,
-        instance_paths = val_paths,
-        instance_classes = val_classes
-    )
-
-    assert len(train_dataset) == 18
-    assert len(validation_dataset) == 2
+    assert len(train_dset) == 18
+    assert len(val_dset) == 2
 
 
 def test_item_data_types(mock_audio_dataset):
     train_dir, test_dir = mock_audio_dataset
-    class_mapping = get_class_mapping_from_folder(train_dir)
+    class_mapping = get_class_mapping(train_dir)
 
     dataset = AudioClassificationDataset(
         root_dir = train_dir,
         sample_rate = 16000,
-        class_mapping = class_mapping,
-        instance_paths = [],
-        instance_classes = []
+        class_mapping = class_mapping
     )
 
-    assert isinstance(dataset[0][0], torch.Tensor)
-    assert isinstance(dataset[0][1], int)
+    assert isinstance(dataset[0]['feature'], np.ndarray)
+    assert isinstance(dataset[0]['class_id'], int)
+    assert isinstance(dataset[0]['class_name'], str)
