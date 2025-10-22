@@ -57,6 +57,8 @@ def test_item_data_types(mock_audio_dataset):
         class_mapping = class_mapping
     )
 
+    print(dataset[0]['feature'])
+
     assert isinstance(dataset[0]['feature'], np.ndarray)
     assert isinstance(dataset[0]['class_id'], int)
     assert isinstance(dataset[0]['class_name'], str)

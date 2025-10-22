@@ -15,8 +15,6 @@ class AudioClassificationDataset(Dataset):
         root_dir (str): Root directory containing the audio files.
         sample_rate (int): Target sampling rate for audio loading.
         class_mapping (dict): Mapping from string labels to integer IDs.
-        instance_paths (list): List of paths of the included instances.
-        instance_classes (list): List of classes of the included instances.
 
     """
 
@@ -32,8 +30,6 @@ class AudioClassificationDataset(Dataset):
             root_dir (str): Root directory containing the audio files.
             sample_rate (int): Target sampling rate for audio loading.
             class_mapping (dict): Mapping from string labels to integer IDs.
-            instance_paths (list): List of paths of the included instances.
-            instance_classes (list): List of classes of the included instances.
 
         """
         self.root_dir = root_dir
