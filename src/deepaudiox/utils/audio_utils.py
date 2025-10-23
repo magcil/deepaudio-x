@@ -1,6 +1,5 @@
 import librosa
 import numpy as np
-import torchaudio
 
 
 def load_audio(
@@ -18,7 +17,7 @@ def load_audio(
         end_sample (int OR None): The ending sample point, when cropping. Defaults to None.
 
     Returns:
-        torch.Tensor: The Torch tensor with the audio data
+        np.ndarray: The numpy array with the audio data
 
     """
     waveform, sr = librosa.load(file_path, sr=sample_rate)
@@ -28,15 +27,3 @@ def load_audio(
     waveform = waveform[start_sample:end_sample]
 
     return waveform
-
-def get_audio_num_samples(file_path: str) -> int:
-    """Return the number of sample points of an audio file, without loading it.
-
-    Args:
-        file_path (str): The path to the audio file
-    Returns:
-        int: The number of sample points
-
-    """
-    info = torchaudio.info(file_path)
-    return info.num_frames
