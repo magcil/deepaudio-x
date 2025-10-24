@@ -1,19 +1,8 @@
 from dataclasses import dataclass
 
+from deepaudiox.config.base_config import OptimizationConfig
 from deepaudiox.config.optimization_config_registry import register_optimizer_config
 
-
-@dataclass
-class OptimizationConfig:
-    """ Configuration for setting up optimizers.
-        Every optimizer config class inherits LossConfig.
-
-    Attributes:
-        name (str): The name used by the registry to build the configuration 
-                    of an optimizer. Defaults to ADAM.
-    
-    """
-    name: str = "ADAM"
 
 @dataclass 
 @register_optimizer_config("ADAM")

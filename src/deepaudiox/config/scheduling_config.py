@@ -1,19 +1,8 @@
 from dataclasses import dataclass
 
+from deepaudiox.config.base_config import SchedulingConfig
 from deepaudiox.config.scheduling_config_registry import register_scheduling_config
 
-
-@dataclass
-class SchedulingConfig:
-    """ Configuration for setting up a scheduler.
-        Every scheduling config class inherits SchedulingConfig.
-
-    Attributes:
-        name (str): The name of the scheduler. Defaults to CosineAnnealingLR.
-
-    """
-    epochs: int
-    name: str = "CosineAnnealingLR"
 
 @dataclass 
 @register_scheduling_config("CosineAnnealingLR")

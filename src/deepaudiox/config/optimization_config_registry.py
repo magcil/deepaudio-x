@@ -1,3 +1,5 @@
+from deepaudiox.config.base_config import OptimizationConfig
+
 _OPTIMIZER_CONFIG_REGISTRY = {}
 
 def register_optimizer_config(name):
@@ -13,7 +15,7 @@ def register_optimizer_config(name):
         return cls
     return decorator
 
-def build_optimizer_config(params: dict, *args, **kwargs):
+def build_optimizer_config(params: dict, *args, **kwargs) -> OptimizationConfig:
     """Build the configuration of an optimizer given its name.
 
         Arguments:
@@ -35,6 +37,6 @@ def build_optimizer_config(params: dict, *args, **kwargs):
     optimizer_config_cls = _OPTIMIZER_CONFIG_REGISTRY[name]
     return optimizer_config_cls(*args, **{**params, **kwargs})
 
-def list_optimizer_configs():
+def list_optimizer_configs() -> list:
     """List all registered optimizer configurations."""
     return list(_OPTIMIZER_CONFIG_REGISTRY.keys())

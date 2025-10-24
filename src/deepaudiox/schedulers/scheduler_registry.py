@@ -1,3 +1,7 @@
+import torch.nn as nn
+
+from src.deepaudiox.config.base_config import SchedulingConfig
+
 _SCHEDULER_REGISTRY = {}
 
 def register_scheduler(name):
@@ -13,7 +17,7 @@ def register_scheduler(name):
         return cls
     return decorator
 
-def build_scheduler(optimizer: object, config):
+def build_scheduler(optimizer: nn.Module, config: SchedulingConfig) -> nn.Module:
     """Build the scheduler given its name.
 
         Arguments:
@@ -28,6 +32,6 @@ def build_scheduler(optimizer: object, config):
 
     return scheduler_cls(optimizer, config)
 
-def list_schedulers():
+def list_schedulers() -> list:
     """List all registered schedulers."""
     return list(_SCHEDULER_REGISTRY.keys())

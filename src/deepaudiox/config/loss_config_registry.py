@@ -1,3 +1,5 @@
+from deepaudiox.config.base_config import LossConfig
+
 _LOSS_CONFIG_REGISTRY = {}
 
 def register_loss_config(name: str):
@@ -14,7 +16,7 @@ def register_loss_config(name: str):
     
     return decorator
 
-def build_loss_config(params: dict, *args, **kwargs):
+def build_loss_config(params: dict, *args, **kwargs) -> LossConfig:
     """Build the configuration of a loss function given its name.
 
         Arguments:
@@ -36,6 +38,6 @@ def build_loss_config(params: dict, *args, **kwargs):
     loss_config_cls = _LOSS_CONFIG_REGISTRY[name]
     return loss_config_cls(*args, **{**params, **kwargs})
 
-def list_loss_configs():
+def list_loss_configs() -> list:
     """List all registered loss function configurations"""
     return list(_LOSS_CONFIG_REGISTRY.keys())

@@ -1,19 +1,8 @@
 from dataclasses import dataclass
 
+from deepaudiox.config.base_config import LossConfig
 from deepaudiox.config.loss_config_registry import register_loss_config
 
-
-@dataclass
-class LossConfig:
-    """ Configuration for setting up loss functions.
-        Every loss function config class inherits LossConfig.
-
-    Attributes:
-        name (str): The name used by the registry to build the configuration 
-                    of a loss function. Defaults to CrossEntropyLoss.
-    
-    """
-    name: str = "CrossEntropyLoss"
 
 @dataclass 
 @register_loss_config("CrossEntropyLoss")

@@ -1,8 +1,9 @@
 import argparse
 
 from deepaudiox.config.data_config import DataConfig
-from deepaudiox.config.loss_config_registry import build_loss_config
 from deepaudiox.config.model_config import ModelConfig
+
+from deepaudiox.config.loss_config_registry import build_loss_config
 from deepaudiox.config.optimization_config_registry import build_optimizer_config
 from deepaudiox.config.scheduling_config_registry import build_scheduling_config
 from deepaudiox.config.training_config import TrainingConfig

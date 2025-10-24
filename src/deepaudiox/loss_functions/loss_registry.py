@@ -1,3 +1,7 @@
+import torch.nn as nn
+
+from src.deepaudiox.config.base_config import LossConfig
+
 _LOSS_REGISTRY = {}
 
 def register_loss_function(name):
@@ -13,7 +17,7 @@ def register_loss_function(name):
         return cls
     return decorator
 
-def build_loss_function(config):
+def build_loss_function(config: LossConfig) -> nn.Module:
     """Build the loss function given its name.
 
         Arguments:
@@ -27,6 +31,6 @@ def build_loss_function(config):
 
     return loss_cls(config)
 
-def list_loss_functions():
+def list_loss_functions() -> list:
     """List all registered loss functions."""
     return list(_LOSS_REGISTRY.keys())

@@ -1,3 +1,7 @@
+import torch.nn as nn
+
+from src.deepaudiox.config.base_config import OptimizationConfig
+
 _OPTIMIZER_REGISTRY = {}
 
 def register_optimizer(name):
@@ -13,7 +17,7 @@ def register_optimizer(name):
         return cls
     return decorator
 
-def build_optimizer(model_params, config):
+def build_optimizer(model_params: list, config: OptimizationConfig) -> nn.Module: 
     """Build the optimizer given its name.
 
         Arguments:
@@ -28,6 +32,6 @@ def build_optimizer(model_params, config):
 
     return optimizer_cls(model_params, config)
 
-def list_optimizers():
+def list_optimizers() -> list:
     """List all registered optimizers."""
     return list(_OPTIMIZER_REGISTRY.keys())

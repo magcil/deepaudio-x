@@ -5,12 +5,12 @@ import torch
 import torch.nn.functional as F
 
 
-def get_logger():
+def get_logger() -> object:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     logger = logging.getLogger("ConsoleLogger")
     return logger
 
-def get_class_mapping(root_dir: str):
+def get_class_mapping(root_dir: str) -> dict[str, int]:
     """Load the class mapping given a folder of class sub-folders.
 
     Args:
@@ -29,7 +29,7 @@ def get_class_mapping(root_dir: str):
 
     return class_mapping
 
-def get_device():
+def get_device() -> torch.device:
     """Returns the best available device for PyTorch computations.
     
     Returns:
@@ -44,7 +44,7 @@ def get_device():
     
     return device
 
-def pad_collate_fn(batch):
+def pad_collate_fn(batch) -> dict:
     """
     Collate function that pads variable-length audio tensors in a batch.
 

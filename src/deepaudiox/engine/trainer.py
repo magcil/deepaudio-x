@@ -10,7 +10,7 @@ from deepaudiox.callbacks.checkpointer import Checkpointer
 from deepaudiox.callbacks.console_logger import ConsoleLogger
 from deepaudiox.callbacks.early_stopper import EarlyStopper
 from deepaudiox.callbacks.reporter import Reporter
-from deepaudiox.config.data_config import DataConfig
+from deepaudiox.config.base_config import DataConfig
 from deepaudiox.config.training_config import TrainingConfig
 from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
 from deepaudiox.loss_functions.loss_registry import build_loss_function

@@ -1,3 +1,5 @@
+from deepaudiox.config.base_config import SchedulingConfig
+
 _SCHEDULING_CONFIG_REGISTRY = {}
 
 def register_scheduling_config(name: str):
@@ -13,7 +15,7 @@ def register_scheduling_config(name: str):
         return cls
     return decorator
 
-def build_scheduling_config(params: dict, *args, **kwargs):
+def build_scheduling_config(params: dict, *args, **kwargs) -> SchedulingConfig:
     """Build the configuration of a scheduler given its name.
 
         Arguments:
@@ -35,6 +37,6 @@ def build_scheduling_config(params: dict, *args, **kwargs):
     scheduling_config_cls = _SCHEDULING_CONFIG_REGISTRY[name]
     return scheduling_config_cls(*args, **{**params, **kwargs})
 
-def list_scheduling_configs():
+def list_scheduling_configs() -> list:
     """List all registered scheduler configurations."""
     return list(_SCHEDULING_CONFIG_REGISTRY.keys())
