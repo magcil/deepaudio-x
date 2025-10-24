@@ -1,10 +1,6 @@
 from dataclasses import dataclass
 
-from src.deepaudiox.config.base_config import DataConfig
-from src.deepaudiox.config.base_config import LossConfig
-from src.deepaudiox.config.base_config import ModelConfig
-from src.deepaudiox.config.base_config import OptimizationConfig
-from src.deepaudiox.config.base_config import SchedulingConfig
+from src.deepaudiox.config.base_config import DataConfig, LossConfig, ModelConfig, OptimizationConfig, SchedulingConfig
 
 
 @dataclass

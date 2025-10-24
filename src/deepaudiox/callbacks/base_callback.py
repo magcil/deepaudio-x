@@ -1,4 +1,4 @@
-class BaseCallback():
+class BaseCallback:
     """Base class for all training callbacks.
     
     Includes methods that are called throught the training process
