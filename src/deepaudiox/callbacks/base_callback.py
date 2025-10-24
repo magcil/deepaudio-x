@@ -1,4 +1,5 @@
-from abc import ABC
+from abc import ABC, abstractmethod
+
 
 class BaseCallback(ABC):
     """Base class for all training callbacks.
@@ -8,9 +9,13 @@ class BaseCallback(ABC):
     handling early stopping, and reporting training results.
 
     """
-
-    def on_train_start(self, trainer): ...
-    def on_train_end(self, trainer): ...
-    def on_epoch_start(self, trainer): ...
-    def on_epoch_end(self, trainer): ...
-    def on_step_end(self, trainer): ...
+    @abstractmethod
+    def on_train_start(self, trainer): pass
+    @abstractmethod
+    def on_train_end(self, trainer): pass
+    @abstractmethod
+    def on_epoch_start(self, trainer): pass
+    @abstractmethod
+    def on_epoch_end(self, trainer): pass
+    @abstractmethod
+    def on_step_end(self, trainer): pass

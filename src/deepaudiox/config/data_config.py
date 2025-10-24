@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class DataConfig:
     """Configuration for training and testing datasets.

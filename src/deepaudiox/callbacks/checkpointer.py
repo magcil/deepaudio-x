@@ -1,7 +1,9 @@
-from src.deepaudiox.callbacks.base_callback import BaseCallback
-from src.deepaudiox.utils.training_utils import get_logger
 from pathlib import Path
+
 import torch
+
+from deepaudiox.callbacks.base_callback import BaseCallback
+from deepaudiox.utils.training_utils import get_logger
 
 GREEN = '\033[92m'
 ENDC = '\033[0m'

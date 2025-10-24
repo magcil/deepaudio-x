@@ -1,7 +1,10 @@
-from torch.nn import CrossEntropyLoss
 from dataclasses import asdict
-from src.deepaudiox.config.loss_config import CrossEntropyLossConfig
-from src.deepaudiox.loss_functions.loss_registry import register_loss_function
+
+from torch.nn import CrossEntropyLoss
+
+from deepaudiox.config.loss_config import CrossEntropyLossConfig
+from deepaudiox.loss_functions.loss_registry import register_loss_function
+
 
 @register_loss_function("CrossEntropyLoss")
 class CrossEntropy(CrossEntropyLoss):

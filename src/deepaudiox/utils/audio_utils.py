@@ -25,9 +25,5 @@ def load_audio(
     if end_sample is None:
         end_sample = len(waveform)
     waveform = waveform[start_sample:end_sample]
-
-<<<<<<< HEAD
+    
     return waveform
-=======
-    return waveform
->>>>>>> main

@@ -1,7 +1,9 @@
-from torch.optim.lr_scheduler import CosineAnnealingLR
-from src.deepaudiox.config.scheduling_config import CosineAnnealingConfig
-from src.deepaudiox.schedulers.scheduler_registry import register_scheduler
 from dataclasses import asdict
+
+from torch.optim.lr_scheduler import CosineAnnealingLR
+
+from deepaudiox.config.scheduling_config import CosineAnnealingConfig
+from deepaudiox.schedulers.scheduler_registry import register_scheduler
 
 
 @register_scheduler("CosineAnnealingLR")

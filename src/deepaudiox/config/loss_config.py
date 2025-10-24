@@ -1,6 +1,7 @@
-import torch
 from dataclasses import dataclass
-from src.deepaudiox.config.loss_config_registry import register_loss_config
+
+from deepaudiox.config.loss_config_registry import register_loss_config
+
 
 @dataclass
 class LossConfig:

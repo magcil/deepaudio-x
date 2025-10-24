@@ -1,5 +1,6 @@
-from src.deepaudiox.callbacks.base_callback import BaseCallback
-from src.deepaudiox.utils.training_utils import get_logger
+from deepaudiox.callbacks.base_callback import BaseCallback
+from deepaudiox.utils.training_utils import get_logger
+
 
 class EarlyStopper(BaseCallback):
     """Training callback for handling early stopping.
@@ -47,6 +48,6 @@ class EarlyStopper(BaseCallback):
         # Terminate training
         if self.elapsed_epochs == self.patience:
             trainer.state.early_stop = True
-            self.logger.info(f"[EARLY STOPPING] Patience exceeded, early stoping ...")
+            self.logger.info("[EARLY STOPPING] Patience exceeded, early stoping ...")
 
         return

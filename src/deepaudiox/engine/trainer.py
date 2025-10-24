@@ -1,23 +1,24 @@
-from src.deepaudiox.config.training_config import TrainingConfig
-from src.deepaudiox.config.data_config import DataConfig
-from src.deepaudiox.optimizers.optimizer_registry import build_optimizer
-from src.deepaudiox.schedulers.scheduler_registry import build_scheduler
-from src.deepaudiox.loss_functions.loss_registry import build_loss_function
-from src.deepaudiox.callbacks.console_logger import ConsoleLogger
-from src.deepaudiox.callbacks.checkpointer import Checkpointer
-from src.deepaudiox.callbacks.early_stopper import EarlyStopper
-from src.deepaudiox.callbacks.reporter import Reporter
-from src.deepaudiox.utils.training_utils import get_device
-from src.deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
-from src.deepaudiox.utils.training_utils import get_class_mapping, pad_collate_fn
-from torch.utils.data import random_split, DataLoader
-from tqdm import tqdm
-from dataclasses import dataclass
-import torch
 import logging
-import numpy as np
+from dataclasses import dataclass
 
-from src.deepaudiox.models.wav2vec_classifier import Wav2VecClassifier
+import numpy as np
+import torch
+from torch.utils.data import DataLoader, random_split
+from tqdm import tqdm
+
+from deepaudiox.callbacks.checkpointer import Checkpointer
+from deepaudiox.callbacks.console_logger import ConsoleLogger
+from deepaudiox.callbacks.early_stopper import EarlyStopper
+from deepaudiox.callbacks.reporter import Reporter
+from deepaudiox.config.data_config import DataConfig
+from deepaudiox.config.training_config import TrainingConfig
+from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
+from deepaudiox.loss_functions.loss_registry import build_loss_function
+from deepaudiox.models.wav2vec_classifier import Wav2VecClassifier
+from deepaudiox.optimizers.optimizer_registry import build_optimizer
+from deepaudiox.schedulers.scheduler_registry import build_scheduler
+from deepaudiox.utils.training_utils import get_class_mapping, get_device, pad_collate_fn
+
 
 @dataclass
 class State:
@@ -111,7 +112,8 @@ class Trainer:
         """Perform the training process"""
 
         # Execute callbacks in the beginning of training
-        for cb in self.callbacks: cb.on_train_start(self)
+        for cb in self.callbacks: 
+            cb.on_train_start(self)
 
         # Initiate training
         for epoch in range(1, self.epochs + 1):
@@ -120,13 +122,14 @@ class Trainer:
 
             if not self.state.early_stop:
                 # Execute callbacks in the beginning of the epoch
-                for cb in self.callbacks: cb.on_epoch_start(self)
+                for cb in self.callbacks: 
+                    cb.on_epoch_start(self)
 
                 # Execute training loop
                 self.model.train()
-                with tqdm(self.train_dloader, unit="batch", leave=False, desc=f"Training phase") as tbatch:
+                with tqdm(self.train_dloader, unit="batch", leave=False, desc="Training phase") as tbatch:
                     # Optimize the model by batch
-                    for i, item in enumerate(tbatch, 1):
+                    for _i, item in enumerate(tbatch, 1):
                         self.optimizer.zero_grad()
                         features = item['feature'].to(self.device)
                         y_pred = self.model(features) 
@@ -142,9 +145,9 @@ class Trainer:
                 # Execute validation loop
                 self.model.eval()
                 with torch.no_grad():
-                    with tqdm(self.validation_dloader, unit="batch", leave=False, desc=f"Validation phase") as vbatch:
+                    with tqdm(self.validation_dloader, unit="batch", leave=False, desc="Validation phase") as vbatch:
                         # Compute validation loss by batch
-                        for i, item in enumerate(vbatch, 1):
+                        for _i, item in enumerate(vbatch, 1):
                             features = item['feature'].to(self.device)
                             y_true = item['class_id'].to(self.device)
                             y_pred = self.model(features) 
@@ -160,9 +163,11 @@ class Trainer:
                     self.state.lowest_loss = val_loss
 
                 # Execute callbacks at the end of the epoch
-                for cb in self.callbacks: cb.on_epoch_end(self)
+                for cb in self.callbacks: 
+                    cb.on_epoch_end(self)
         # Execute callbacks at the end of training
-        for cb in self.callbacks: cb.on_train_end(self)
+        for cb in self.callbacks: 
+            cb.on_train_end(self)
 
         return
 
