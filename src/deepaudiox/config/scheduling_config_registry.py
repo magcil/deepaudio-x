@@ -1,4 +1,4 @@
-from deepaudiox.config.base_config import SchedulingConfig
+from src.deepaudiox.config.base_config import SchedulingConfig
 
 _SCHEDULING_CONFIG_REGISTRY = {}
 

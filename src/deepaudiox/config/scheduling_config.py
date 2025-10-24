@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from deepaudiox.config.base_config import SchedulingConfig
-from deepaudiox.config.scheduling_config_registry import register_scheduling_config
+from src.deepaudiox.config.base_config import SchedulingConfig
+from src.deepaudiox.config.scheduling_config_registry import register_scheduling_config
 
 
 @dataclass 

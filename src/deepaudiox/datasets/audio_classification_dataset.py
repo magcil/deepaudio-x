@@ -4,7 +4,7 @@ from typing import TypedDict
 import numpy as np
 from torch.utils.data import Dataset
 
-from deepaudiox.utils.audio_utils import load_audio
+from src.deepaudiox.utils.audio_utils import load_audio
 
 
 class WaveDict(TypedDict):

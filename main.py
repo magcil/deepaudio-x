@@ -1,13 +1,11 @@
 import argparse
 
-from deepaudiox.config.data_config import DataConfig
-from deepaudiox.config.model_config import ModelConfig
-
-from deepaudiox.config.loss_config_registry import build_loss_config
-from deepaudiox.config.optimization_config_registry import build_optimizer_config
-from deepaudiox.config.scheduling_config_registry import build_scheduling_config
-from deepaudiox.config.training_config import TrainingConfig
-from deepaudiox.engine.trainer import Trainer
+from src.deepaudiox.config.base_config import DataConfig, ModelConfig
+from src.deepaudiox.config.loss_config_registry import build_loss_config
+from src.deepaudiox.config.optimization_config_registry import build_optimizer_config
+from src.deepaudiox.config.scheduling_config_registry import build_scheduling_config
+from src.deepaudiox.config.training_config import TrainingConfig
+from src.deepaudiox.engine.trainer import Trainer
 
 
 def main():

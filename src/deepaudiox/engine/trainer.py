@@ -6,18 +6,18 @@ import torch
 from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 
-from deepaudiox.callbacks.checkpointer import Checkpointer
-from deepaudiox.callbacks.console_logger import ConsoleLogger
-from deepaudiox.callbacks.early_stopper import EarlyStopper
-from deepaudiox.callbacks.reporter import Reporter
-from deepaudiox.config.base_config import DataConfig
-from deepaudiox.config.training_config import TrainingConfig
-from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
-from deepaudiox.loss_functions.loss_registry import build_loss_function
-from deepaudiox.models.wav2vec_classifier import Wav2VecClassifier
-from deepaudiox.optimizers.optimizer_registry import build_optimizer
-from deepaudiox.schedulers.scheduler_registry import build_scheduler
-from deepaudiox.utils.training_utils import get_class_mapping, get_device, pad_collate_fn
+from src.deepaudiox.callbacks.checkpointer import Checkpointer
+from src.deepaudiox.callbacks.console_logger import ConsoleLogger
+from src.deepaudiox.callbacks.early_stopper import EarlyStopper
+from src.deepaudiox.callbacks.reporter import Reporter
+from src.deepaudiox.config.base_config import DataConfig
+from src.deepaudiox.config.training_config import TrainingConfig
+from src.deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
+from src.deepaudiox.loss_functions.loss_registry import build_loss_function
+from src.deepaudiox.models.wav2vec_classifier import Wav2VecClassifier
+from src.deepaudiox.optimizers.optimizer_registry import build_optimizer
+from src.deepaudiox.schedulers.scheduler_registry import build_scheduler
+from src.deepaudiox.utils.training_utils import get_class_mapping, get_device, pad_collate_fn
 
 
 @dataclass
@@ -94,8 +94,6 @@ class Trainer:
             optimizer=self.optimizer,
             config=config.scheduling_config
         )
-
-        print(self.scheduler.T_max)
 
         # Configure loss function
         self.loss_function = build_loss_function(config=config.loss_config)

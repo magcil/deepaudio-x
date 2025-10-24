@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from deepaudiox.config.base_config import LossConfig
-from deepaudiox.config.loss_config_registry import register_loss_config
+from src.deepaudiox.config.base_config import LossConfig
+from src.deepaudiox.config.loss_config_registry import register_loss_config
 
 
 @dataclass 

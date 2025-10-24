@@ -1,4 +1,4 @@
-from deepaudiox.config.base_config import OptimizationConfig
+from src.deepaudiox.config.base_config import OptimizationConfig
 
 _OPTIMIZER_CONFIG_REGISTRY = {}
 

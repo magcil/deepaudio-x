@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from deepaudiox.config.base_config import OptimizationConfig
-from deepaudiox.config.optimization_config_registry import register_optimizer_config
+from src.deepaudiox.config.base_config import OptimizationConfig
+from src.deepaudiox.config.optimization_config_registry import register_optimizer_config
 
 
 @dataclass 

@@ -2,8 +2,8 @@ from dataclasses import asdict
 
 from torch.optim import Adam, AdamW
 
-from deepaudiox.config.optimization_config import AdamOptimizationConfig, AdamwOptimizationConfig
-from deepaudiox.optimizers.optimizer_registry import register_optimizer
+from src.deepaudiox.config.optimization_config import AdamOptimizationConfig, AdamwOptimizationConfig
+from src.deepaudiox.optimizers.optimizer_registry import register_optimizer
 
 
 @register_optimizer("ADAM")

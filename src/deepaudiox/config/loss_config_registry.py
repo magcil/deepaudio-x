@@ -1,4 +1,4 @@
-from deepaudiox.config.base_config import LossConfig
+from src.deepaudiox.config.base_config import LossConfig
 
 _LOSS_CONFIG_REGISTRY = {}
 
