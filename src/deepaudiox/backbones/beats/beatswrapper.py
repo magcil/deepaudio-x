@@ -1,4 +1,3 @@
-
 import warnings
 
 import torch
@@ -6,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .beats_modules.BEATs import BEATs, BEATsConfig
+from deepaudiox.backbones import register_backbone
 
 warnings.filterwarnings(
     "ignore",
@@ -103,6 +103,8 @@ class BEATsBackbone(nn.Module):
         if div_encoder_layer:
             self.projection_head: DivEncLayer = DivEncLayer(q=128, v=int(768 / 128))
 
+        self.out_dim = 128 if div_encoder_layer else 768
+
     def load_pretrained_encoder(self, weights: str) -> None:
         self.encoder.load_state_dict(torch.load(weights, weights_only=True))
 
@@ -122,3 +124,15 @@ class BEATsBackbone(nn.Module):
             return F.normalize(self.projection_head(x), p=2.0)
         else:
             return F.normalize(x, p=2.0)
+
+
+@register_backbone("beats_base")
+def beats_base() -> BEATsBackbone:
+    """BEATs backbone without DivEncLayer."""
+    return BEATsBackbone(div_encoder_layer=False)
+
+
+@register_backbone("beats_div")
+def beats_div() -> BEATsBackbone:
+    """BEATs backbone with DivEncLayer projection head."""
+    return BEATsBackbone(div_encoder_layer=True)

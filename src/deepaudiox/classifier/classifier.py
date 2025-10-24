@@ -1,7 +1,17 @@
+from typing import Literal
+
 import torch.nn as nn
 
+
 class AudioClassifier(nn.Module):
-    def __init__(self, in_dim, num_classes, hidden_layers=None, activation="relu", batch_norm=False):
+    def __init__(
+        self,
+        num_classes: int,
+        in_dim: int,
+        hidden_layers: list[int] | None = None,
+        activation: Literal["relu", "gelu", "tanh", "leakyrelu"] = "relu",
+        batch_norm: bool = False,
+    ):
         """Audio classification head for downstream tasks.
 
         Attributes:
@@ -13,29 +23,27 @@ class AudioClassifier(nn.Module):
 
         """
         super().__init__()
-        
+
         if hidden_layers is None or len(hidden_layers) == 0:
             hidden_layers = []
-        
+
         layers = []
         input_dim = in_dim
-        
-        activation_fn = {
-            "relu": nn.ReLU(),
-            "gelu": nn.GELU(),
-            "tanh": nn.Tanh(),
-            "leakyrelu": nn.LeakyReLU()
-        }.get(activation.lower(), nn.ReLU())
-        
+        self.linear_bias = True if not batch_norm else False
+
+        activation_fn = {"relu": nn.ReLU(), "gelu": nn.GELU(), "tanh": nn.Tanh(), "leakyrelu": nn.LeakyReLU()}.get(
+            activation.lower(), nn.ReLU()
+        )
+
         for hidden_dim in hidden_layers:
-            layers.append(nn.Linear(input_dim, hidden_dim))
+            layers.append(nn.Linear(input_dim, hidden_dim, bias=self.linear_bias))
             if batch_norm:
                 layers.append(nn.BatchNorm1d(hidden_dim))
             layers.append(activation_fn)
             input_dim = hidden_dim
-        
+
         layers.append(nn.Linear(input_dim, num_classes))
-        
+
         self.model = nn.Sequential(*layers)
 
     def forward(self, x):
