@@ -15,42 +15,53 @@ def main():
     parser = argparse.ArgumentParser(description="Welcome to DeepAudioX SDK.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # Train
+    # Train parser
     train_parser = subparsers.add_parser("train", help="Train a model")
     train_parser.add_argument("--train_dir", type=str, required=True, help="Path to the train folder.")
-    train_parser.add_argument("--test_dir", type=str, required=True, help="Path to the test folder.")
+    train_parser.add_argument("--output_dir", type=str, required=True, help="Path to the output folder.")
+    train_parser.add_argument("--model", type=str, required=True, help="Name of the model.")
+    train_parser.add_argument("--epochs", type=str, required=False, default=10, help="Number of maximum training epochs.")
     train_parser.add_argument("--scheduler", type=str, required=False, default="CosineAnnealingLR", help="Name of the scheduler.")
     train_parser.add_argument("--optimizer", type=str, required=False, default="ADAM", help="Name of the optimizer.")
     train_parser.add_argument("--loss_function", type=str, required=False, default="CrossEntropyLoss", help="Name of the loss function.")
-    train_parser.add_argument("--model", type=str, required=True, help="Name of the model.")
 
     args = parser.parse_args()
 
     if args.command == "train": 
         training_config = TrainingConfig(
+            output_dir = args.output_dir,
             data_config = DataConfig(
-                train_dir=args.train_dir,
-                test_dir=args.test_dir
+                train_dir=args.train_dir
             ),
-            model_config = ModelConfig(
-                name=args.model
+            model_config = ModelConfig(),
+            scheduling_config = build_scheduling_config(
+                params = {
+                    "name": args.scheduler, 
+                    "epochs": args.epochs
+                }
             ),
-            scheduling_config = build_scheduling_config(args.scheduler),
-            optimization_config = build_optimizer_config(args.optimizer),
-            loss_config = build_loss_config(args.loss_function)
+            optimization_config = build_optimizer_config(
+                params = {
+                    "name": args.optimizer
+                }
+            ),
+            loss_config = build_loss_config(
+                params = {
+                    "name": args.loss_function
+                }
+            )
         )
 
         trainer = Trainer(training_config)
         trainer.train()
 
     elif args.command == "evaluate":
-        config_path = args.config
-        config = load_yaml(config_path)
+        evaluation_config = None
         # evaluate_model(config)
 
-    elif args.command == "export":
+    elif args.command == "inference":
+        inference_config = None
         # export_model(args.model, args.output)
-        pass
 
 if __name__ == "__main__":
     main()

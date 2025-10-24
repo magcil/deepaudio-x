@@ -1,19 +1,35 @@
 from dataclasses import dataclass
-from .optimization_config_registry import register_optimizer_config
-
+from src.deepaudiox.config.optimization_config_registry import register_optimizer_config
 
 @dataclass
 class OptimizationConfig:
-    name: str = "ADAM"
+    """ Configuration for setting up optimizers.
+        Every optimizer config class inherits LossConfig.
 
+    Attributes:
+        name (str): The name used by the registry to build the configuration 
+                    of an optimizer. Defaults to ADAM.
+    
+    """
+    name: str = "ADAM"
 
 @dataclass 
 @register_optimizer_config("ADAM")
 class AdamOptimizationConfig(OptimizationConfig):
-    """Configuration for setting up an ADAM optimizer.
+    """ Configuration for setting up an Adam optimizer.
+        https://docs.pytorch.org/docs/stable/generated/torch.optim.Adam.html
 
     Attributes:
-        weight_decay (float): The L2 regularization coefficient. Defaults to 1e-2.
+        lr (float): The learning rate of the optimizer. Defaults to 1e-3.
+        weight_decay (float): Specifies the amount of smoothing when computing the loss. Defaults to 0.0.
+        betas (tuple): Coefficients used for computing running averages of gradient and its square. Defaults to (0.9, 0.999).
+        eps (float): Term added to the denominator to improve numerical stability. Defaults to 1e-8.
+        amsgrad (bool): Whether to use the AMSGrad variant of this algorithm. Defaults to False.
+        foreach (bool): Whether foreach implementation of optimizer is used. Defaults to False.
+        maximize (bool): Maximize the objective with respect to the params, instead of minimizing. Defaults to False.
+        capturable (bool): Whether this instance is safe to capture in a graph. Defaults to False.
+        differentiable (bool): Whether autograd should occur through the optimizer step in training. Defaults to False.
+        fused (bool): Whether the fused implementation is used. Defaults to None.
 
     """
     lr: float = 0.001  
@@ -31,10 +47,20 @@ class AdamOptimizationConfig(OptimizationConfig):
 @dataclass 
 @register_optimizer_config("ADAMW")
 class AdamwOptimizationConfig(OptimizationConfig):
-    """Configuration for setting up an ADAMW optimizer.
+    """ Configuration for setting up an AdamW optimizer.
+        https://docs.pytorch.org/docs/stable/generated/torch.optim.AdamW.html
 
     Attributes:
-        weight_decay (float): The L2 regularization coefficient. Defaults to 1e-2.
+        lr (float): The learning rate of the optimizer. Defaults to 1e-3.
+        weight_decay (float): Specifies the amount of smoothing when computing the loss. Defaults to 0.0.
+        betas (tuple): Coefficients used for computing running averages of gradient and its square. Defaults to (0.9, 0.999).
+        eps (float): Term added to the denominator to improve numerical stability. Defaults to 1e-8.
+        amsgrad (bool): Whether to use the AMSGrad variant of this algorithm. Defaults to False.
+        foreach (bool): Whether foreach implementation of optimizer is used. Defaults to False.
+        maximize (bool): Maximize the objective with respect to the params, instead of minimizing. Defaults to False.
+        capturable (bool): Whether this instance is safe to capture in a graph. Defaults to False.
+        differentiable (bool): Whether autograd should occur through the optimizer step in training. Defaults to False.
+        fused (bool): Whether the fused implementation is used. Defaults to None.
 
     """
     lr: float = 0.001  

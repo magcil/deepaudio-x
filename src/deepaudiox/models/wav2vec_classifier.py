@@ -4,9 +4,7 @@ import torchaudio
 
 
 class Wav2VecClassifier(nn.Module):
-    """
-    Lightweight audio classification model built on top of a pretrained Wav2Vec2 backbone.
-    """
+    """Lightweight audio classification model built on top of a pretrained Wav2Vec2 backbone."""
 
     def __init__(
         self,

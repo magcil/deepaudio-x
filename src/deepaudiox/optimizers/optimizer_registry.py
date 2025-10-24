@@ -1,15 +1,26 @@
-from src.deepaudiox.config.optimization_config import OptimizationConfig
-
-
 _OPTIMIZER_REGISTRY = {}
 
 def register_optimizer(name):
+    """Add an optimizer to the registry.
+
+    Arguments:
+        name: The name of the optimizer.
+    
+    """
     def decorator(cls):
+        """Access an optimizer by its name."""
         _OPTIMIZER_REGISTRY[name] = cls
         return cls
     return decorator
 
-def build_optimizer(model_params, config: OptimizationConfig):
+def build_optimizer(model_params, config):
+    """Build the optimizer given its name.
+
+        Arguments:
+            model_params (list): The model parameters to be optimized.
+            config (OptimizationConfig): Parameters required for setting up an optimizer.
+    
+    """
     if config.name not in _OPTIMIZER_REGISTRY:
         raise ValueError(f"Unknown optimizer: {config.name}")
     
@@ -17,6 +28,6 @@ def build_optimizer(model_params, config: OptimizationConfig):
 
     return optimizer_cls(model_params, config)
 
-
 def list_optimizers():
+    """List all registered optimizers."""
     return list(_OPTIMIZER_REGISTRY.keys())

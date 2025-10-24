@@ -1,11 +1,10 @@
-from dataclasses import dataclass, field
-
+from dataclasses import dataclass
 
 @dataclass
 class ModelConfig:
-    """Configuration for constructing a model.
+    """Configuration for setting up a model.
 
-    Attributes: pending
+    Attributes: Currently anavailable
 
     """
-    name: str
+    pass

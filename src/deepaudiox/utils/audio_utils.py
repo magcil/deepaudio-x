@@ -28,15 +28,3 @@ def load_audio(
     waveform = waveform[start_sample:end_sample]
 
     return waveform
-
-def get_audio_num_samples(file_path: str) -> int:
-    """Return the number of sample points of an audio file, without loading it.
-
-    Args:
-        file_path (str): The path to the audio file
-    Returns:
-        int: The number of sample points
-
-    """
-    info = torchaudio.info(file_path)
-    return info.num_frames
