@@ -1,15 +1,23 @@
 from pathlib import Path
+from typing import TypedDict
 
+import numpy as np
 from torch.utils.data import Dataset
 
 from src.deepaudiox.utils.audio_utils import load_audio
 
 
+class WaveDict(TypedDict):
+    feature: np.ndarray
+    class_id: int
+    class_name: str
+
+
 class AudioClassificationDataset(Dataset):
     """PyTorch Dataset for audio classification tasks.
 
-    This dataset loads audio files and encodes their labels as integers. Each
-    item returned by the dataset contains the label and the audio feature tensor.
+    This dataset loads audio files from a specified directory. Each
+    item returned by the dataset contains the label; label id, and the waveform of the audio as numpy array.
 
     Attributes:
         root_dir (str): Root directory containing the audio files.
@@ -20,9 +28,9 @@ class AudioClassificationDataset(Dataset):
 
     def __init__(
         self, 
-        root_dir: str, 
+        root_dir: str | Path, 
         sample_rate: int, 
-        class_mapping: dict
+        class_mapping: dict[str, int]
     ):
         """Initialize the dataset.
 
@@ -37,7 +45,7 @@ class AudioClassificationDataset(Dataset):
         self.class_mapping = class_mapping
         self.instances = self._load_instance_paths_and_classes(root_dir)
 
-    def _load_instance_paths_and_classes(self, root_dir: str):
+    def _load_instance_paths_and_classes(self, root_dir: str | Path) -> list[dict[str, str]]:
         """Scan a given directory for class sub-folders and audio files and load metadata.
 
         Args:
@@ -72,7 +80,7 @@ class AudioClassificationDataset(Dataset):
 
         return instances
     
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the number of items in the dataset.
 
         Returns:
@@ -81,14 +89,14 @@ class AudioClassificationDataset(Dataset):
         """
         return len(self.instances)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> WaveDict:
         """Get a single dataset item by index.
 
         Args:
             idx (int): Index of the item to retrieve.
 
         Returns:
-            dict: A dictionary containing the label and the feature tensor.
+            WaveDict: A dictionary containing the class_id; class_name and the waveform.
 
         """
         item = self.instances[idx]
