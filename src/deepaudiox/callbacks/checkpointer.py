@@ -48,6 +48,8 @@ class Checkpointer(BaseCallback):
                 f"{GREEN}(-{decrease_percentage:.2f}%){ENDC}."
             )
 
+            trainer.state.lowest_loss = latest_validation_loss
+
             checkpoint_path = self.output_dir / "checkpoint.pt"
             try:
                 self.output_dir.mkdir(parents=True, exist_ok=True)

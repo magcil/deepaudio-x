@@ -40,6 +40,8 @@ class EarlyStopper(BaseCallback):
         latest_validation_loss = trainer.state.validation_loss[-1]
         if trainer.state.lowest_loss < latest_validation_loss:
             self.elapsed_epochs += 1
+        else:
+            self.elapsed_epochs = 0
 
         # Log warning message
         if self.elapsed_epochs >= int(0.8 * self.patience):

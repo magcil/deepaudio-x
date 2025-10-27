@@ -34,7 +34,7 @@ def main():
     )
     train_parser.add_argument(
         "--epochs", 
-        type=str, 
+        type=int, 
         required=False, 
         default=10, 
         help="Number of maximum training epochs."
@@ -66,6 +66,7 @@ def main():
     if args.command == "train": 
         training_config = TrainingConfig(
             output_dir = args.output_dir,
+            epochs = args.epochs,
             data_config = DataConfig(
                 train_dir=args.train_dir
             ),

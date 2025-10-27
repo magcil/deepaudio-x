@@ -34,7 +34,7 @@ class State:
     
     """
     current_epoch = 1
-    lowest_loss = np.Inf
+    lowest_loss = np.inf
     train_loss = []
     validation_loss = []
     early_stop = False
@@ -82,6 +82,7 @@ class Trainer:
 
         # Load mock model
         self.model = Wav2VecClassifier()
+        self.model.to(self.device)
 
         # Configure optimizer
         self.optimizer = build_optimizer(
@@ -130,8 +131,8 @@ class Trainer:
                     for _i, item in enumerate(tbatch, 1):
                         self.optimizer.zero_grad()
                         features = item['feature'].to(self.device)
-                        y_pred = self.model(features) 
                         y_true = item['class_id'].to(self.device)
+                        y_pred = self.model(features) 
                         batch_loss = self.loss_function(y_pred, y_true)                    
                         batch_loss.backward()
                         train_loss += batch_loss.item()
@@ -157,8 +158,6 @@ class Trainer:
                 # Update training state
                 self.state.train_loss.append(train_loss)
                 self.state.validation_loss.append(val_loss)
-                if self.state.lowest_loss > val_loss:
-                    self.state.lowest_loss = val_loss
 
                 # Execute callbacks at the end of the epoch
                 for cb in self.callbacks: 
