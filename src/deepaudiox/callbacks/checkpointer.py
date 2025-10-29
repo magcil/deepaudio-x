@@ -15,20 +15,20 @@ class Checkpointer(BaseCallback):
     stores a model checkpoint when it drops.
 
     Attributes:
-        output_dir (str): The directory to store training output.
+        path_to_checkpoint (str): The path to the saved checpoint.
         logger (): A module for logging messages.
 
     """
 
-    def __init__(self, output_dir: str, logger: object = None):
+    def __init__(self, path_to_checkpoint: str, logger: object = None):
         """Initialize the callback.
 
         Args:
-            output_dir (str): The directory to store training output.
+            path_to_checkpoint (str): The path to the saved checpoint.
             logger (): A module for logging messages. Defaults to None.
 
         """
-        self.output_dir = Path(output_dir)
+        self.path_to_checkpoint = Path(path_to_checkpoint)
         self.logger = logger or get_logger()
 
     def on_epoch_end(self, trainer):
@@ -37,7 +37,8 @@ class Checkpointer(BaseCallback):
         Args:
             trainer (trainer.Trainer): The training module of the SDK.
         """
-        latest_validation_loss = trainer.state.validation_loss[-1]
+        # latest_validation_loss = trainer.state.validation_loss[-1]
+        latest_validation_loss = 0.1
 
         if trainer.state.lowest_loss > latest_validation_loss:
             decrease_percentage = (trainer.state.lowest_loss - latest_validation_loss) / trainer.state.lowest_loss * 100
@@ -50,15 +51,14 @@ class Checkpointer(BaseCallback):
 
             trainer.state.lowest_loss = latest_validation_loss
 
-            checkpoint_path = self.output_dir / "checkpoint.pt"
             try:
-                self.output_dir.mkdir(parents=True, exist_ok=True)
-                torch.save(trainer.model.state_dict(), checkpoint_path)
-                self.logger.info(f"[CHECKPOINTER] Checkpoint saved successfully at: {checkpoint_path}")
+                self.path_to_checkpoint.parent.mkdir(parents=True, exist_ok=True)
+                torch.save(trainer.model.state_dict(), self.path_to_checkpoint)
+                self.logger.info(f"[CHECKPOINTER] Checkpoint saved successfully at: {self.path_to_checkpoint}")
             except PermissionError:
-                self.logger.info(f"[CHECKPOINTER] Permission denied: cannot write to {checkpoint_path}")
+                self.logger.info(f"[CHECKPOINTER] Permission denied: cannot write to {self.path_to_checkpoint}")
             except FileNotFoundError:
-                self.logger.info(f"[CHECKPOINTER] Directory not found: {self.output_dir}")
+                self.logger.info(f"[CHECKPOINTER] Directory not found: {self.path_to_checkpoint}")
             except OSError as e:
                 self.logger.info(f"[CHECKPOINTER] OS error while saving checkpoint: {e}")
             except Exception as e:
