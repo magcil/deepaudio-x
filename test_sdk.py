@@ -4,6 +4,7 @@ import torch.optim as optim
 from src.deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
 from src.deepaudiox.loops.trainer import Trainer
 from src.deepaudiox.models.wav2vec_classifier import Wav2VecClassifier
+from src.deepaudiox.utils.training_utils import get_class_mapping
 
 
 def main():
@@ -11,9 +12,12 @@ def main():
     model = Wav2VecClassifier()
 
     # Dataset
+    root_dir = "..."
+    class_mapping = get_class_mapping(root_dir)
     train_dset = AudioClassificationDataset(
-        root_dir="...",
-        sample_rate=16000
+        root_dir=root_dir,
+        sample_rate=16000,
+        class_mapping=class_mapping
     )
 
     # Define optimizer, scheduler, and loss function
