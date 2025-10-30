@@ -4,13 +4,15 @@ import torch.nn as nn
 
 from deepaudiox.modules.backbones import BACKBONES
 from deepaudiox.modules.classifier.classifier import AudioClassifier
+from deepaudiox.modules.projection.base_projection import BaseProjection
 
 
 class AudioClassifierConstructor(nn.Module):
     def __init__(
         self,
         num_classes: int,
-        backbone: Literal["beats_base", "beats_div"],
+        backbone: Literal["beats"],
+        projection: BaseProjection | None = None,
         freeze_backbone: bool = False,
         sample_frequency: int = 16000,
         classifier_hidden_layers: list[int] | None = None,
@@ -36,7 +38,11 @@ class AudioClassifierConstructor(nn.Module):
         if freeze_backbone:
             self.backbone_model.freeze_encoder_weights()
 
-        self.emb_dim = self.backbone_model.out_dim
+        if projection is not None:
+            self.backbone_model = nn.Sequential(self.backbone_model, projection)
+            self.emb_dim = projection.out_dim
+        else:
+            self.emb_dim = self.backbone_model.out_dim
 
         self.classifier = AudioClassifier(
             num_classes=num_classes,

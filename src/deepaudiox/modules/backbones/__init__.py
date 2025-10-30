@@ -21,13 +21,7 @@ def register_backbone(name: str):
     return decorator
 
 
-@register_backbone("beats_base")
+@register_backbone("beats")
 def beats_base() -> BEATsBackbone:
     """BEATs backbone without DivEncLayer."""
-    return BEATsBackbone(div_encoder_layer=False)
-
-
-@register_backbone("beats_div")
-def beats_div() -> BEATsBackbone:
-    """BEATs backbone with DivEncLayer projection head."""
-    return BEATsBackbone(div_encoder_layer=True)
+    return BEATsBackbone()
