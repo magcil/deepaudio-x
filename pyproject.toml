@@ -24,7 +24,7 @@ dev = [
 # Set the maximum line length to 120
 line-length = 120
 exclude = [
-    "src/deepaudiox/backbones/beats/beats_modules"
+    "src/deepaudiox/modules/backbones/beats/beats_modules"
 ]
 
 [tool.ruff.lint]

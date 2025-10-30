@@ -29,7 +29,7 @@ class AudioClassifier(nn.Module):
 
         layers = []
         input_dim = in_dim
-        self.linear_bias = True if not batch_norm else False
+        self.linear_bias = not batch_norm
 
         activation_fn = {"relu": nn.ReLU(), "gelu": nn.GELU(), "tanh": nn.Tanh(), "leakyrelu": nn.LeakyReLU()}.get(
             activation.lower(), nn.ReLU()

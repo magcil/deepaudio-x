@@ -4,8 +4,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from deepaudiox.modules.backbones.base_backbone import BaseBackbone
+
 from .beats_modules.BEATs import BEATs, BEATsConfig
-from deepaudiox.backbones import register_backbone
 
 warnings.filterwarnings(
     "ignore",
@@ -79,7 +80,7 @@ class DivEncLayer(nn.Module):
         return self._split_encoding(x)
 
 
-class BEATsBackbone(nn.Module):
+class BEATsBackbone(BaseBackbone):
     # Initialize BEATs Model
     def __init__(
         self,
@@ -124,15 +125,3 @@ class BEATsBackbone(nn.Module):
             return F.normalize(self.projection_head(x), p=2.0)
         else:
             return F.normalize(x, p=2.0)
-
-
-@register_backbone("beats_base")
-def beats_base() -> BEATsBackbone:
-    """BEATs backbone without DivEncLayer."""
-    return BEATsBackbone(div_encoder_layer=False)
-
-
-@register_backbone("beats_div")
-def beats_div() -> BEATsBackbone:
-    """BEATs backbone with DivEncLayer projection head."""
-    return BEATsBackbone(div_encoder_layer=True)

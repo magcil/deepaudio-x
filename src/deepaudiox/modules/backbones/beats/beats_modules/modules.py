@@ -9,9 +9,10 @@
 
 import math
 import warnings
+
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
 
 class GradMultiply(torch.autograd.Function):
@@ -105,12 +106,10 @@ def get_activation_fn(activation: str):
         return gelu_accurate
     elif activation == "tanh":
         return torch.tanh
-    elif activation == "linear":
-        return lambda x: x
-    elif activation == "glu":
+    elif activation == "linear" or activation == "glu":
         return lambda x: x
     else:
-        raise RuntimeError("--activation-fn {} not supported".format(activation))
+        raise RuntimeError(f"--activation-fn {activation} not supported")
 
 
 def quant_noise(module, p, block_size):
