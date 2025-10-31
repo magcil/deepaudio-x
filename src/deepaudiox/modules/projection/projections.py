@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 from deepaudiox.modules.projection.base_projection import BaseProjection
 
+
 class DivEncLayer(BaseProjection):
     # Divided Encoder Layer for dimensionality reduction
     def __init__(self, in_dim: int, out_dim: int, unit_dim: list[int] | None = None) -> None:

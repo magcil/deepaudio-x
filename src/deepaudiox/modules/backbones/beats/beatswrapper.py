@@ -1,7 +1,6 @@
 import warnings
 
 import torch
-import torch.nn as nn
 
 from deepaudiox.modules.backbones.base_backbone import BaseBackbone
 
@@ -75,5 +74,5 @@ class BEATsBackbone(BaseBackbone):
         # x: B x N x 768
         x = x.mean(1)
         # x: B x 768
-        
+
         return x
