@@ -11,7 +11,9 @@ license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "librosa>=0.11.0",
     "numpy>=2.3.3",
+    "soundfile>=0.13.1",
     "torch>=2.8.0",
     "torchaudio>=2.8.0",
 ]
@@ -46,6 +48,8 @@ select = [
     "SIM",
     # isort
     "I",
+    # pydocstring
+    #"D"
 ]
 
 [build-system]
