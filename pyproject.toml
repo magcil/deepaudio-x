@@ -3,9 +3,9 @@ name = "deepaudio-x"
 version = "0.1.0"
 description = "DeepAudio-X: Self-supervised audio toolkit for audio classification and beyond."
 authors = [
-  { name = "Christos Nikou", email = "chrisnick92@gmail.com" , 
-    name = "Stefanos Vlachos", email = "stevenvlaxos@gmail.com ", 
-    name = "Ellie Vakalaki", email = "evakalakiaidl@gmail.com" }
+  { name = "Christos Nikou", email = "chrisnick92@gmail.com" }, 
+  { name = "Stefanos Vlachos", email = "stevenvlaxos@gmail.com " }, 
+  { name = "Ellie Vakalaki", email = "evakalakiaidl@gmail.com" }
 ]
 license = {text = "MIT"}
 readme = "README.md"
