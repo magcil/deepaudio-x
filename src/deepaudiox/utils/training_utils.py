@@ -10,6 +10,7 @@ def get_logger() -> object:
     logger = logging.getLogger("ConsoleLogger")
     return logger
 
+
 def get_class_mapping(root_dir: str) -> dict[str, int]:
     """Load the class mapping given a folder of class sub-folders.
 
@@ -29,9 +30,10 @@ def get_class_mapping(root_dir: str) -> dict[str, int]:
 
     return class_mapping
 
+
 def get_device() -> torch.device:
     """Returns the best available device for PyTorch computations.
-    
+
     Returns:
         torch.device
     """
@@ -41,8 +43,9 @@ def get_device() -> torch.device:
     else:
         device = torch.device("cpu")
         print("Using CPU (no GPU available)")
-    
+
     return device
+
 
 def pad_collate_fn(batch) -> dict:
     """
@@ -68,15 +71,10 @@ def pad_collate_fn(batch) -> dict:
 
     # Pad each tensor to max_len
     padded_features = [
-        F.pad(f, (0, max_len - f.shape[-1])) if f.shape[-1] < max_len else f[..., :max_len]
-        for f in features
+        F.pad(f, (0, max_len - f.shape[-1])) if f.shape[-1] < max_len else f[..., :max_len] for f in features
     ]
 
     # Stack into a single batch tensor: (batch_size, num_channels, num_samples)
     batch_features = torch.stack(padded_features)
 
-    return {
-        "feature": batch_features,
-        "class_id": labels,
-        "class_name": class_names
-    }
+    return {"feature": batch_features, "class_id": labels, "class_name": class_names}
