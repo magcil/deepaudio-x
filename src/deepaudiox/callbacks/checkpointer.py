@@ -37,8 +37,7 @@ class Checkpointer(BaseCallback):
         Args:
             trainer (trainer.Trainer): The training module of the SDK.
         """
-        # latest_validation_loss = trainer.state.validation_loss[-1]
-        latest_validation_loss = 0.1
+        latest_validation_loss = trainer.state.validation_loss[-1]
 
         if trainer.state.lowest_loss > latest_validation_loss:
             decrease_percentage = (trainer.state.lowest_loss - latest_validation_loss) / trainer.state.lowest_loss * 100

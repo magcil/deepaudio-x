@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, random_split
+from torch.optim.lr_scheduler import LRScheduler
 from tqdm import tqdm
 
 from src.deepaudiox.callbacks.checkpointer import Checkpointer
@@ -59,7 +60,7 @@ class Trainer:
         model: nn.Module,
         optimizer: torch.optim.Optimizer,
         loss_function: nn.Module,
-        lr_scheduler: torch.optim.Optimizer,
+        lr_scheduler: LRScheduler,
         train_ratio: float = 0.8,
         epochs: int = 10,
         learning_rate: float = 1e-3,
@@ -75,7 +76,7 @@ class Trainer:
             model (nn.Module): The model to be trained.
             optimizer (torch.optim.Optimizer): The optimizer used for training.
             loss_function (nn.Module): The loss function used for training.
-            lr_scheduler (torch.optim.Optimizer): The scheduler used for training.
+            lr_scheduler (LRScheduler): The scheduler used for training.
             train_ratio (float, optional): The ratio of the train split. Defaults to 0.8.
             epochs (int, optional): The maximum number of training epochs. Defaults to 10.
             learning_rate (float, optional): The learning rate used for optimization. Defaults to 1e-3.
