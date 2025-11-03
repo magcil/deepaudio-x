@@ -50,7 +50,7 @@ class AudioClassificationDataset(Dataset):
         if drop_corrupted:
             self.drop_corrupted_items()
         self.segment_map = None
-        
+
         if self.segment_duration is not None:
             self.segmentize_audios(self.segment_duration)
 
@@ -147,7 +147,7 @@ class AudioClassificationDataset(Dataset):
                 self.segment_map.append(
                     {"file_path": item["path"], "class_name": item["class_name"], "segment_idx": seg_idx}
                 )
-                
+
     def drop_corrupted_items(self):
         """Drop corrupted audio files from the dataset."""
         valid_instances = []
