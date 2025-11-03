@@ -1,18 +1,17 @@
-import logging
 from dataclasses import dataclass
 
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, random_split
 from torch.optim.lr_scheduler import LRScheduler
+from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 
 from src.deepaudiox.callbacks.checkpointer import Checkpointer
 from src.deepaudiox.callbacks.console_logger import ConsoleLogger
 from src.deepaudiox.callbacks.early_stopper import EarlyStopper
 from src.deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
-from src.deepaudiox.utils.training_utils import get_device, pad_collate_fn
+from src.deepaudiox.utils.training_utils import get_device, get_logger, pad_collate_fn
 
 
 @dataclass
@@ -92,8 +91,7 @@ class Trainer:
         self.device = get_device()
 
         # Configure logger
-        logging.basicConfig(level=logging.INFO, format="%(message)s")
-        self.logger = logging.getLogger("ConsoleLogger")
+        self.logger = get_logger()
 
         # Load datasets
         self.train_dloader = None
@@ -105,7 +103,7 @@ class Trainer:
             num_workers = num_workers
         )
 
-        # Load mock model
+        # Load model
         self.model = model
         self.model.to(self.device)
 

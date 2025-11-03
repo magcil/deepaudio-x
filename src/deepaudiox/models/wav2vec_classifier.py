@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torchaudio
 
 
@@ -64,6 +65,15 @@ class Wav2VecClassifier(nn.Module):
         logits = self.classifier(pooled)
         return logits
 
+    def predict(self, waveforms: torch.Tensor, lengths: torch.Tensor | None = None):
+        logits = self.forward(waveforms = waveforms, lengths = lengths)
+        posteriors = F.softmax(logits.cpu(), dim=1)
+        dominant_posteriors = posteriors.max(dim=1)
+        return {
+            "dominant_posteriors": dominant_posteriors.values, 
+            "dominant_class_indices": dominant_posteriors.indices, 
+            "logits": logits
+        }
 
     def get_backbone(self):
         """Return the pretrained feature extractor for downstream reuse."""

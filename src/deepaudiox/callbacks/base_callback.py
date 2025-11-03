@@ -11,3 +11,5 @@ class BaseCallback:
     def on_epoch_start(self, trainer): pass
     def on_epoch_end(self, trainer): pass
     def on_step_end(self, trainer): pass
+    def on_testing_start(self, evaluator): pass
+    def on_testing_end(self, evaluator): pass

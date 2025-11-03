@@ -10,7 +10,7 @@ class ConsoleLogger(BaseCallback):
     Log messages in the console throughout the training process.
 
     Attributes:
-        logger (): A module for logging messages.
+        logger: A module for logging messages.
 
     """
 
@@ -63,5 +63,16 @@ class ConsoleLogger(BaseCallback):
 
         """
         self.logger.info("Training has finished.")
+
+        return
+
+    def on_testing_end(self, evaluator):
+        """When testing ends, show indicative message.
+        
+        Args:
+            evaluator (evaluator.Evaluator): The evaluation module of the SDK.
+
+        """
+        self.logger.info("Testing has finished.")
 
         return
