@@ -4,7 +4,7 @@ from typing import TypedDict
 import numpy as np
 from torch.utils.data import Dataset
 
-from deepaudiox.utils.audio_utils import load_audio
+from src.deepaudiox.utils.audio_utils import load_audio
 
 
 class WaveDict(TypedDict):
@@ -29,7 +29,7 @@ class AudioClassificationDataset(Dataset):
     def __init__(
         self, 
         root_dir: str | Path, 
-        sample_rate: int, 
+        sample_rate: int,
         class_mapping: dict[str, int]
     ):
         """Initialize the dataset.
@@ -37,7 +37,6 @@ class AudioClassificationDataset(Dataset):
         Args:
             root_dir (str): Root directory containing the audio files.
             sample_rate (int): Target sampling rate for audio loading.
-            class_mapping (dict): Mapping from string labels to integer IDs.
 
         """
         self.root_dir = root_dir

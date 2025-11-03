@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from deepaudiox.backbones.beats.beatswrapper import BEATsBackbone
+from src.deepaudiox.backbones.beats.beatswrapper import BEATsBackbone
 
 
 @pytest.mark.parametrize(

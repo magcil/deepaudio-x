@@ -1,5 +1,5 @@
 def main():
-    print("Hello from deepaudio-x!")
+    print("Welcome to DeepAudioX SDK.")
 
 
 if __name__ == "__main__":
