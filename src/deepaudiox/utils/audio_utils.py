@@ -3,10 +3,7 @@ import numpy as np
 
 
 def load_audio(
-    file_path: str, 
-    sample_rate: int = 16000, 
-    start_sample: int = 0, 
-    end_sample: int | None = None
+    file_path: str, sample_rate: int = 16000, start_sample: int = 0, end_sample: int | None = None
 ) -> np.ndarray:
     """Load an audio file.
 
@@ -25,5 +22,5 @@ def load_audio(
     if end_sample is None:
         end_sample = len(waveform)
     waveform = waveform[start_sample:end_sample]
-    
+
     return waveform

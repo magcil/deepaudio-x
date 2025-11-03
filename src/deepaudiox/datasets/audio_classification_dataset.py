@@ -26,12 +26,7 @@ class AudioClassificationDataset(Dataset):
 
     """
 
-    def __init__(
-        self, 
-        root_dir: str | Path, 
-        sample_rate: int,
-        class_mapping: dict[str, int]
-    ):
+    def __init__(self, root_dir: str | Path, sample_rate: int, class_mapping: dict[str, int]):
         """Initialize the dataset.
 
         Args:
@@ -63,22 +58,12 @@ class AudioClassificationDataset(Dataset):
         for child_directory in root_path.iterdir():
             if child_directory.is_dir():
                 for audio_file in child_directory.rglob("*.wav"):
-                    instances.append(
-                        {
-                            "path": str(audio_file),
-                            "class_name": child_directory.name
-                        }
-                    )
+                    instances.append({"path": str(audio_file), "class_name": child_directory.name})
                 for audio_file in child_directory.rglob("*.mp3"):
-                    instances.append(
-                        {
-                            "path": str(audio_file),
-                            "class_name": child_directory.name
-                        }
-                    )
+                    instances.append({"path": str(audio_file), "class_name": child_directory.name})
 
         return instances
-    
+
     def __len__(self) -> int:
         """Return the number of items in the dataset.
 
@@ -99,15 +84,11 @@ class AudioClassificationDataset(Dataset):
 
         """
         item = self.instances[idx]
-        
-        waveform = load_audio(
-            file_path=item['path'],
-            start_sample=0,
-            end_sample=None
-        )
+
+        waveform = load_audio(file_path=item["path"], start_sample=0, end_sample=None)
 
         return {
             "feature": waveform,
-            "class_id": self.class_mapping[item['class_name']],
-            "class_name": item['class_name']
+            "class_id": self.class_mapping[item["class_name"]],
+            "class_name": item["class_name"],
         }
