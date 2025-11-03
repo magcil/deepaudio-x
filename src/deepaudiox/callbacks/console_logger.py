@@ -1,7 +1,7 @@
 import time
 
-from src.deepaudiox.callbacks.base_callback import BaseCallback
-from src.deepaudiox.utils.training_utils import get_logger
+from deepaudiox.callbacks.base_callback import BaseCallback
+from deepaudiox.utils.training_utils import get_logger
 
 
 class ConsoleLogger(BaseCallback):

@@ -8,11 +8,11 @@ from torch.utils.data import DataLoader, random_split
 from torch.optim.lr_scheduler import LRScheduler
 from tqdm import tqdm
 
-from src.deepaudiox.callbacks.checkpointer import Checkpointer
-from src.deepaudiox.callbacks.console_logger import ConsoleLogger
-from src.deepaudiox.callbacks.early_stopper import EarlyStopper
-from src.deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
-from src.deepaudiox.utils.training_utils import get_device, pad_collate_fn
+from deepaudiox.callbacks.checkpointer import Checkpointer
+from deepaudiox.callbacks.console_logger import ConsoleLogger
+from deepaudiox.callbacks.early_stopper import EarlyStopper
+from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
+from deepaudiox.utils.training_utils import get_device, pad_collate_fn
 
 
 @dataclass
