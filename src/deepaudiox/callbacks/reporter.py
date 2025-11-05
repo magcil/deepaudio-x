@@ -1,8 +1,8 @@
 import numpy as np
 
-from src.deepaudiox.callbacks.base_callback import BaseCallback
-from src.deepaudiox.utils.reporting_utils import get_avg_posteriors, get_classification_report, get_confusion_matrix
-from src.deepaudiox.utils.training_utils import get_logger
+from deepaudiox.callbacks.base_callback import BaseCallback
+from deepaudiox.utils.reporting_utils import get_avg_posteriors, get_classification_report, get_confusion_matrix
+from deepaudiox.utils.training_utils import get_logger
 
 
 class Reporter(BaseCallback):

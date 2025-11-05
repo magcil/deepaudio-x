@@ -4,8 +4,8 @@ import torch
 import torchaudio
 from torch.utils.data import random_split
 
-from src.deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
-from src.deepaudiox.utils.training_utils import get_class_mapping
+from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
+from deepaudiox.utils.training_utils import get_class_mapping
 
 torchaudio.set_audio_backend("soundfile")
 
