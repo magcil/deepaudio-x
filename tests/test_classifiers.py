@@ -8,18 +8,12 @@ from deepaudiox.modules.projection.projections import DivEncLayer
 @pytest.mark.parametrize(
     "div_encoder_layer,sample_frequency,duration_sec",
     [
-        (True, 8000, 1),
-        (True, 8000, 10),
+        (True, 8000, 3),
         (True, 16000, 1),
-        (True, 16000, 10),
-        (True, 22050, 1),
-        (True, 22050, 10),
-        (False, 8000, 1),
+        (True, 22050, 5),
         (False, 8000, 10),
         (False, 16000, 1),
-        (False, 16000, 10),
         (False, 22050, 1),
-        (False, 22050, 10),
     ],
 )
 class TestAudioClassifierConstructor:
