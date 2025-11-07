@@ -6,7 +6,7 @@ from src.deepaudiox.utils.training_utils import get_logger
 
 class ConsoleLogger(BaseCallback):
     """Training callback for logging messages in the console.
-    
+
     Log messages in the console throughout the training process.
 
     Attributes:
@@ -14,7 +14,7 @@ class ConsoleLogger(BaseCallback):
 
     """
 
-    def __init__(self, logger: object=None):
+    def __init__(self, logger: object = None):
         """Initialize the callback.
 
         Args:
@@ -27,7 +27,7 @@ class ConsoleLogger(BaseCallback):
 
     def on_epoch_start(self, trainer):
         """When epoch starts, log indicative message.
-        
+
         Args:
             trainer (trainer.Trainer): The training module of the SDK.
         """
@@ -35,7 +35,7 @@ class ConsoleLogger(BaseCallback):
 
     def on_epoch_end(self, trainer):
         """When epoch ends, log epoch duration and recorded scores.
-        
+
         Args:
             trainer (trainer.Trainer): The training module of the SDK.
 
@@ -57,7 +57,7 @@ class ConsoleLogger(BaseCallback):
 
     def on_train_end(self, trainer):
         """When train ends, show indicative message.
-        
+
         Args:
             trainer (trainer.Trainer): The training module of the SDK.
 

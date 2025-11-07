@@ -5,13 +5,14 @@ import torch
 from src.deepaudiox.callbacks.base_callback import BaseCallback
 from src.deepaudiox.utils.training_utils import get_logger
 
-GREEN = '\033[92m'
-ENDC = '\033[0m'
+GREEN = "\033[92m"
+ENDC = "\033[0m"
+
 
 class Checkpointer(BaseCallback):
     """Training callback for saving model checkpoints.
-    
-    Keep track of validation loss and 
+
+    Keep track of validation loss and
     stores a model checkpoint when it drops.
 
     Attributes:
@@ -33,7 +34,7 @@ class Checkpointer(BaseCallback):
 
     def on_epoch_end(self, trainer):
         """When epoch ends, check validation loss and produce checkpoint.
-        
+
         Args:
             trainer (trainer.Trainer): The training module of the SDK.
         """
@@ -41,10 +42,10 @@ class Checkpointer(BaseCallback):
 
         if trainer.state.lowest_loss > latest_validation_loss:
             decrease_percentage = (trainer.state.lowest_loss - latest_validation_loss) / trainer.state.lowest_loss * 100
-        
+
             self.logger.info(
                 f"[CHECKPOINTER] Validation loss decreased: "
-                f"({trainer.state.lowest_loss:.6f} --> {latest_validation_loss:.6f}), " 
+                f"({trainer.state.lowest_loss:.6f} --> {latest_validation_loss:.6f}), "
                 f"{GREEN}(-{decrease_percentage:.2f}%){ENDC}."
             )
 
