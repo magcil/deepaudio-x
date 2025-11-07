@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from deepaudiox.modules.classifier import AudioClassifierConstructor
+from deepaudiox.modules.audio_classifier_constructor import AudioClassifierConstructor
 from deepaudiox.modules.projection.projections import DivEncLayer
 
 

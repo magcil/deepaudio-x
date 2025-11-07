@@ -9,8 +9,15 @@ import torch.nn as nn
 class BaseBackbone(nn.Module, ABC):
     """Abstract base class for all audio backbone models."""
 
-    out_dim: int  # every subclass must set this in __init__
-    sample_frequency: int  # every subclass must set this in __init__
+    def __init__(self, out_dim: int, sample_frequency: int) -> None:
+        """Initialize the BaseBackbone.
+        Args:
+            out_dim (int): Output dimension of the backbone embeddings.
+            sample_frequency (int): Sample frequency for audio input.
+        """
+        super().__init__()
+        self.out_dim = out_dim
+        self.sample_frequency = sample_frequency
 
     @abstractmethod
     def forward(self, x: torch.Tensor) -> torch.Tensor:

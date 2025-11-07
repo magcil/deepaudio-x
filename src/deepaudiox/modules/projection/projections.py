@@ -16,11 +16,9 @@ class DivEncLayer(BaseProjection):
         """
         if unit_dim is None:
             unit_dim = [32, 1]
-        super().__init__()
-        assert in_dim % out_dim == 0, "out_dim must be divisible by in_dim"
+        super().__init__(in_dim=in_dim, out_dim=out_dim)
+        assert in_dim % out_dim == 0, "in_dim must be divisible by out_dim"
         self.split_fc_layers: nn.ModuleList = nn.ModuleList()
-        self.out_dim = out_dim
-        self.in_dim: int = in_dim
         self.unit_dim: list[int] = unit_dim
         self.v: int = int(in_dim / out_dim)
         self._construct_layers()

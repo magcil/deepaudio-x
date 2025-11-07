@@ -46,7 +46,7 @@ class BEATsBackbone(BaseBackbone):
         backbone_config: dict = MODEL_CONFIG,
         sample_frequency: int = 16000,
     ) -> None:
-        super().__init__()
+        super().__init__(out_dim=768, sample_frequency=sample_frequency)
         """A wrapper for BEATs model to be used as a backbone in other models.
         Args:
             backbone_config (Dict): Configuration dictionary for BEATs model.
@@ -55,9 +55,7 @@ class BEATsBackbone(BaseBackbone):
         """
         # Initialize BEATs Encoder
         cfg = BEATsConfig(cfg=backbone_config)
-        self.sample_frequency: int = sample_frequency
         self.encoder: BEATs = BEATs(cfg=cfg, preprocess_flag=True)
-        self.out_dim = 768
 
     def load_pretrained_encoder(self, weights: str) -> None:
         self.encoder.load_state_dict(torch.load(weights, weights_only=True))
