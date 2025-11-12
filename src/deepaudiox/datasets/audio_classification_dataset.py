@@ -31,7 +31,6 @@ class AudioClassificationDataset(Dataset):
         sample_rate: int,
         class_mapping: dict[str, int],
         segment_duration: float | None = None,
-        drop_corrupted: bool = False,
     ):
         """Initialize the dataset.
 
@@ -47,8 +46,6 @@ class AudioClassificationDataset(Dataset):
         self.class_mapping = class_mapping
         self.segment_duration = segment_duration
         self.instances = self._load_instance_paths_and_classes(root_dir)
-        if drop_corrupted:
-            self.drop_corrupted_items()
         self.segment_map = None
 
         if self.segment_duration is not None:
@@ -74,13 +71,10 @@ class AudioClassificationDataset(Dataset):
             if child_directory.is_dir():
                 for audio_file in child_directory.rglob("*.wav"):
                     instances.append({"path": str(audio_file), "class_name": child_directory.name})
-                    instances.append({"path": str(audio_file), "class_name": child_directory.name})
                 for audio_file in child_directory.rglob("*.mp3"):
-                    instances.append({"path": str(audio_file), "class_name": child_directory.name})
                     instances.append({"path": str(audio_file), "class_name": child_directory.name})
 
         return instances
-
 
     def __len__(self) -> int:
         """Return the number of items in the dataset.
@@ -120,7 +114,7 @@ class AudioClassificationDataset(Dataset):
                 path=item["file_path"],
                 sr=self.sample_rate,
                 mono=True,
-                offset=segment_idx,
+                offset=segment_idx * self.segment_duration,
                 duration=self.segment_duration,
             )
 
@@ -150,14 +144,3 @@ class AudioClassificationDataset(Dataset):
                 self.segment_map.append(
                     {"file_path": item["path"], "class_name": item["class_name"], "segment_idx": seg_idx}
                 )
-
-    def drop_corrupted_items(self):
-        """Drop corrupted audio files from the dataset."""
-        valid_instances = []
-        for item in self.instances:
-            try:
-                _ = librosa.load(path=item["path"], sr=self.sample_rate, mono=True)
-                valid_instances.append(item)
-            except Exception:
-                print(f"Warning: Dropping corrupted file {item['path']}")
-        self.instances = valid_instances
