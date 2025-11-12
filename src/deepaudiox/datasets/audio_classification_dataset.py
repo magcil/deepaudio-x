@@ -74,10 +74,13 @@ class AudioClassificationDataset(Dataset):
             if child_directory.is_dir():
                 for audio_file in child_directory.rglob("*.wav"):
                     instances.append({"path": str(audio_file), "class_name": child_directory.name})
+                    instances.append({"path": str(audio_file), "class_name": child_directory.name})
                 for audio_file in child_directory.rglob("*.mp3"):
+                    instances.append({"path": str(audio_file), "class_name": child_directory.name})
                     instances.append({"path": str(audio_file), "class_name": child_directory.name})
 
         return instances
+
 
     def __len__(self) -> int:
         """Return the number of items in the dataset.
