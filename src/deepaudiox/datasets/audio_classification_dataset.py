@@ -46,7 +46,7 @@ class AudioClassificationDataset(Dataset):
         self.class_mapping = class_mapping
         self.segment_duration = segment_duration
         self.instances = self._load_instance_paths_and_classes(root_dir)
-        self.segment_map = None
+        self.segment_map = []
 
         if self.segment_duration is not None:
             self.segmentize_audios(self.segment_duration)
@@ -83,7 +83,7 @@ class AudioClassificationDataset(Dataset):
             int: Total number of samples.
 
         """
-        return len(self.instances) if self.segment_map is None else len(self.segment_map)
+        return len(self.segment_map) if self.segment_map else len(self.instances)
 
     def __getitem__(self, idx: int) -> WaveDict:
         """Get a single dataset item by index.
@@ -96,17 +96,8 @@ class AudioClassificationDataset(Dataset):
 
         """
 
-        if self.segment_map is None:
-            item = self.instances[idx]
-
-            waveform, _ = librosa.load(path=item["path"], sr=self.sample_rate, mono=True)
-
-            return {
-                "feature": waveform,
-                "class_id": self.class_mapping[item["class_name"]],
-                "class_name": item["class_name"],
-            }
-        else:
+        # If segmentize is true
+        if self.segment_map:
             item = self.segment_map[idx]
             segment_idx = item["segment_idx"]
 
@@ -117,6 +108,17 @@ class AudioClassificationDataset(Dataset):
                 offset=segment_idx * self.segment_duration,
                 duration=self.segment_duration,
             )
+            
+            return {
+                "feature": waveform,
+                "class_id": self.class_mapping[item["class_name"]],
+                "class_name": item["class_name"],
+            }
+            
+        else:
+            item = self.instances[idx]
+
+            waveform, _ = librosa.load(path=item["path"], sr=self.sample_rate, mono=True)
 
             return {
                 "feature": waveform,
@@ -131,8 +133,6 @@ class AudioClassificationDataset(Dataset):
             segment_duration (int): Duration of each segment in seconds.
 
         """
-        self.segment_duration = segment_duration
-        self.segment_map = []
 
         for item in self.instances:
             waveform, _ = librosa.load(path=item["path"], sr=self.sample_rate, mono=True)
