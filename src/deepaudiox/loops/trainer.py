@@ -16,7 +16,7 @@ from deepaudiox.utils.training_utils import get_device, get_logger, pad_collate_
 
 @dataclass
 class State:
-    """ Dataclass that stores variables 
+    """Dataclass that stores variables
         accessed throught the training lifecycle.
 
     Attributes:
@@ -25,18 +25,20 @@ class State:
         train_loss (list): An ordered list of train losses, by epoch.
         validation_loss (list): An orderd list of validation lossed, by epoch.
         early_stop (bool): Determines if training should be early stopped. Defaults to False.
-    
+
     """
+
     current_epoch = 1
     lowest_loss = np.inf
     train_loss = []
     validation_loss = []
     early_stop = False
 
+
 class Trainer:
-    """ The core SDK module for training a model.
-    
-    The Trainer assembles all modules required for training 
+    """The core SDK module for training a model.
+
+    The Trainer assembles all modules required for training
     and performs the training process.
 
     Attributes:
@@ -53,6 +55,7 @@ class Trainer:
         callbacks (list): A list of callbacks used throught the training lifecycle.
 
     """
+
     def __init__(
         self,
         train_dset: AudioClassificationDataset,
@@ -66,9 +69,9 @@ class Trainer:
         patience: int = 5,
         num_workers: int = 4,
         batch_size: int = 16,
-        path_to_checkpoint: str = "checkpoint.pt"
-    ):  
-        """ Initialize the Trainer.
+        path_to_checkpoint: str = "checkpoint.pt",
+    ):
+        """Initialize the Trainer.
 
         Args:
             train_dset (AudioClassificationDataset): The training dataset.
@@ -97,10 +100,7 @@ class Trainer:
         self.train_dloader = None
         self.validation_dloader = None
         self._setup_dataloaders(
-            train_dset = train_dset,
-            train_ratio = train_ratio,
-            batch_size = batch_size,
-            num_workers = num_workers
+            train_dset=train_dset, train_ratio=train_ratio, batch_size=batch_size, num_workers=num_workers
         )
 
         # Load model
@@ -120,14 +120,14 @@ class Trainer:
         self.callbacks = [
             ConsoleLogger(logger=self.logger),
             Checkpointer(path_to_checkpoint=path_to_checkpoint, logger=self.logger),
-            EarlyStopper(patience=patience, logger=self.logger)
+            EarlyStopper(patience=patience, logger=self.logger),
         ]
 
     def train(self):
         """Perform the training process"""
 
         # Execute callbacks in the beginning of training
-        for cb in self.callbacks: 
+        for cb in self.callbacks:
             cb.on_train_start(self)
 
         # Initiate training
@@ -137,7 +137,7 @@ class Trainer:
 
             if not self.state.early_stop:
                 # Execute callbacks in the beginning of the epoch
-                for cb in self.callbacks: 
+                for cb in self.callbacks:
                     cb.on_epoch_start(self)
 
                 # Execute training loop
@@ -146,10 +146,10 @@ class Trainer:
                     # Optimize the model by batch
                     for _i, item in enumerate(tbatch, 1):
                         self.optimizer.zero_grad()
-                        features = item['feature'].to(self.device)
-                        y_true = item['class_id'].to(self.device)
-                        y_pred = self.model(features) 
-                        batch_loss = self.loss_function(y_pred, y_true)                    
+                        features = item["feature"].to(self.device)
+                        y_true = item["class_id"].to(self.device)
+                        y_pred = self.model(features)
+                        batch_loss = self.loss_function(y_pred, y_true)
                         batch_loss.backward()
                         train_loss += batch_loss.item()
                         self.optimizer.step()
@@ -163,12 +163,12 @@ class Trainer:
                     with tqdm(self.validation_dloader, unit="batch", leave=False, desc="Validation phase") as vbatch:
                         # Compute validation loss by batch
                         for _i, item in enumerate(vbatch, 1):
-                            features = item['feature'].to(self.device)
-                            y_true = item['class_id'].to(self.device)
-                            y_pred = self.model(features) 
+                            features = item["feature"].to(self.device)
+                            y_true = item["class_id"].to(self.device)
+                            y_pred = self.model(features)
                             batch_loss = self.loss_function(y_pred, y_true)
                             val_loss += batch_loss.item()
-                            
+
                     val_loss /= len(self.validation_dloader)
 
                 # Update training state
@@ -176,23 +176,19 @@ class Trainer:
                 self.state.validation_loss.append(val_loss)
 
                 # Execute callbacks at the end of the epoch
-                for cb in self.callbacks: 
+                for cb in self.callbacks:
                     cb.on_epoch_end(self)
         # Execute callbacks at the end of training
-        for cb in self.callbacks: 
+        for cb in self.callbacks:
             cb.on_train_end(self)
 
         return
 
     def _setup_dataloaders(
-        self, 
-        train_dset: AudioClassificationDataset,
-        train_ratio: float,
-        batch_size: int,
-        num_workers: int
+        self, train_dset: AudioClassificationDataset, train_ratio: float, batch_size: int, num_workers: int
     ):
         """Generate PyTorch DataLoaders for training and validation splits.
-        
+
         Arguments:
             train_dset (AudioClassificationDataset): The training dataset.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
@@ -201,16 +197,16 @@ class Trainer:
 
         """
         # Split to train and validation
-        train_dset, validation_dset = random_split(train_dset, [train_ratio, 1-train_ratio])
+        train_dset, validation_dset = random_split(train_dset, [train_ratio, 1 - train_ratio])
 
         # Produce DataLoaders
         self.train_dloader = DataLoader(
             train_dset,
             batch_size=batch_size,
             shuffle=True,
-            num_workers=num_workers,  
+            num_workers=num_workers,
             pin_memory=True,
-            collate_fn=pad_collate_fn
+            collate_fn=pad_collate_fn,
         )
 
         self.validation_dloader = DataLoader(
@@ -219,7 +215,7 @@ class Trainer:
             shuffle=False,
             num_workers=num_workers,
             pin_memory=True,
-            collate_fn=pad_collate_fn
+            collate_fn=pad_collate_fn,
         )
 
         return

@@ -6,25 +6,25 @@
 # Based on fairseq code bases
 # https://github.com/pytorch/fairseq
 # --------------------------------------------------------
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import math
+
 import numpy as np
-from typing import Dict, Optional, Tuple
 import torch
-from torch import Tensor, nn
 import torch.nn.functional as F
-from torch.nn import LayerNorm, Parameter
 from modules import (
+    GLU_Linear,
     GradMultiply,
     SamePad,
     get_activation_fn,
-    GLU_Linear,
     quant_noise,
 )
+from torch import Tensor, nn
+from torch.nn import LayerNorm, Parameter
 
 
 class TransformerEncoder(nn.Module):
@@ -421,17 +421,17 @@ class MultiheadAttention(nn.Module):
     def forward(
         self,
         query,
-        key: Optional[Tensor],
-        value: Optional[Tensor],
-        key_padding_mask: Optional[Tensor] = None,
-        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        key: Tensor | None,
+        value: Tensor | None,
+        key_padding_mask: Tensor | None = None,
+        incremental_state: dict[str, dict[str, Tensor | None]] | None = None,
         need_weights: bool = True,
         static_kv: bool = False,
-        attn_mask: Optional[Tensor] = None,
+        attn_mask: Tensor | None = None,
         before_softmax: bool = False,
         need_head_weights: bool = False,
-        position_bias: Optional[Tensor] = None,
-    ) -> Tuple[Tensor, Optional[Tensor], Optional[Tensor]]:
+        position_bias: Tensor | None = None,
+    ) -> tuple[Tensor, Tensor | None, Tensor | None]:
         """Input shape: Time x Batch x Channel
 
         Args:
@@ -545,7 +545,7 @@ class MultiheadAttention(nn.Module):
                 else:
                     assert v is not None
                     v = torch.cat([prev_value, v], dim=1)
-            prev_key_padding_mask: Optional[Tensor] = None
+            prev_key_padding_mask: Tensor | None = None
             if "prev_key_padding_mask" in saved_state:
                 prev_key_padding_mask = saved_state["prev_key_padding_mask"]
             assert k is not None and v is not None
@@ -642,7 +642,7 @@ class MultiheadAttention(nn.Module):
         assert list(attn.size()) == [bsz * self.num_heads, tgt_len, self.head_dim]
         attn = attn.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         attn = self.out_proj(attn)
-        attn_weights: Optional[Tensor] = None
+        attn_weights: Tensor | None = None
         if need_weights:
             attn_weights = attn_weights_float.view(bsz, self.num_heads, tgt_len, src_len).transpose(1, 0)
             if not need_head_weights:
@@ -653,12 +653,12 @@ class MultiheadAttention(nn.Module):
 
     @staticmethod
     def _append_prev_key_padding_mask(
-        key_padding_mask: Optional[Tensor],
-        prev_key_padding_mask: Optional[Tensor],
+        key_padding_mask: Tensor | None,
+        prev_key_padding_mask: Tensor | None,
         batch_size: int,
         src_len: int,
         static_kv: bool,
-    ) -> Optional[Tensor]:
+    ) -> Tensor | None:
         # saved key padding masks have shape (bsz, seq_len)
         if prev_key_padding_mask is not None and static_kv:
             new_key_padding_mask = prev_key_padding_mask
@@ -690,19 +690,19 @@ class MultiheadAttention(nn.Module):
         return new_key_padding_mask
 
     def _get_input_buffer(
-        self, incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]]
-    ) -> Dict[str, Optional[Tensor]]:
+        self, incremental_state: dict[str, dict[str, Tensor | None]] | None
+    ) -> dict[str, Tensor | None]:
         result = self.get_incremental_state(incremental_state, "attn_state")
         if result is not None:
             return result
         else:
-            empty_result: Dict[str, Optional[Tensor]] = {}
+            empty_result: dict[str, Tensor | None] = {}
             return empty_result
 
     def _set_input_buffer(
         self,
-        incremental_state: Dict[str, Dict[str, Optional[Tensor]]],
-        buffer: Dict[str, Optional[Tensor]],
+        incremental_state: dict[str, dict[str, Tensor | None]],
+        buffer: dict[str, Tensor | None],
     ):
         return self.set_incremental_state(incremental_state, "attn_state", buffer)
 
