@@ -95,11 +95,11 @@ class Trainer:
         self.logger = get_logger()
 
         # Load datasets
-        self.train_dloader = None
-        self.validation_dloader = None
-        self._setup_dataloaders(
+        train_dl, val_dl = self._setup_dataloaders(
             train_dset=train_dset, train_ratio=train_ratio, batch_size=batch_size, num_workers=num_workers
         )
+        self.train_dloader = train_dl
+        self.validation_dloader = val_dl
 
         # Load model
         self.model = model
@@ -198,7 +198,7 @@ class Trainer:
         train_dset, validation_dset = random_split(train_dset, [train_ratio, 1 - train_ratio])
 
         # Produce DataLoaders
-        self.train_dloader = DataLoader(
+        train_dloader = DataLoader(
             train_dset,
             batch_size=batch_size,
             shuffle=True,
@@ -207,7 +207,7 @@ class Trainer:
             collate_fn=pad_collate_fn,
         )
 
-        self.validation_dloader = DataLoader(
+        validation_dloader = DataLoader(
             validation_dset,
             batch_size=batch_size,
             shuffle=False,
@@ -216,4 +216,4 @@ class Trainer:
             collate_fn=pad_collate_fn,
         )
 
-        return
+        return train_dloader, validation_dloader
