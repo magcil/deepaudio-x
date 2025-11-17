@@ -17,7 +17,7 @@ class EarlyStopper(BaseCallback):
 
     """
 
-    def __init__(self, patience: int = 5, logger: logging.Logger = None):
+    def __init__(self, patience: int = 5, logger: logging.Logger | None = None):
         """Initialize the callback.
 
         Args:

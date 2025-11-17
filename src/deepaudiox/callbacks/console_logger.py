@@ -15,7 +15,7 @@ class ConsoleLogger(BaseCallback):
 
     """
 
-    def __init__(self, logger: logging.Logger = None):
+    def __init__(self, logger: logging.Logger | None = None):
         """Initialize the callback.
 
         Args:
@@ -69,7 +69,7 @@ class ConsoleLogger(BaseCallback):
 
     def on_testing_end(self, evaluator):
         """When testing ends, show indicative message.
-        
+
         Args:
             evaluator (evaluator.Evaluator): The evaluation module of the SDK.
 

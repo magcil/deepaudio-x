@@ -22,7 +22,7 @@ class Checkpointer(BaseCallback):
 
     """
 
-    def __init__(self, path_to_checkpoint: str, logger: logging.Logger = None):
+    def __init__(self, path_to_checkpoint: str, logger: logging.Logger | None = None):
         """Initialize the callback.
 
         Args:
