@@ -12,7 +12,7 @@ class Reporter(BaseCallback):
         logger: A module for logging messages.
 
     """
-    def __init__(self, logger: object=None):
+    def __init__(self, logger: logging.Logger=None):
         """Initialize the callback.
 
         Args:

@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 
 
-def get_logger() -> object:
+def get_logger() -> logging.Logger:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     logger = logging.getLogger("ConsoleLogger")
     return logger

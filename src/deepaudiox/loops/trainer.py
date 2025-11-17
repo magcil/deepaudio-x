@@ -45,7 +45,7 @@ class Trainer:
         state (State): Stores training variables.
         epochs (int): The maximum number of training epochs.
         device (str): The device used for training.
-        logger (object): A module used for logging messages.
+        logger (logging.Logger): A module used for logging messages.
         train_dloader (torch.DataLoader): The DataLoader of the training set.
         validation_dloader (torch.DataLoader): The DataLoader of the validation set.
         model (nn.Module): The trained model.

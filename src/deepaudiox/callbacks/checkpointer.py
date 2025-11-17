@@ -17,16 +17,16 @@ class Checkpointer(BaseCallback):
 
     Attributes:
         path_to_checkpoint (str): The path to the saved checpoint.
-        logger (): A module for logging messages.
+        logger (logging.Logger): A module for logging messages.
 
     """
 
-    def __init__(self, path_to_checkpoint: str, logger: object = None):
+    def __init__(self, path_to_checkpoint: str, logger: logging.Logger = None):
         """Initialize the callback.
 
         Args:
             path_to_checkpoint (str): The path to the saved checpoint.
-            logger (): A module for logging messages. Defaults to None.
+            logger (logging.Logger): A module for logging messages. Defaults to None.
 
         """
         self.path_to_checkpoint = Path(path_to_checkpoint)

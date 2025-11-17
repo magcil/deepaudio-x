@@ -37,7 +37,7 @@ class Evaluator:
         state (State): Stores testing variables.
         device (str): The device used for testing.
         class_mapping (dict): A mapping between class names and IDs.
-        logger (object): A module used for logging messages.
+        logger (logging.Logger): A module used for logging messages.
         test_dloader (torch.DataLoader): The DataLoader of the testing set.
         model (nn.Module): The tested model.
         callbacks (list): A list of callbacks used throughout the testing lifecycle.

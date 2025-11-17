@@ -14,11 +14,11 @@ class ConsoleLogger(BaseCallback):
 
     """
 
-    def __init__(self, logger: object = None):
+    def __init__(self, logger: logging.Logger = None):
         """Initialize the callback.
 
         Args:
-            logger (): A module for logging messages. Defaults to None.
+            logger (logging.Logger): A module for logging messages. Defaults to None.
             last_time (float): Keeps track of epoch duration.
 
         """
