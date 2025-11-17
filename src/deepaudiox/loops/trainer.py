@@ -65,7 +65,6 @@ class Trainer:
         lr_scheduler: LRScheduler,
         train_ratio: float = 0.8,
         epochs: int = 10,
-        learning_rate: float = 1e-3,
         patience: int = 5,
         num_workers: int = 4,
         batch_size: int = 16,
@@ -81,7 +80,6 @@ class Trainer:
             lr_scheduler (LRScheduler): The scheduler used for training.
             train_ratio (float, optional): The ratio of the train split. Defaults to 0.8.
             epochs (int, optional): The maximum number of training epochs. Defaults to 10.
-            learning_rate (float, optional): The learning rate used for optimization. Defaults to 1e-3.
             patience (int, optional): The maximum number of epochs with no decrease in loss. Defaults to 5.
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
