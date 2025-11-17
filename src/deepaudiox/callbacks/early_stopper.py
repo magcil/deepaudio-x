@@ -1,3 +1,5 @@
+import logging
+
 from deepaudiox.callbacks.base_callback import BaseCallback
 from deepaudiox.utils.training_utils import get_logger
 
@@ -9,13 +11,13 @@ class EarlyStopper(BaseCallback):
     and terminates the training process when patience is exceeded.
 
     Attributes:
-        logger (): A module for logging messages. Defaults to None.
+        logger (logging.Logger): A module for logging messages. Defaults to None.
         patience (int): The maximum number of epochs with no decrease in loss
         elapsed_epochs (int): The number of concurrent epochs with no decrease in loss.
 
     """
 
-    def __init__(self, patience: int = 5, logger: object = None):
+    def __init__(self, patience: int = 5, logger: logging.Logger | None = None):
         """Initialize the callback.
 
         Args:

@@ -1,3 +1,4 @@
+import logging
 import time
 
 from deepaudiox.callbacks.base_callback import BaseCallback
@@ -14,11 +15,11 @@ class ConsoleLogger(BaseCallback):
 
     """
 
-    def __init__(self, logger: object = None):
+    def __init__(self, logger: logging.Logger | None = None):
         """Initialize the callback.
 
         Args:
-            logger (): A module for logging messages. Defaults to None.
+            logger (logging.Logger): A module for logging messages. Defaults to None.
             last_time (float): Keeps track of epoch duration.
 
         """
@@ -68,7 +69,7 @@ class ConsoleLogger(BaseCallback):
 
     def on_testing_end(self, evaluator):
         """When testing ends, show indicative message.
-        
+
         Args:
             evaluator (evaluator.Evaluator): The evaluation module of the SDK.
 
