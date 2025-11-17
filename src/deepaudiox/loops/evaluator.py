@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 import torch
@@ -15,17 +15,17 @@ from deepaudiox.utils.training_utils import get_device, get_logger, pad_collate_
 @dataclass
 class State:
     """ Dataclass that stores variables 
-        accessed throught the testing lifecycle.
+        accessed throughout the testing lifecycle.
 
     Attributes:
-        y_true (list): A list of true labels.
-        y_pred (list): A list of predicted labels.
-        posteriors (list): AA list of posterior probabilities.
-    
+        y_true (np.ndarray): A NumPy array of true labels.
+        y_pred (np.ndarray): A NumPy array of predicted labels.
+        posteriors (np.ndarray): A NumPy array of posterior probabilities.
     """
-    y_true = []
-    y_pred = []
-    posteriors = []
+    y_true: np.ndarray = field(default_factory=lambda: np.array([], dtype=int))
+    y_pred: np.ndarray = field(default_factory=lambda: np.array([], dtype=int))
+    posteriors: np.ndarray = field(default_factory=lambda: np.array([], dtype=float))
+
 
 class Evaluator:
     """ The core SDK module for testing a model.
@@ -40,8 +40,7 @@ class Evaluator:
         logger (object): A module used for logging messages.
         test_dloader (torch.DataLoader): The DataLoader of the testing set.
         model (nn.Module): The tested model.
-        callbacks (list): A list of callbacks used throught the testing lifecycle.
-
+        callbacks (list): A list of callbacks used throughout the testing lifecycle.
     """
     def __init__(
         self,
@@ -59,7 +58,6 @@ class Evaluator:
             class_mapping (dict): A mapping between class names and IDs.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
-
         """
         self.state = State()
         self.device = get_device()
@@ -73,7 +71,7 @@ class Evaluator:
             test_dset,
             batch_size=batch_size,
             shuffle=False,
-            num_workers=num_workers,  
+            num_workers=num_workers,
             pin_memory=True,
             collate_fn=pad_collate_fn
         )
@@ -91,27 +89,24 @@ class Evaluator:
 
 
     def evaluate(self):
-        """Perform the testing process"""
-
-        # Execute testing loop
+        """Perform the testing process."""
         with torch.no_grad(), tqdm(self.test_dloader, unit="batch", leave=False, desc="Evaluation phase") as vbatch:
-                for _i, item in enumerate(vbatch, 1):
-                    features = item['feature'].to(self.device)
-                    y_true = item['class_id'].to(self.device)
-                    inference = self.model.predict(features)
-                    
-                    # Update testing state
-                    self.state.y_true.append(y_true.cpu().numpy())
-                    self.state.y_pred.append(inference['dominant_class_indices'].cpu().numpy())
-                    self.state.posteriors.append(inference['dominant_posteriors'].cpu().numpy())
+            for _i, item in enumerate(vbatch, 1):
 
-        self.state.y_true = np.concatenate(self.state.y_true)
-        self.state.y_pred = np.concatenate(self.state.y_pred)  
-        self.state.posteriors = np.concatenate(self.state.posteriors)  
+                # Move inputs
+                features = item['feature'].to(self.device)
+                y_true = item['class_id'].cpu().numpy()
+
+                # Run model prediction
+                inference = self.model.predict(features)
+                y_pred = inference['dominant_class_indices'].cpu().numpy()
+                post = inference['dominant_posteriors'].cpu().numpy()
+
+                # Update testing state (NumPy arrays)
+                self.state.y_true = np.concatenate([self.state.y_true, y_true])
+                self.state.y_pred = np.concatenate([self.state.y_pred, y_pred])
+                self.state.posteriors = np.concatenate([self.state.posteriors, post])
 
         # Execute callbacks at the end of testing
         for cb in self.callbacks: 
             cb.on_testing_end(self)
-
-        return
-                  
