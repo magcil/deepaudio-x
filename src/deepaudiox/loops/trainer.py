@@ -1,4 +1,3 @@
-import logging
 from dataclasses import dataclass
 
 import numpy as np
@@ -12,7 +11,7 @@ from deepaudiox.callbacks.checkpointer import Checkpointer
 from deepaudiox.callbacks.console_logger import ConsoleLogger
 from deepaudiox.callbacks.early_stopper import EarlyStopper
 from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
-from deepaudiox.utils.training_utils import get_device, pad_collate_fn
+from deepaudiox.utils.training_utils import get_device, get_logger, pad_collate_fn
 
 
 @dataclass
@@ -66,7 +65,6 @@ class Trainer:
         lr_scheduler: LRScheduler,
         train_ratio: float = 0.8,
         epochs: int = 10,
-        learning_rate: float = 1e-3,
         patience: int = 5,
         num_workers: int = 4,
         batch_size: int = 16,
@@ -82,7 +80,6 @@ class Trainer:
             lr_scheduler (LRScheduler): The scheduler used for training.
             train_ratio (float, optional): The ratio of the train split. Defaults to 0.8.
             epochs (int, optional): The maximum number of training epochs. Defaults to 10.
-            learning_rate (float, optional): The learning rate used for optimization. Defaults to 1e-3.
             patience (int, optional): The maximum number of epochs with no decrease in loss. Defaults to 5.
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
@@ -95,17 +92,16 @@ class Trainer:
         self.device = get_device()
 
         # Configure logger
-        logging.basicConfig(level=logging.INFO, format="%(message)s")
-        self.logger = logging.getLogger("ConsoleLogger")
+        self.logger = get_logger()
 
         # Load datasets
-        self.train_dloader = None
-        self.validation_dloader = None
-        self._setup_dataloaders(
+        train_dl, val_dl = self._setup_dataloaders(
             train_dset=train_dset, train_ratio=train_ratio, batch_size=batch_size, num_workers=num_workers
         )
+        self.train_dloader = train_dl
+        self.validation_dloader = val_dl
 
-        # Load mock model
+        # Load model
         self.model = model
         self.model.to(self.device)
 
@@ -202,7 +198,7 @@ class Trainer:
         train_dset, validation_dset = random_split(train_dset, [train_ratio, 1 - train_ratio])
 
         # Produce DataLoaders
-        self.train_dloader = DataLoader(
+        train_dloader = DataLoader(
             train_dset,
             batch_size=batch_size,
             shuffle=True,
@@ -211,7 +207,7 @@ class Trainer:
             collate_fn=pad_collate_fn,
         )
 
-        self.validation_dloader = DataLoader(
+        validation_dloader = DataLoader(
             validation_dset,
             batch_size=batch_size,
             shuffle=False,
@@ -220,4 +216,4 @@ class Trainer:
             collate_fn=pad_collate_fn,
         )
 
-        return
+        return train_dloader, validation_dloader
