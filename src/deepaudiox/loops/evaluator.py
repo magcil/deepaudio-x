@@ -99,8 +99,8 @@ class Evaluator:
 
                 # Run model prediction
                 inference = self.model.predict(features)
-                y_pred = inference['dominant_class_indices'].cpu().numpy()
-                post = inference['dominant_posteriors'].cpu().numpy()
+                y_pred = np.array(inference['y_preds'], dtype=int)
+                post = np.array(inference['posteriors'], dtype=float)
 
                 # Update testing state (NumPy arrays)
                 self.state.y_true = np.concatenate([self.state.y_true, y_true])

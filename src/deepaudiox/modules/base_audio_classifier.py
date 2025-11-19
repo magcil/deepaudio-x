@@ -23,21 +23,18 @@ class BaseAudioClassifier(nn.Module, ABC):
         raise NotImplementedError
     
     def predict(self, x: torch.Tensor):
-        """Compute predicted class and posterior probabilities.
-        
-        Args:
-            x (torch.Tensor): The input tensor.
-        """
+        """Compute predicted class and posterior probabilities."""
         if x.dim() == 1:
             x = x.unsqueeze(0)
 
-        logits = self.forward(x)
-        posteriors = F.softmax(logits.cpu(), dim=1)
+        logits = self.forward(x)                   
+        posteriors = F.softmax(logits, dim=1)     
         max_posteriors = posteriors.max(dim=1)
 
         return {
-            "posterior_probs": max_posteriors.values.tolist(),
-            "y_preds": max_posteriors.indices.tolist()
+            "y_preds": max_posteriors.indices.cpu().tolist(),
+            "posteriors": max_posteriors.values.cpu().tolist(),
+            "logits": logits.cpu()
         }
 
     def extract_feature(self, x: torch.Tensor):
