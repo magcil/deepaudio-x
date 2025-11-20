@@ -4,14 +4,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import LRScheduler
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from deepaudiox.callbacks.checkpointer import Checkpointer
 from deepaudiox.callbacks.console_logger import ConsoleLogger
 from deepaudiox.callbacks.early_stopper import EarlyStopper
 from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
-from deepaudiox.utils.training_utils import get_device, get_logger, pad_collate_fn
+from deepaudiox.utils.training_utils import get_device, get_logger, pad_collate_fn, random_split_audio_dataset
 
 
 @dataclass
@@ -58,7 +58,7 @@ class Trainer:
 
     def __init__(
         self,
-        train_dset: AudioClassificationDataset,
+        d_set: AudioClassificationDataset,
         model: nn.Module,
         optimizer: torch.optim.Optimizer,
         loss_function: nn.Module,
@@ -73,7 +73,7 @@ class Trainer:
         """Initialize the Trainer.
 
         Args:
-            train_dset (AudioClassificationDataset): The training dataset.
+            d_set (AudioClassificationDataset): The training dataset.
             model (nn.Module): The model to be trained.
             optimizer (torch.optim.Optimizer): The optimizer used for training.
             loss_function (nn.Module): The loss function used for training.
@@ -96,7 +96,7 @@ class Trainer:
 
         # Load datasets
         train_dl, val_dl = self._setup_dataloaders(
-            train_dset=train_dset, train_ratio=train_ratio, batch_size=batch_size, num_workers=num_workers
+            d_set=d_set, train_ratio=train_ratio, batch_size=batch_size, num_workers=num_workers
         )
         self.train_dloader = train_dl
         self.validation_dloader = val_dl
@@ -183,7 +183,7 @@ class Trainer:
         return
 
     def _setup_dataloaders(
-        self, train_dset: AudioClassificationDataset, train_ratio: float, batch_size: int, num_workers: int
+        self, d_set: AudioClassificationDataset, train_ratio: float, batch_size: int, num_workers: int
     ):
         """Generate PyTorch DataLoaders for training and validation splits.
 
@@ -195,7 +195,7 @@ class Trainer:
 
         """
         # Split to train and validation
-        train_dset, validation_dset = random_split(train_dset, [train_ratio, 1 - train_ratio])
+        train_dset, validation_dset = random_split_audio_dataset(d_set, [train_ratio, 1 - train_ratio])
 
         # Produce DataLoaders
         train_dloader = DataLoader(

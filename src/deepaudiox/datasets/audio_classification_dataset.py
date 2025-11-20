@@ -112,7 +112,7 @@ class AudioClassificationDataset(Dataset):
             return {
                 "feature": waveform,
                 "class_id": self.class_mapping[item["class_name"]],
-                "class_name": item["class_name"],
+                "class_name": item["class_name"]
             }
 
         else:
@@ -123,7 +123,7 @@ class AudioClassificationDataset(Dataset):
             return {
                 "feature": waveform,
                 "class_id": self.class_mapping[item["class_name"]],
-                "class_name": item["class_name"],
+                "class_name": item["class_name"]
             }
 
     def segmentize_audios(self, segment_duration: float):
