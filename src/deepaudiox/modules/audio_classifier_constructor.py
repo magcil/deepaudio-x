@@ -1,7 +1,5 @@
 from typing import Literal
 
-import torch.nn as nn
-
 from deepaudiox.modules.backbones import BACKBONES
 from deepaudiox.modules.base_audio_classifier import BaseAudioClassifier
 from deepaudiox.modules.classifier.classifier import MLPHead
@@ -39,9 +37,11 @@ class AudioClassifierConstructor(BaseAudioClassifier):
         if freeze_backbone:
             self.backbone_model.freeze_encoder_weights()
 
+        self.projection: BaseProjection | None = None
+
         if projection is not None:
-            self.backbone_model = nn.Sequential(self.backbone_model, projection)
-            self.emb_dim = projection.out_dim
+            self.projection = projection
+            self.emb_dim = self.projection.out_dim
         else:
             self.emb_dim = self.backbone_model.out_dim
 
@@ -60,4 +60,4 @@ class AudioClassifierConstructor(BaseAudioClassifier):
         return x
 
     def get_embeddings(self, x):
-        return self.backbone_model(x)
+        return self.projection(self.backbone_model(x)) if self.projection else self.backbone_model(x)
