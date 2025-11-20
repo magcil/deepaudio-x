@@ -3,11 +3,12 @@ from typing import Literal
 import torch.nn as nn
 
 from deepaudiox.modules.backbones import BACKBONES
+from deepaudiox.modules.base_audio_classifier import BaseAudioClassifier
 from deepaudiox.modules.classifier.classifier import MLPHead
 from deepaudiox.modules.projection.base_projection import BaseProjection
 
 
-class AudioClassifierConstructor(nn.Module):
+class AudioClassifierConstructor(BaseAudioClassifier):
     def __init__(
         self,
         num_classes: int,
