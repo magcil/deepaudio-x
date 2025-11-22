@@ -1,8 +1,16 @@
+import itertools
 import logging
+import math
+import warnings
 from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn.functional as F
+from torch import Generator, default_generator, randperm
+from torch.utils.data import Subset
+
+from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
 
 
 def get_logger() -> logging.Logger:
@@ -78,3 +86,60 @@ def pad_collate_fn(batch) -> dict:
     batch_features = torch.stack(padded_features)
 
     return {"feature": batch_features, "class_id": labels, "class_name": class_names}
+
+
+def random_split_audio_dataset(
+    dataset: AudioClassificationDataset, train_ratio: float, generator: Generator = default_generator
+) -> list[Subset[AudioClassificationDataset]]:
+    """
+    Split AudioClassificationDataset into train / val subsets specified by train ratio. Method accounts for segmentized
+    waveforms.
+    
+    Args:
+        dataset (AudioClassificationDataset): An AudioClassificationDataset
+        train_ratio (float): Percentage of training set.
+        generator (Generator): Random Generator.
+    """
+    # Validate ratio
+    if not (0 <= train_ratio <= 1):
+        raise ValueError("train_ratio must be between 0 and 1.")
+
+    # Extract recording paths
+    wav_files = np.array([d["path"] for d in dataset.instances])
+    num_files = len(wav_files)
+
+    # Compute split sizes
+    n_train = int(math.floor(num_files * train_ratio))
+    n_valid = num_files - n_train
+
+    subset_lengths = [n_train, n_valid]
+
+    # Validate split sizes
+    if n_train == 0:
+        warnings.warn("Training split has length 0.", stacklevel=2)
+    if n_valid == 0:
+        warnings.warn("Validation split has length 0.", stacklevel=2)
+    if sum(subset_lengths) != num_files:
+        raise ValueError("Split sizes do not sum to the total number of items.")
+
+    # Generate list of shuffled indices
+    indices = randperm(num_files, generator=generator).tolist()
+
+    # Split dataset to train and validation
+    if dataset.segment_map:
+        segment_mapping_array = np.array([d["file_path"] for d in dataset.segment_map])
+        shuffled_wav_files = wav_files[np.array(indices)]
+
+        return [
+            Subset(
+                dataset,
+                np.where(np.isin(segment_mapping_array, shuffled_wav_files[offset - length : offset]))[0].tolist(),
+            )
+            for offset, length in zip(itertools.accumulate(subset_lengths), subset_lengths, strict=False)
+        ]
+
+    else:
+        return [
+            Subset(dataset, indices[offset - length : offset])
+            for offset, length in zip(itertools.accumulate(subset_lengths), subset_lengths, strict=False)
+        ]
