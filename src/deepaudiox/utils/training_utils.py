@@ -2,9 +2,7 @@ import itertools
 import logging
 import math
 import warnings
-from collections.abc import Sequence
 from pathlib import Path
-from typing import cast
 
 import numpy as np
 import torch
@@ -91,53 +89,57 @@ def pad_collate_fn(batch) -> dict:
 
 
 def random_split_audio_dataset(
-    dataset: AudioClassificationDataset, lengths: Sequence[int | float], generator: Generator = default_generator
-):
-    """Extends the random_split by PyTorch.
-
-    Randomly split an AudioClassificationDataset into non-overlapping
-    ClassificationDataset of given lengths. Accounts for segmentized dataset, i.e, segments of a given recording fall
-    into the same Subset.
-
+    dataset: AudioClassificationDataset, train_ratio: float, generator: Generator = default_generator
+) -> list[Subset[AudioClassificationDataset]]:
     """
+    Split AudioClassificationDataset into train / val subsets specified by train ratio. Method accounts for segmentized
+    waveforms.
+    
+    Args:
+        dataset (AudioClassificationDataset): An AudioClassificationDataset
+        train_ratio (float): Percentage of training set.
+        generator (Generator): Random Generator.
+    """
+    # Validate ratio
+    if not (0 <= train_ratio <= 1):
+        raise ValueError("train_ratio must be between 0 and 1.")
 
+    # Extract recording paths
     wav_files = np.array([d["path"] for d in dataset.instances])
+    num_files = len(wav_files)
 
-    if math.isclose(sum(lengths), 1) and sum(lengths) <= 1:
-        subset_lengths: list[int] = []
-        for i, frac in enumerate(lengths):
-            if frac < 0 or frac > 1:
-                raise ValueError(f"Fraction at index {i} is not between 0 and 1")
-            n_items_in_split = int(
-                math.floor(len(wav_files) * frac)  # type: ignore[arg-type]
-            )
-            subset_lengths.append(n_items_in_split)
-        remainder = len(wav_files) - sum(subset_lengths)  # type: ignore[arg-type]
-        # add 1 to all the lengths in round-robin fashion until the remainder is 0
-        for i in range(remainder):
-            idx_to_add_at = i % len(subset_lengths)
-            subset_lengths[idx_to_add_at] += 1
-        lengths = subset_lengths
-        for i, length in enumerate(lengths):
-            if length == 0:
-                warnings.warn(
-                    f"Length of split at index {i} is 0. This might result in an empty wav_files.", stacklevel=2
-                )
+    # Compute split sizes
+    n_train = int(math.floor(num_files * train_ratio))
+    n_valid = num_files - n_train
 
-    # Cannot verify that dataset is Sized
-    if sum(lengths) != len(wav_files):  # type: ignore[arg-type]
-        raise ValueError("Sum of input lengths does not equal the length of the input dataset!")
-    indices = randperm(sum(lengths), generator=generator).tolist()  # type: ignore[arg-type, call-overload]
-    lengths = cast(Sequence[int], lengths)
+    subset_lengths = [n_train, n_valid]
 
+    # Validate split sizes
+    if n_train == 0:
+        warnings.warn("Training split has length 0.", stacklevel=2)
+    if n_valid == 0:
+        warnings.warn("Validation split has length 0.", stacklevel=2)
+    if sum(subset_lengths) != num_files:
+        raise ValueError("Split sizes do not sum to the total number of items.")
+
+    # Generate list of shuffled indices
+    indices = randperm(num_files, generator=generator).tolist()
+
+    # Split dataset to train and validation
     if dataset.segment_map:
         segment_mapping_array = np.array([d["file_path"] for d in dataset.segment_map])
+        shuffled_wav_files = wav_files[np.array(indices)]
+
         return [
-            Subset(dataset, np.where(np.isin(segment_mapping_array, wav_files[offset - length : offset]))[0].tolist())
-            for offset, length in zip(itertools.accumulate(lengths), lengths, strict=False)
+            Subset(
+                dataset,
+                np.where(np.isin(segment_mapping_array, shuffled_wav_files[offset - length : offset]))[0].tolist(),
+            )
+            for offset, length in zip(itertools.accumulate(subset_lengths), subset_lengths, strict=False)
         ]
+
     else:
         return [
             Subset(dataset, indices[offset - length : offset])
-            for offset, length in zip(itertools.accumulate(lengths), lengths, strict=False)
+            for offset, length in zip(itertools.accumulate(subset_lengths), subset_lengths, strict=False)
         ]
