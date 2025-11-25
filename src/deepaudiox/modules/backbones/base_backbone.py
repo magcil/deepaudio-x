@@ -45,11 +45,6 @@ class BaseBackbone(nn.Module, ABC):
         """
         pass
 
-    @abstractmethod
-    def freeze_encoder_weights(self) -> None:
-        """Freeze encoder parameters to disable gradient updates."""
-        pass
-
     def forward_pipeline(self, x: torch.Tensor) -> torch.Tensor:
         """
         Standard processing pipeline:

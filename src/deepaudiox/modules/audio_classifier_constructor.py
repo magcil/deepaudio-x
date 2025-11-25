@@ -34,8 +34,10 @@ class AudioClassifierConstructor(BaseAudioClassifier):
         # Set sample frequency for backbone feature extraction
         self.backbone_model.sample_frequency = sample_frequency
 
+        # Freeze backbone's weights
         if freeze_backbone:
-            self.backbone_model.freeze_encoder_weights()
+            for p in self.backbone_model.parameters():
+                p.requires_grad = False
 
         self.projection: BaseProjection | None = None
 

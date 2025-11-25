@@ -195,7 +195,7 @@ class Trainer:
 
         """
         # Split to train and validation
-        train_dset, validation_dset = random_split_audio_dataset(d_set, [train_ratio, 1 - train_ratio])
+        train_dset, validation_dset = random_split_audio_dataset(d_set, train_ratio)
 
         # Produce DataLoaders
         train_dloader = DataLoader(

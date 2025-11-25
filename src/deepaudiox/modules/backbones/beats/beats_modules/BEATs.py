@@ -19,6 +19,7 @@ from deepaudiox.modules.backbones.beats.beats_modules.backbone import (
 )
 from torch.nn import LayerNorm
 
+
 class BEATsConfig:
     def __init__(self, cfg=None):
         self.input_patch_size: int = 16  # path size of patch embedding
@@ -65,12 +66,14 @@ class BEATsConfig:
 
 
 class BEATs(BaseBackbone):
-    def __init__(self, cfg: BEATsConfig = BEATsConfig(), preprocess_flag: bool = True, sample_frequency: int = 16_000) -> None:
+    def __init__(
+        self, cfg: BEATsConfig = BEATsConfig(), preprocess_flag: bool = True, sample_frequency: int = 16_000
+    ) -> None:
         super().__init__(out_dim=768, sample_frequency=sample_frequency)
 
         self.cfg = cfg
         self.preprocess_flag: bool = preprocess_flag
-        
+
         self.fbank_mean, self.fbank_std = 15.41663, 6.55582
 
         self.embed = cfg.embed_dim
@@ -107,10 +110,7 @@ class BEATs(BaseBackbone):
         padding_mask = padding_mask.all(-1)
         return padding_mask
 
-    def extract_features(
-        self,
-        waveforms: torch.Tensor
-    ) -> torch.Tensor:
+    def extract_features(self, waveforms: torch.Tensor) -> torch.Tensor:
         fbanks = []
         for waveform in waveforms:
             waveform = waveform.unsqueeze(0) * 2**15
@@ -122,12 +122,7 @@ class BEATs(BaseBackbone):
         fbank = (fbank - self.fbank_mean) / (2 * self.fbank_std)
         return fbank.unsqueeze(1)
 
-    def forward(
-        self,
-        x: torch.Tensor,
-        padding_mask: torch.Tensor | None = None
-    ):
-
+    def forward(self, x: torch.Tensor, padding_mask: torch.Tensor | None = None):
         if padding_mask is not None:
             padding_mask = self.forward_padding_mask(x, padding_mask)
 
@@ -148,9 +143,5 @@ class BEATs(BaseBackbone):
             x,
             padding_mask=padding_mask,
         )
-        
+
         return x.mean(1)
-    
-    def freeze_encoder_weights(self) -> None:
-        for p in self.encoder.parameters():
-            p.requires_grad = False
