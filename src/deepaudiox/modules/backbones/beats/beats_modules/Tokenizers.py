@@ -6,26 +6,16 @@
 # Based on fairseq code bases
 # https://github.com/pytorch/fairseq
 # --------------------------------------------------------
-import os
-import sys
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-import logging
-
 import torch
 import torch.nn as nn
 import torchaudio.compliance.kaldi as ta_kaldi
-from backbone import (
+from deepaudiox.modules.backbones.beats.beats_modules.backbone import (
     TransformerEncoder,
 )
-from quantizer import (
+from deepaudiox.modules.backbones.beats.beats_modules.quantizer import (
     NormEMAVectorQuantizer,
 )
 from torch.nn import LayerNorm
-
-logger = logging.getLogger(__name__)
-
 
 class TokenizersConfig:
     def __init__(self, cfg=None):
@@ -76,7 +66,6 @@ class Tokenizers(nn.Module):
         cfg: TokenizersConfig,
     ) -> None:
         super().__init__()
-        logger.info(f"Tokenizers Config: {cfg.__dict__}")
 
         self.cfg = cfg
 

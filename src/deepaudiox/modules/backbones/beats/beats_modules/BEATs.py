@@ -9,24 +9,19 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-import logging
-
 import torch
 import torch.nn as nn
 import torchaudio.compliance.kaldi as ta_kaldi
-from backbone import (
+
+from deepaudiox.modules.backbones.base_backbone import BaseBackbone
+from deepaudiox.modules.backbones.beats.beats_modules.backbone import (
     TransformerEncoder,
 )
 from torch.nn import LayerNorm
 
-logger = logging.getLogger(__name__)
-
-
 class BEATsConfig:
     def __init__(self, cfg=None):
-        self.input_patch_size: int = -1  # path size of patch embedding
+        self.input_patch_size: int = 16  # path size of patch embedding
         self.embed_dim: int = 512  # patch embedding dimension
         self.conv_bias: bool = False  # include bias in conv encoder
 
@@ -36,15 +31,15 @@ class BEATsConfig:
         self.encoder_attention_heads: int = 12  # num encoder attention heads
         self.activation_fn: str = "gelu"  # activation function to use
 
-        self.layer_wise_gradient_decay_ratio: float = 1.0  # ratio for layer-wise gradient decay
+        self.layer_wise_gradient_decay_ratio: float = 0.6  # ratio for layer-wise gradient decay
         self.layer_norm_first: bool = False  # apply layernorm first in the transformer
-        self.deep_norm: bool = False  # apply deep_norm first in the transformer
+        self.deep_norm: bool = True  # apply deep_norm first in the transformer
 
         # dropouts
         self.dropout: float = 0.1  # dropout probability for the transformer
         self.attention_dropout: float = 0.1  # dropout probability for attention weights
         self.activation_dropout: float = 0.0  # dropout probability after activation in FFN
-        self.encoder_layerdrop: float = 0.0  # probability of dropping a tarnsformer layer
+        self.encoder_layerdrop: float = 0.05  # probability of dropping a tarnsformer layer
         self.dropout_input: float = 0.0  # dropout to apply to the input (after feat extr)
 
         # positional embeddings
@@ -52,10 +47,10 @@ class BEATsConfig:
         self.conv_pos_groups: int = 16  # number of groups for convolutional positional embedding
 
         # relative position embedding
-        self.relative_position_embedding: bool = False  # apply relative position embedding
+        self.relative_position_embedding: bool = True  # apply relative position embedding
         self.num_buckets: int = 320  # number of buckets for relative position embedding
-        self.max_distance: int = 1280  # maximum distance for relative position embedding
-        self.gru_rel_pos: bool = False  # apply gated relative position embedding
+        self.max_distance: int = 800  # maximum distance for relative position embedding
+        self.gru_rel_pos: bool = True  # apply gated relative position embedding
 
         # label predictor
         self.finetuned_model: bool = False  # whether the model is a fine-tuned model.
@@ -69,13 +64,14 @@ class BEATsConfig:
         self.__dict__.update(cfg)
 
 
-class BEATs(nn.Module):
-    def __init__(self, cfg: BEATsConfig, preprocess_flag: bool = True) -> None:
-        super().__init__()
-        logger.info(f"BEATs Config: {cfg.__dict__}")
+class BEATs(BaseBackbone):
+    def __init__(self, cfg: BEATsConfig = BEATsConfig(), preprocess_flag: bool = True, sample_frequency: int = 16_000) -> None:
+        super().__init__(out_dim=768, sample_frequency=sample_frequency)
 
         self.cfg = cfg
         self.preprocess_flag: bool = preprocess_flag
+        
+        self.fbank_mean, self.fbank_std = 15.41663, 6.55582
 
         self.embed = cfg.embed_dim
         self.post_extract_proj = (
@@ -111,42 +107,31 @@ class BEATs(nn.Module):
         padding_mask = padding_mask.all(-1)
         return padding_mask
 
-    def preprocess(
+    def extract_features(
         self,
-        source: torch.Tensor,
-        fbank_mean: float = 15.41663,
-        fbank_std: float = 6.55582,
-        sample_frequency: int = 16000,
+        waveforms: torch.Tensor
     ) -> torch.Tensor:
         fbanks = []
-        for waveform in source:
+        for waveform in waveforms:
             waveform = waveform.unsqueeze(0) * 2**15
             fbank = ta_kaldi.fbank(
-                waveform, num_mel_bins=128, sample_frequency=sample_frequency, frame_length=25, frame_shift=10
+                waveform, num_mel_bins=128, sample_frequency=self.sample_frequency, frame_length=25, frame_shift=10
             )
             fbanks.append(fbank)
         fbank = torch.stack(fbanks, dim=0)
-        fbank = (fbank - fbank_mean) / (2 * fbank_std)
-        return fbank
+        fbank = (fbank - self.fbank_mean) / (2 * self.fbank_std)
+        return fbank.unsqueeze(1)
 
-    def extract_features(
+    def forward(
         self,
-        source: torch.Tensor,
-        padding_mask: torch.Tensor | None = None,
-        fbank_mean: float = 15.41663,
-        fbank_std: float = 6.55582,
+        x: torch.Tensor,
+        padding_mask: torch.Tensor | None = None
     ):
-        if self.preprocess_flag:
-            fbank = self.preprocess(source, fbank_mean=fbank_mean, fbank_std=fbank_std)
-        else:
-            fbank = source
 
         if padding_mask is not None:
-            padding_mask = self.forward_padding_mask(fbank, padding_mask)
+            padding_mask = self.forward_padding_mask(x, padding_mask)
 
-        if self.preprocess_flag:
-            fbank = fbank.unsqueeze(1)
-        features = self.patch_embedding(fbank)
+        features = self.patch_embedding(x)
         features = features.reshape(features.shape[0], features.shape[1], -1)
         features = features.transpose(1, 2)
         features = self.layer_norm(features)
@@ -163,49 +148,9 @@ class BEATs(nn.Module):
             x,
             padding_mask=padding_mask,
         )
-
-        if self.predictor is not None:
-            embedding = x
-            x = self.predictor_dropout(x)
-            logits = self.predictor(x)
-
-            if padding_mask is not None and padding_mask.any():
-                logits[padding_mask] = 0
-                logits = logits.sum(dim=1)
-                logits = logits / (~padding_mask).sum(dim=1).unsqueeze(-1).expand_as(logits)
-            else:
-                logits = logits.mean(dim=1)
-
-            lprobs = torch.sigmoid(logits)
-
-            return lprobs, padding_mask, embedding
-        else:
-            return x, padding_mask
-
-    def forward(self, fbank: torch.Tensor):
-        """Custom forward encoder-only imlementation
-
-        Args:
-            fbank (torch.Tensor): Fbanks of shape B x 1 x T x F, where B=Batchsize, T=timestep, F=frequencies
-
-        Returns:
-            torch.Tensor: Embeddings of size B x N_seq x Emb Dim
-        """
-
-        # (B, 1, T, F)
-        features = self.patch_embedding(fbank)
-        features = features.reshape(features.shape[0], features.shape[1], -1)
-        features = features.transpose(1, 2)
-        features = self.layer_norm(features)
-
-        if self.post_extract_proj is not None:
-            features = self.post_extract_proj(features)
-
-        x = self.dropout_input(features)
-
-        x, layer_results = self.encoder(
-            x,
-            padding_mask=None,
-        )
-
-        return x
+        
+        return x.mean(1)
+    
+    def freeze_encoder_weights(self) -> None:
+        for p in self.encoder.parameters():
+            p.requires_grad = False

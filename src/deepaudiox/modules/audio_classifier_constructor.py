@@ -60,4 +60,8 @@ class AudioClassifierConstructor(BaseAudioClassifier):
         return x
 
     def get_embeddings(self, x):
-        return self.projection(self.backbone_model(x)) if self.projection else self.backbone_model(x)
+        return (
+            self.projection(self.backbone_model.forward_pipeline(x))
+            if self.projection
+            else self.backbone_model.forward_pipeline(x)
+        )
