@@ -30,7 +30,8 @@ class AudioClassificationDataset(Dataset):
         root_dir: str | Path,
         sample_rate: int,
         class_mapping: dict[str, int],
-        segment_duration: float | None = None,
+        instance_metadata: list[dict] = [],
+        segment_duration: float | None = None
     ):
         """Initialize the dataset.
 
@@ -41,38 +42,64 @@ class AudioClassificationDataset(Dataset):
             segment_duration (float | None): Duration of audio segments in seconds. If None, load full audio.
             drop_corrupted (bool): Whether to drop corrupted audio files. Defaults to False.
         """
-        self.root_dir = root_dir
+        self.root_dir = Path(root_dir)
+        if not self.root_dir.is_dir():
+            raise ValueError(f"The path '{self.root_dir}' is not a directory")
+
+        self.absolute_paths = list(self.root_dir.rglob("*.wav")) + list(self.root_dir.rglob("*.mp3"))
+        self.instances = self._load_instance_paths_and_classes(instance_metadata)
+        self.segment_map = []
+
         self.sample_rate = sample_rate
         self.class_mapping = class_mapping
         self.segment_duration = segment_duration
-        self.instances = self._load_instance_paths_and_classes(root_dir)
-        self.segment_map = []
-
+        
         if self.segment_duration is not None:
             self.segmentize_audios(self.segment_duration)
 
-    def _load_instance_paths_and_classes(self, root_dir: str | Path) -> list[dict[str, str]]:
-        """Scan a given directory for class sub-folders and audio files and load metadata.
+    def _load_instance_paths_and_classes(self, instance_metadata: list[dict]) -> list[dict[str, str]]:
+        """Load metadata of dataset instances.
 
         Args:
-            root_dir (str): Directory to scan for audio files.
+            instance_metadata (list[dict]): List of metadata for instances to be loaded
 
         Returns:
             list: List of dictionaries with keys 'file_path' and 'label'.
 
         """
-        root_path = Path(root_dir)
         instances = []
 
-        if not root_path.is_dir():
-            raise ValueError(f"The path '{root_dir}' is not a directory")
+        # ---- Case A: Metadata provided ----
+        if instance_metadata:
+            for meta in instance_metadata:
 
-        for child_directory in root_path.iterdir():
-            if child_directory.is_dir():
-                for audio_file in child_directory.rglob("*.wav"):
-                    instances.append({"path": str(audio_file), "class_name": child_directory.name})
-                for audio_file in child_directory.rglob("*.mp3"):
-                    instances.append({"path": str(audio_file), "class_name": child_directory.name})
+                if "file_name" not in meta or "class_name" not in meta:
+                    raise ValueError("Metadata items must contain 'file_name' and 'class_name'.")
+
+                file_name = meta["file_name"]
+
+                for abs_path in self.absolute_paths:
+                    abs_path = Path(abs_path)
+
+                    if abs_path.name.endswith(file_name):
+                        instances.append({
+                            "path": abs_path,
+                            "class_name": meta["class_name"]
+                        })
+
+            return instances
+
+        # ---- Case B: Infer from folder structure ----
+        for subdir in self.root_dir.iterdir():
+            if subdir.is_dir():
+                class_name = subdir.name
+
+                for file_type in ("*.wav", "*.mp3"):
+                    for audio_file in subdir.rglob(file_type):
+                        instances.append({
+                            "path": audio_file,
+                            "class_name": class_name
+                        })
 
         return instances
 
@@ -133,7 +160,6 @@ class AudioClassificationDataset(Dataset):
             segment_duration (int): Duration of each segment in seconds.
 
         """
-
         for item in self.instances:
             waveform, _ = librosa.load(path=item["path"], sr=self.sample_rate, mono=True)
             total_samples = waveform.shape[0]
