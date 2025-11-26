@@ -30,7 +30,7 @@ class AudioClassificationDataset(Dataset):
         root_dir: str | Path,
         sample_rate: int,
         class_mapping: dict[str, int],
-        instance_metadata: list[dict] = [],
+        instance_metadata: list[dict] | None = None,
         segment_duration: float | None = None
     ):
         """Initialize the dataset.
@@ -53,7 +53,7 @@ class AudioClassificationDataset(Dataset):
         self.sample_rate = sample_rate
         self.class_mapping = class_mapping
         self.segment_duration = segment_duration
-        
+
         if self.segment_duration is not None:
             self.segmentize_audios(self.segment_duration)
 
