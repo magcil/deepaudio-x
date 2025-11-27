@@ -31,7 +31,7 @@ class AudioClassificationDataset(Dataset):
         sample_rate: int,
         class_mapping: dict[str, int],
         instance_metadata: list[dict] | None = None,
-        segment_duration: float | None = None
+        segment_duration: float | None = None,
     ):
         """Initialize the dataset.
 
@@ -57,7 +57,7 @@ class AudioClassificationDataset(Dataset):
         if self.segment_duration is not None:
             self.segmentize_audios(self.segment_duration)
 
-    def _load_instance_paths_and_classes(self, instance_metadata: list[dict]) -> list[dict[str, str]]:
+    def _load_instance_paths_and_classes(self, instance_metadata: list[dict] | None) -> list[dict[str, str]]:
         """Load metadata of dataset instances.
 
         Args:
@@ -72,7 +72,6 @@ class AudioClassificationDataset(Dataset):
         # ---- Case A: Metadata provided ----
         if instance_metadata:
             for meta in instance_metadata:
-
                 if "file_name" not in meta or "class_name" not in meta:
                     raise ValueError("Metadata items must contain 'file_name' and 'class_name'.")
 
@@ -82,10 +81,7 @@ class AudioClassificationDataset(Dataset):
                     abs_path = Path(abs_path)
 
                     if abs_path.name.endswith(file_name):
-                        instances.append({
-                            "path": abs_path,
-                            "class_name": meta["class_name"]
-                        })
+                        instances.append({"path": abs_path, "class_name": meta["class_name"]})
 
             return instances
 
@@ -96,10 +92,7 @@ class AudioClassificationDataset(Dataset):
 
                 for file_type in ("*.wav", "*.mp3"):
                     for audio_file in subdir.rglob(file_type):
-                        instances.append({
-                            "path": audio_file,
-                            "class_name": class_name
-                        })
+                        instances.append({"path": audio_file, "class_name": class_name})
 
         return instances
 
@@ -139,7 +132,7 @@ class AudioClassificationDataset(Dataset):
             return {
                 "feature": waveform,
                 "class_id": self.class_mapping[item["class_name"]],
-                "class_name": item["class_name"]
+                "class_name": item["class_name"],
             }
 
         else:
@@ -150,7 +143,7 @@ class AudioClassificationDataset(Dataset):
             return {
                 "feature": waveform,
                 "class_id": self.class_mapping[item["class_name"]],
-                "class_name": item["class_name"]
+                "class_name": item["class_name"],
             }
 
     def segmentize_audios(self, segment_duration: float):
