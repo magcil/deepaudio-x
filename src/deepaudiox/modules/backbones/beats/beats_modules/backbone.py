@@ -16,7 +16,7 @@ import math
 import numpy as np
 import torch
 import torch.nn.functional as F
-from modules import (
+from deepaudiox.modules.backbones.beats.beats_modules.modules import (
     GLU_Linear,
     GradMultiply,
     SamePad,
