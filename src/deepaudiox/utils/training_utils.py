@@ -94,7 +94,7 @@ def random_split_audio_dataset(
     """
     Split AudioClassificationDataset into train / val subsets specified by train ratio. Method accounts for segmentized
     waveforms.
-    
+
     Args:
         dataset (AudioClassificationDataset): An AudioClassificationDataset
         train_ratio (float): Percentage of training set.
