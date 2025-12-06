@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.optim.lr_scheduler import LRScheduler
+from torch.optim.lr_scheduler import LRScheduler, StepLR
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -61,10 +61,10 @@ class Trainer:
         d_set: AudioClassificationDataset,
         model: nn.Module,
         optimizer: torch.optim.Optimizer,
-        loss_function: nn.Module,
-        lr_scheduler: LRScheduler,
+        loss_function: nn.Module = nn.CrossEntropyLoss(),
+        lr_scheduler: LRScheduler | None = None,
         train_ratio: float = 0.8,
-        epochs: int = 10,
+        epochs: int = 50,
         patience: int = 5,
         num_workers: int = 4,
         batch_size: int = 16,
@@ -109,7 +109,7 @@ class Trainer:
         self.optimizer = optimizer
 
         # Configure scheduler
-        self.scheduler = lr_scheduler
+        self.scheduler = lr_scheduler if lr_scheduler is not None else StepLR(self.optimizer, step_size=10, gamma=0.1)
 
         # Configure loss function
         self.loss_function = loss_function
