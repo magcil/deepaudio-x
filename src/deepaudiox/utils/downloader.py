@@ -2,8 +2,8 @@ from pathlib import Path
 from typing import Literal
 
 import requests
-from tqdm import tqdm
 from platformdirs import user_cache_dir
+from tqdm import tqdm
 
 BACKBONE_REPO_URL = "https://github.com/magcil/pretrained-ssl-audio-backbones/raw/refs/heads/main/models/"
 

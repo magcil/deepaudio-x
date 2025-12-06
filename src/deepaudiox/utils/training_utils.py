@@ -39,15 +39,24 @@ def get_class_mapping(root_dir: str) -> dict[str, int]:
     return class_mapping
 
 
-def get_device() -> torch.device:
+def get_device(device_index: int | None = None) -> torch.device:
     """Returns the best available device for PyTorch computations.
+    
+    Args:
+        device_index (int | None): The GPU device index to use. If None, uses the default GPU if available.
 
     Returns:
         torch.device
     """
     if torch.cuda.is_available():
-        device = torch.device("cuda")
-        print(f"Using GPU: {torch.cuda.get_device_name(0)}")
+        if device_index is not None and (device_index < 0 or device_index >= torch.cuda.device_count()):
+            raise ValueError(f"Invalid device_index {device_index}. Available GPU count: {torch.cuda.device_count()}")
+        if device_index is not None:
+            device = torch.device(f"cuda:{device_index}")
+            print(f"Using GPU: {torch.cuda.get_device_name(device_index)}")
+        else:
+            device = torch.device("cuda")
+            print(f"Using GPU: {torch.cuda.get_device_name(0)}")
     else:
         device = torch.device("cpu")
         print("Using CPU (no GPU available)")

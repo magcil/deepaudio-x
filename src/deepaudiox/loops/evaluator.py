@@ -51,6 +51,7 @@ class Evaluator:
         class_mapping: dict,
         batch_size: int = 16,
         num_workers: int = 4,
+        device_index: int | None = None
     ):
         """Initialize the Evaluator.
 
@@ -60,9 +61,10 @@ class Evaluator:
             class_mapping (dict): A mapping between class names and IDs.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
+            device_index (int | None): The GPU device index to use. If None, uses the default GPU if available.
         """
         self.state = State()
-        self.device = get_device()
+        self.device = get_device(device_index=device_index)
         self.class_mapping = class_mapping
 
         # Configure logger
