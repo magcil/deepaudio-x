@@ -19,7 +19,7 @@ def load_pretrained_backbone(model_path: Path | str):
             f"Use `from deepaudiox.utils.downloader import Downloader` "
             f"and call`Downloader.download_pretrained_backbone()` to download the checkpoint locally."
         )
-    
+
     ckpt = torch.load(model_path, map_location="cpu")
 
     return ckpt

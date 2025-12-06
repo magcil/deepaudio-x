@@ -1,11 +1,11 @@
 from typing import Literal
 
 from deepaudiox.modules.backbones import BACKBONES
-from deepaudiox.utils.downloader import Downloader
-from deepaudiox.utils.file_utils import load_pretrained_backbone
 from deepaudiox.modules.base_audio_classifier import BaseAudioClassifier
 from deepaudiox.modules.classifier.classifier import MLPHead
 from deepaudiox.modules.projection.base_projection import BaseProjection
+from deepaudiox.utils.downloader import Downloader
+from deepaudiox.utils.file_utils import load_pretrained_backbone
 
 
 class AudioClassifierConstructor(BaseAudioClassifier):
