@@ -44,8 +44,10 @@ class AudioClassifierConstructor(BaseAudioClassifier):
             ckpt = load_pretrained_backbone(ckpt_path)
             self.backbone_model.load_state_dict(ckpt)
 
+        # Freeze backbone's weights
         if freeze_backbone:
-            self.backbone_model.freeze_encoder_weights()
+            for p in self.backbone_model.parameters():
+                p.requires_grad = False
 
         self.projection: BaseProjection | None = None
 
@@ -70,4 +72,8 @@ class AudioClassifierConstructor(BaseAudioClassifier):
         return x
 
     def get_embeddings(self, x):
-        return self.projection(self.backbone_model(x)) if self.projection else self.backbone_model(x)
+        return (
+            self.projection(self.backbone_model.forward_pipeline(x))
+            if self.projection
+            else self.backbone_model.forward_pipeline(x)
+        )
