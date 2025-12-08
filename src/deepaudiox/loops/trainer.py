@@ -110,10 +110,10 @@ class Trainer:
         self.optimizer = optimizer
 
         # Configure scheduler
-        self.scheduler = lr_scheduler if lr_scheduler is not None else StepLR(self.optimizer, step_size=20, gamma=0.1)
+        self.scheduler = lr_scheduler or StepLR(self.optimizer, step_size=20, gamma=0.1)
 
         # Configure loss function
-        self.loss_function = loss_function if loss_function is not None else nn.CrossEntropyLoss()
+        self.loss_function = loss_function or nn.CrossEntropyLoss()
 
         # Configure callbacks
         self.callbacks = [
