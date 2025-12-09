@@ -19,35 +19,31 @@ class AudioClassificationDataset(Dataset):
     item returned by the dataset contains the label; label id, and the waveform of the audio as numpy array.
 
     Attributes:
-        root_dir (str): Root directory containing the audio files.
+        file_to_class_mapping (dict): Mapping from file paths to class names.
         sample_rate (int): Target sampling rate for audio loading.
         class_mapping (dict): Mapping from string labels to integer IDs.
-
     """
 
     def __init__(
         self,
-        root_dir: str | Path,
+        file_to_class_mapping: dict[str, str],
         sample_rate: int,
         class_mapping: dict[str, int],
-        instance_metadata: list[dict] | None = None,
         segment_duration: float | None = None,
     ):
         """Initialize the dataset.
 
         Args:
-            root_dir (str): Root directory containing the audio files.
+            file_to_class_mapping (dict): Mapping from file paths to class names.
             sample_rate (int): Target sampling rate for audio loading.
             class_mapping (dict): Mapping from string labels to integer IDs.
             segment_duration (float | None): Duration of audio segments in seconds. If None, load full audio.
-            drop_corrupted (bool): Whether to drop corrupted audio files. Defaults to False.
         """
-        self.root_dir = Path(root_dir)
-        if not self.root_dir.is_dir():
-            raise ValueError(f"The path '{self.root_dir}' is not a directory")
 
-        self.absolute_paths = list(self.root_dir.rglob("*.wav")) + list(self.root_dir.rglob("*.mp3"))
-        self.instances = self._load_instance_paths_and_classes(instance_metadata)
+        self.file_to_class_mapping = file_to_class_mapping
+        self.instances = [
+            {"path": Path(path), "class_name": class_name} for path, class_name in file_to_class_mapping.items()
+        ]
         self.segment_map = []
 
         self.sample_rate = sample_rate
@@ -56,45 +52,6 @@ class AudioClassificationDataset(Dataset):
 
         if self.segment_duration is not None:
             self.segmentize_audios(self.segment_duration)
-
-    def _load_instance_paths_and_classes(self, instance_metadata: list[dict] | None) -> list[dict[str, str]]:
-        """Load metadata of dataset instances.
-
-        Args:
-            instance_metadata (list[dict]): List of metadata for instances to be loaded
-
-        Returns:
-            list: List of dictionaries with keys 'file_path' and 'label'.
-
-        """
-        instances = []
-
-        # ---- Case A: Metadata provided ----
-        if instance_metadata:
-            for meta in instance_metadata:
-                if "file_name" not in meta or "class_name" not in meta:
-                    raise ValueError("Metadata items must contain 'file_name' and 'class_name'.")
-
-                file_name = meta["file_name"]
-
-                for abs_path in self.absolute_paths:
-                    abs_path = Path(abs_path)
-
-                    if abs_path.name.endswith(file_name):
-                        instances.append({"path": abs_path, "class_name": meta["class_name"]})
-
-            return instances
-
-        # ---- Case B: Infer from folder structure ----
-        for subdir in self.root_dir.iterdir():
-            if subdir.is_dir():
-                class_name = subdir.name
-
-                for file_type in ("*.wav", "*.mp3"):
-                    for audio_file in subdir.rglob(file_type):
-                        instances.append({"path": audio_file, "class_name": class_name})
-
-        return instances
 
     def __len__(self) -> int:
         """Return the number of items in the dataset.
@@ -163,3 +120,62 @@ class AudioClassificationDataset(Dataset):
                 self.segment_map.append(
                     {"file_path": item["path"], "class_name": item["class_name"], "segment_idx": seg_idx}
                 )
+
+
+def audio_classification_dataset_from_dir(
+    root_dir: str,
+    sample_rate: int,
+    class_mapping: dict[str, int],
+    segment_duration: float | None = None,
+) -> AudioClassificationDataset:
+    """Create an AudioClassificationDataset from a directory structure.
+
+    Args:
+        root_dir (str | Path): Root directory containing class sub-folders.
+        sample_rate (int): Target sampling rate for audio loading.
+        class_mapping (dict): Mapping from string labels to integer IDs.
+        segment_duration (float | None): Duration of audio segments in seconds. If None, load full audio.
+
+    Returns:
+        AudioClassificationDataset: The constructed dataset.
+    """
+    root_path = Path(root_dir)
+    file_to_class_mapping = {}
+
+    subdirs = [d for d in root_path.iterdir() if d.is_dir()]
+    for _idx, subdir in enumerate(sorted(subdirs)):
+        audio_files = list(subdir.glob("**/*.wav")) + list(subdir.glob("**/*.mp3"))
+        for audio_file in audio_files:
+            file_to_class_mapping[audio_file] = subdir.name
+
+    return AudioClassificationDataset(
+        file_to_class_mapping=file_to_class_mapping,
+        sample_rate=sample_rate,
+        class_mapping=class_mapping,
+        segment_duration=segment_duration,
+    )
+
+
+def audio_classification_dataset_from_dictionary(
+    file_to_class_mapping: dict[str, str],
+    sample_rate: int,
+    class_mapping: dict[str, int],
+    segment_duration: float | None = None,
+) -> AudioClassificationDataset:
+    """Create an AudioClassificationDataset from a file-to-class mapping dictionary.
+
+    Args:
+        file_to_class_mapping (dict): Mapping from file paths to class names.
+        sample_rate (int): Target sampling rate for audio loading.
+        class_mapping (dict): Mapping from string labels to integer IDs.
+        segment_duration (float | None): Duration of audio segments in seconds. If None, load full audio.
+
+    Returns:
+        AudioClassificationDataset: The constructed dataset.
+    """
+    return AudioClassificationDataset(
+        file_to_class_mapping=file_to_class_mapping,
+        sample_rate=sample_rate,
+        class_mapping=class_mapping,
+        segment_duration=segment_duration,
+    )

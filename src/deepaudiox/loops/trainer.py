@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.optim.lr_scheduler import LRScheduler, StepLR
+from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -110,7 +110,7 @@ class Trainer:
         self.optimizer = optimizer
 
         # Configure scheduler
-        self.scheduler = lr_scheduler or StepLR(self.optimizer, step_size=20, gamma=0.1)
+        self.scheduler = lr_scheduler
 
         # Configure loss function
         self.loss_function = loss_function or nn.CrossEntropyLoss()
@@ -154,7 +154,9 @@ class Trainer:
                         self.optimizer.step()
 
                     train_loss /= len(self.train_dloader)
-                    self.scheduler.step()
+
+                    if self.scheduler:
+                        self.scheduler.step()
 
                 # Execute validation loop
                 self.model.eval()
