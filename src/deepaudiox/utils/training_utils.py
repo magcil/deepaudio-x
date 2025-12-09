@@ -41,7 +41,7 @@ def get_class_mapping(root_dir: str) -> dict[str, int]:
 
 def get_device(device_index: int | None = None) -> torch.device:
     """Returns the best available device for PyTorch computations.
-    
+
     Args:
         device_index (int | None): The GPU device index to use. If None, uses the default GPU if available.
 

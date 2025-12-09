@@ -51,7 +51,7 @@ class Evaluator:
         class_mapping: dict,
         batch_size: int = 16,
         num_workers: int = 4,
-        device_index: int | None = None
+        device_index: int | None = None,
     ):
         """Initialize the Evaluator.
 

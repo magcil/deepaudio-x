@@ -11,27 +11,32 @@ BACKBONE_URLS = {"beats": BACKBONE_REPO_URL + "BEATs_iter3_plus_AS2M.pt"}
 
 
 class Downloader:
-    def __init__(self, backbone: Literal["beats"]):
+    def __init__(self):
         """Downloads a checkpoint (.pt or .pth file) with pretrained weights for the backbone.
 
         Attributes:
             backbone (str): Name of the backbone model to download weights for.
 
         """
-        self.backbone = backbone
-        self.url = BACKBONE_URLS[self.backbone]
+        self.BACKBONES_URLS = BACKBONE_URLS
 
         self.cache_dir = Path(user_cache_dir("deepaudiox"))
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-        self.model_path = self.cache_dir / self.url.split("/")[-1]
+    def download_checkpoint(self, backbone: Literal["beats"]):
+        """Downloads the pretrained backbone weights if not already cached.
 
-    def download_pretrained_backbone(self):
-        if self.model_path.exists():
-            return self.model_path
+        Args:
+            backbone (Literal["beats"]): Name of the backbone model to download weights for.
 
+        Returns:  Path to the downloaded model file.
+        """
+        url = self.BACKBONES_URLS[backbone]
+        model_path = self.cache_dir / url.split("/")[-1]
+        if model_path.exists():
+            return model_path
         else:
-            r = requests.get(self.url, stream=True)
+            r = requests.get(url, stream=True)
             r.raise_for_status()
             total_size = int(r.headers.get("content-length", 0))
             total_mb = total_size / (1024 * 1024)
@@ -46,16 +51,16 @@ class Downloader:
             )
 
             try:
-                with open(self.model_path, "wb") as f:
+                with open(model_path, "wb") as f:
                     for chunk in r.iter_content(chunk_size=chunk_size):
                         if chunk:
                             f.write(chunk)
                             progress.update(len(chunk))
 
                 progress.close()
-                print(f"Model stored as {self.url.split('/')[-1]} in {self.model_path}")
+                print(f"Model stored as {url.split('/')[-1]} in {model_path}")
 
-                return self.model_path
+                return model_path
 
             except OSError as e:
-                raise RuntimeError(f"Failed to write file to {self.model_path}: {e}")
+                raise RuntimeError(f"Failed to write file to {model_path}: {e}")

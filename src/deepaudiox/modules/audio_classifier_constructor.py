@@ -5,7 +5,7 @@ from deepaudiox.modules.base_audio_classifier import BaseAudioClassifier
 from deepaudiox.modules.classifier.classifier import MLPHead
 from deepaudiox.modules.projection.base_projection import BaseProjection
 from deepaudiox.utils.downloader import Downloader
-from deepaudiox.utils.file_utils import load_pretrained_backbone
+from deepaudiox.utils.file_utils import load_checkpoint
 
 
 class AudioClassifierConstructor(BaseAudioClassifier):
@@ -39,9 +39,9 @@ class AudioClassifierConstructor(BaseAudioClassifier):
         self.backbone_model.sample_frequency = sample_frequency
 
         if pretrained:
-            downloader = Downloader(backbone)
-            ckpt_path = downloader.download_pretrained_backbone()
-            ckpt = load_pretrained_backbone(ckpt_path)
+            downloader = Downloader()
+            ckpt_path = downloader.download_checkpoint(backbone)
+            ckpt = load_checkpoint(ckpt_path)
             self.backbone_model.load_state_dict(ckpt)
 
         # Freeze backbone's weights

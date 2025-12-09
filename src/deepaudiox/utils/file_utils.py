@@ -3,7 +3,7 @@ from pathlib import Path
 import torch
 
 
-def load_pretrained_backbone(model_path: Path | str):
+def load_checkpoint(model_path: Path | str):
     """Loads a pretrained model checkpoint from a PyTorch file (.pt or .pth).
 
     Args:

@@ -69,7 +69,7 @@ class Trainer:
         num_workers: int = 4,
         batch_size: int = 16,
         path_to_checkpoint: str = "checkpoint.pt",
-        device_index: int | None = None
+        device_index: int | None = None,
     ):
         """Initialize the Trainer.
 
