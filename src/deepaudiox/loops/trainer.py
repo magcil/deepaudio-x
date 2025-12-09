@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.optim.lr_scheduler import LRScheduler
+from torch.optim.lr_scheduler import LRScheduler, StepLR
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -61,14 +61,15 @@ class Trainer:
         d_set: AudioClassificationDataset,
         model: nn.Module,
         optimizer: torch.optim.Optimizer,
-        loss_function: nn.Module,
-        lr_scheduler: LRScheduler,
+        loss_function: nn.Module | None = None,
+        lr_scheduler: LRScheduler | None = None,
         train_ratio: float = 0.8,
-        epochs: int = 10,
+        epochs: int = 50,
         patience: int = 5,
         num_workers: int = 4,
         batch_size: int = 16,
         path_to_checkpoint: str = "checkpoint.pt",
+        device_index: int | None = None,
     ):
         """Initialize the Trainer.
 
@@ -84,12 +85,12 @@ class Trainer:
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
             path_to_checkpoint (str, optional): The path to the saved model checpoint. Defaults to "checkpoint.pt".
-
+            device_index (int | None): The GPU device index to use. If None, uses the default GPU if available.
         """
         # Configure training state
         self.state = State()
         self.epochs = epochs
-        self.device = get_device()
+        self.device = get_device(device_index=device_index)
 
         # Configure logger
         self.logger = get_logger()
@@ -109,10 +110,10 @@ class Trainer:
         self.optimizer = optimizer
 
         # Configure scheduler
-        self.scheduler = lr_scheduler
+        self.scheduler = lr_scheduler or StepLR(self.optimizer, step_size=20, gamma=0.1)
 
         # Configure loss function
-        self.loss_function = loss_function
+        self.loss_function = loss_function or nn.CrossEntropyLoss()
 
         # Configure callbacks
         self.callbacks = [

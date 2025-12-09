@@ -4,6 +4,8 @@ from deepaudiox.modules.backbones import BACKBONES
 from deepaudiox.modules.base_audio_classifier import BaseAudioClassifier
 from deepaudiox.modules.classifier.classifier import MLPHead
 from deepaudiox.modules.projection.base_projection import BaseProjection
+from deepaudiox.utils.downloader import Downloader
+from deepaudiox.utils.file_utils import load_checkpoint
 
 
 class AudioClassifierConstructor(BaseAudioClassifier):
@@ -17,6 +19,7 @@ class AudioClassifierConstructor(BaseAudioClassifier):
         classifier_hidden_layers: list[int] | None = None,
         activation: Literal["relu", "gelu", "tanh", "leakyrelu"] = "relu",
         apply_batch_norm: bool = True,
+        pretrained: bool = False,
     ):
         """Classifier model using a backbone for feature extraction.
         Attributes:
@@ -27,12 +30,19 @@ class AudioClassifierConstructor(BaseAudioClassifier):
             classifier_hidden_layers (list[int] or None): List of hidden layer sizes for classifier head.
             activation (str): Activation function name for classifier head.
             apply_batch_norm (bool): Whether to use BatchNorm1d in classifier head.
+            pretrained (bool): Whether to load pretrained backbone weights from a checkpoint file.
         """
         super().__init__()
 
         self.backbone_model = BACKBONES[backbone]()
         # Set sample frequency for backbone feature extraction
         self.backbone_model.sample_frequency = sample_frequency
+
+        if pretrained:
+            downloader = Downloader()
+            ckpt_path = downloader.download_checkpoint(backbone)
+            ckpt = load_checkpoint(ckpt_path)
+            self.backbone_model.load_state_dict(ckpt)
 
         # Freeze backbone's weights
         if freeze_backbone:
