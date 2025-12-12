@@ -6,7 +6,7 @@ from deepaudiox.modules.projection.projections import DivEncLayer
 
 
 @pytest.mark.parametrize(
-    "div_encoder_layer,sample_frequency,duration_sec",
+    "div_encoder_layer,sample_rate,duration_sec",
     [
         (True, 8000, 3),
         (True, 16000, 1),
@@ -20,11 +20,11 @@ class TestAudioClassifierConstructor:
     """Tests for AudioClassifierConstructor logic."""
 
     @pytest.fixture(autouse=True)
-    def setup_model(self, div_encoder_layer, sample_frequency, duration_sec):
+    def setup_model(self, div_encoder_layer, sample_rate, duration_sec):
         self.num_classes = 10
         self.duration_sec = duration_sec
-        self.sample_frequency = sample_frequency
-        self.samp_len = self.duration_sec * self.sample_frequency
+        self.sample_rate = sample_rate
+        self.samp_len = self.duration_sec * self.sample_rate
         self.div_encoder_layer = div_encoder_layer
 
         projection = None
@@ -32,7 +32,7 @@ class TestAudioClassifierConstructor:
             projection = DivEncLayer(in_dim=768, out_dim=128)
 
         self.model = AudioClassifierConstructor(
-            num_classes=self.num_classes, backbone="beats", sample_frequency=sample_frequency, projection=projection
+            num_classes=self.num_classes, backbone="beats", sample_rate=sample_rate, projection=projection
         )
 
     def test_forward_waveform(self):

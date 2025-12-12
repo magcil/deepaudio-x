@@ -1,9 +1,16 @@
 from typing import Literal
 
+import torch
 import torch.nn as nn
 
 
 class MLPHead(nn.Module):
+    """Audio classification head for downstream tasks.
+
+    Attributes:
+        model (nn.Module): The audio classifier head.
+    """
+
     def __init__(
         self,
         num_classes: int,
@@ -12,15 +19,18 @@ class MLPHead(nn.Module):
         activation: Literal["relu", "gelu", "tanh", "leakyrelu"] = "relu",
         apply_batch_norm: bool = False,
     ):
-        """Audio classification head for downstream tasks.
+        """Initializes the MLP head for classification.
 
-        Attributes:
-            in_dim (int): Input feature dimension.
-            num_classes (int): Number of output classes.
-            hidden_layers (list[int] or None): List of hidden layer sizes. If None, just a single linear layer.
-            activation (str): Activation function name ("relu", "gelu", "tanh" or "leakyrelu").
-            apply_batch_norm (bool): Whether to use BatchNorm1d after each Linear layer.
+        Args:
+            num_classes (int): The number of input classes.
+            in_dim (int): The embedding dimension of the backbone model.
+            hidden_layers (list[int]): A sequence of integers for indicating the classifier layers.
+            activation (Literal["relu", "gelu", "tanh", "leakyrelu"]): The activation function between layers.
+            apply_batch_norm (bool): Wheter to use batch norm or not.
 
+        Example:
+            >>> from deepaudiox.modules.classifier.classifier import MLPHead
+            >>> head = MLPHead(num_classes=10, in_dim=768, hidden_layers=[768, 256, 32]) # 2 hidden layers
         """
         super().__init__()
 
@@ -45,5 +55,14 @@ class MLPHead(nn.Module):
 
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward method
+
+        Args:
+            x (torch.Tensor): The input one-dimensional embedding.
+
+        Returns:
+            torch.Tensor: The output logits of shape (B, num_classes)
+        """
+
         return self.model(x)

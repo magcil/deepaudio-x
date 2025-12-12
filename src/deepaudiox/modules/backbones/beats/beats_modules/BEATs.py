@@ -6,8 +6,6 @@
 # Based on fairseq code bases
 # https://github.com/pytorch/fairseq
 # --------------------------------------------------------
-import os
-import sys
 
 import torch
 import torch.nn as nn
@@ -67,9 +65,9 @@ class BEATsConfig:
 
 class BEATs(BaseBackbone):
     def __init__(
-        self, cfg: BEATsConfig = BEATsConfig(), preprocess_flag: bool = True, sample_frequency: int = 16_000
+        self, cfg: BEATsConfig = BEATsConfig(), preprocess_flag: bool = True, sample_rate: int = 16_000
     ) -> None:
-        super().__init__(out_dim=768, sample_frequency=sample_frequency)
+        super().__init__(out_dim=768, sample_rate=sample_rate)
 
         self.cfg = cfg
         self.preprocess_flag: bool = preprocess_flag
@@ -115,7 +113,7 @@ class BEATs(BaseBackbone):
         for waveform in waveforms:
             waveform = waveform.unsqueeze(0) * 2**15
             fbank = ta_kaldi.fbank(
-                waveform, num_mel_bins=128, sample_frequency=self.sample_frequency, frame_length=25, frame_shift=10
+                waveform, num_mel_bins=128, sample_frequency=self.sample_rate, frame_length=25, frame_shift=10
             )
             fbanks.append(fbank)
         fbank = torch.stack(fbanks, dim=0)

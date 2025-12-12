@@ -15,13 +15,20 @@ class WaveDict(TypedDict):
 class AudioClassificationDataset(Dataset):
     """PyTorch Dataset for audio classification tasks.
 
-    This dataset loads audio files from a specified directory. Each
-    item returned by the dataset contains the label; label id, and the waveform of the audio as numpy array.
+    This dataset loads audio files and returns a dictionary containing the raw waveform
+    (under the key ``"feature"``), the corresponding class name, and the integer class ID
+    defined in ``class_mapping``. The ``file_to_class_mapping`` argument must be a dictionary
+    of the form::
+
+        {"abs/path/to/audio.wav": "class_name"}
+
+    Optionally, the dataset can segment each audio file into fixed-duration chunks using
+    ``segment_duration``. When enabled, each segment becomes an individual dataset sample.
 
     Attributes:
         file_to_class_mapping (dict): Mapping from file paths to class names.
         sample_rate (int): Target sampling rate for audio loading.
-        class_mapping (dict): Mapping from string labels to integer IDs.
+        class_mapping (dict): Mapping from string class labels to integer IDs.
     """
 
     def __init__(
