@@ -1,11 +1,10 @@
 from pathlib import Path
-from typing import TypedDict
-from deepaudiox.dtos.dataset_items import AudioClassificationItem
 
 import librosa
 import soundfile as sf
-import numpy as np
 from torch.utils.data import Dataset
+
+from deepaudiox.dtos.dataset_items import AudioClassificationItem
 
 
 class AudioClassificationDataset(Dataset):

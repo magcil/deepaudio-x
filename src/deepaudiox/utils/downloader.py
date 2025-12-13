@@ -63,4 +63,4 @@ class Downloader:
                 return model_path
 
             except OSError as e:
-                raise RuntimeError(f"Failed to write file to {model_path}: {e}")
+                raise RuntimeError(f"Failed to write file to {model_path}: {e}") from e
