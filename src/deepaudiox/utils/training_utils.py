@@ -19,7 +19,26 @@ def get_logger() -> logging.Logger:
     return logger
 
 
-def get_class_mapping(root_dir: str) -> dict[str, int]:
+def get_class_mapping_from_list(labels, sort_alphabetically=True):
+    """Get a class mapping dictionary given a list of class names.
+
+    Args:
+        labels (list[str]): List of clas names
+        sort_alphabetically (boolean): Determines if alphabetical sorting should be applied to class names.
+
+    Returns:
+        Dict: The class mapping dictionary
+
+    """
+    if sort_alphabetically:
+        class_mapping = {name: idx for idx, name in enumerate(sorted(labels))}
+    else:
+        class_mapping = {name: idx for idx, name in enumerate(labels)}
+
+    return class_mapping
+
+
+def get_class_mapping_from_dir(root_dir: str) -> dict[str, int]:
     """Load the class mapping given a folder of class sub-folders.
 
     Args:
