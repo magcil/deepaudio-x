@@ -53,7 +53,7 @@ def test_item_data_types(mock_audio_dataset):
     print(dataset[0]["feature"])
 
     assert isinstance(dataset[0]["feature"], np.ndarray)
-    assert isinstance(dataset[0]["class_id"], int)
+    assert isinstance(dataset[0]["y_true"], int)
     assert isinstance(dataset[0]["class_name"], str)
 
 

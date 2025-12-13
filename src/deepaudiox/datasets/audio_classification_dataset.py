@@ -114,7 +114,7 @@ def audio_classification_dataset_from_dir(
     root_dir: str,
     sample_rate: int,
     class_mapping: dict[str, int],
-    segment_duration: float | None = None,
+    segment_duration: float | None = None
 ) -> AudioClassificationDataset:
     """Create an AudioClassificationDataset from a directory structure.
 

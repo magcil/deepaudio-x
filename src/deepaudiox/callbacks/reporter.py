@@ -58,7 +58,10 @@ class Reporter(BaseCallback):
         self.logger.info("[REPORTER] Classification Report: \n")
         self.logger.info(report)
         self.logger.info("[REPORTER] Confusion Matrix: \n")
-        self.logger.info(matrix)
+
+        with np.printoptions(threshold=np.inf, linewidth=np.inf):
+            self.logger.info(matrix)
+       
         self.logger.info("[REPORTER] Average Posteriors: \n")
         self.logger.info(formatted_posteriors)
 

@@ -88,7 +88,7 @@ def pad_collate_fn(batch) -> dict:
     Collate function that pads variable-length audio tensors in a batch.
 
     Args:
-        batch (list of dict): Each dict contains 'feature', 'class_id', and 'class_name'.
+        batch (list of dict): Each dict contains 'feature', 'y_true', and 'class_name'.
 
     Returns:
         dict: Batched and padded tensors.
@@ -96,21 +96,21 @@ def pad_collate_fn(batch) -> dict:
     """
     # Extract data
     features = [torch.from_numpy(item["feature"]) for item in batch]
-    labels = torch.tensor([item["class_id"] for item in batch], dtype=torch.long)
+    labels = torch.tensor([item["y_true"] for item in batch], dtype=torch.long)
     class_names = [item["class_name"] for item in batch]
 
     # Stack into a single batch tensor with padding zeros on right to max_len
     batch_features = pad_sequence(features, batch_first=True)
 
-    return {"feature": batch_features, "class_id": labels, "class_name": class_names}
+    return {"feature": batch_features, "y_true": labels, "class_name": class_names}
 
 
 def random_split_audio_dataset(
     dataset: AudioClassificationDataset, train_ratio: float, generator: Generator = default_generator
 ) -> list[Subset[AudioClassificationDataset]]:
     """
-    Split AudioClassificationDataset into train / val subsets specified by train ratio. Method accounts for segmentized
-    waveforms.
+    Split AudioClassificationDataset into train / val subsets specified by train ratio. 
+    Method accounts for segmentized waveforms.
 
     Args:
         dataset (AudioClassificationDataset): An AudioClassificationDataset
@@ -122,13 +122,12 @@ def random_split_audio_dataset(
         raise ValueError("train_ratio must be between 0 and 1.")
 
     # Extract recording paths
-    wav_files = np.array([d["path"] for d in dataset.instances])
-    num_files = len(wav_files)
+    file_paths = np.array([item.path for item in dataset.items])
+    num_files = len(np.unique(file_paths)) if dataset.segment_duration else len(file_paths)
 
     # Compute split sizes
     n_train = int(math.floor(num_files * train_ratio))
     n_valid = num_files - n_train
-
     subset_lengths = [n_train, n_valid]
 
     # Validate split sizes
@@ -139,24 +138,30 @@ def random_split_audio_dataset(
     if sum(subset_lengths) != num_files:
         raise ValueError("Split sizes do not sum to the total number of items.")
 
-    # Generate list of shuffled indices
-    indices = randperm(num_files, generator=generator).tolist()
+    if dataset.segment_duration:
+        # Segmentized dataset: shuffle files, then map to segments
+        unique_files = np.unique(file_paths)
+        num_unique_files = len(unique_files)
+        shuffled_file_indices = randperm(num_unique_files, generator=generator).tolist()
+        shuffled_files = unique_files[shuffled_file_indices]
 
-    # Split dataset to train and validation
-    if dataset.segment_map:
-        segment_mapping_array = np.array([d["file_path"] for d in dataset.segment_map])
-        shuffled_wav_files = wav_files[np.array(indices)]
-
-        return [
-            Subset(
-                dataset,
-                np.where(np.isin(segment_mapping_array, shuffled_wav_files[offset - length : offset]))[0].tolist(),
-            )
+        split_files_list = [
+            shuffled_files[offset - length : offset] 
             for offset, length in zip(itertools.accumulate(subset_lengths), subset_lengths, strict=False)
         ]
 
+        subsets = [
+            Subset(dataset, np.where(np.isin(file_paths, split_files))[0].tolist())
+            for split_files in split_files_list
+        ]
+
+        return subsets
+
     else:
-        return [
+        # Non-segmentized dataset: shuffle indices directly
+        indices = randperm(num_files, generator=generator).tolist()
+        subsets = [
             Subset(dataset, indices[offset - length : offset])
             for offset, length in zip(itertools.accumulate(subset_lengths), subset_lengths, strict=False)
         ]
+        return subsets

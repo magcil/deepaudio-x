@@ -146,7 +146,7 @@ class Trainer:
                     for _i, item in enumerate(tbatch, 1):
                         self.optimizer.zero_grad()
                         features = item["feature"].to(self.device)
-                        y_true = item["class_id"].to(self.device)
+                        y_true = item["y_true"].to(self.device)
                         y_pred = self.model(features)
                         batch_loss = self.loss_function(y_pred, y_true)
                         batch_loss.backward()
@@ -165,7 +165,7 @@ class Trainer:
                         # Compute validation loss by batch
                         for _i, item in enumerate(vbatch, 1):
                             features = item["feature"].to(self.device)
-                            y_true = item["class_id"].to(self.device)
+                            y_true = item["y_true"].to(self.device)
                             y_pred = self.model(features)
                             batch_loss = self.loss_function(y_pred, y_true)
                             val_loss += batch_loss.item()

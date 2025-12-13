@@ -9,7 +9,7 @@ class AudioClassificationItem:
     """Class for modeling a single-class classification item."""
 
     path: str | Path
-    y_true: float
+    y_true: int
     class_name: str
     feature: np.ndarray | None =  None
     segment_idx: int = 0
