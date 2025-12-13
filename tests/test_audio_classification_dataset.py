@@ -5,7 +5,7 @@ import torchaudio
 from torch.utils.data import random_split
 
 from deepaudiox.datasets.audio_classification_dataset import audio_classification_dataset_from_dir
-from deepaudiox.utils.training_utils import get_class_mapping
+from deepaudiox.utils.training_utils import get_class_mapping_from_dir
 
 torchaudio.set_audio_backend("soundfile")
 
@@ -34,7 +34,7 @@ def mock_audio_dataset(tmp_path):
 
 def test_dataset_splits_counts(mock_audio_dataset):
     train_dir, test_dir = mock_audio_dataset
-    class_mapping = get_class_mapping(train_dir)
+    class_mapping = get_class_mapping_from_dir(train_dir)
 
     dataset = audio_classification_dataset_from_dir(root_dir=train_dir, sample_rate=16000, class_mapping=class_mapping)
 
@@ -46,7 +46,7 @@ def test_dataset_splits_counts(mock_audio_dataset):
 
 def test_item_data_types(mock_audio_dataset):
     train_dir, test_dir = mock_audio_dataset
-    class_mapping = get_class_mapping(train_dir)
+    class_mapping = get_class_mapping_from_dir(train_dir)
 
     dataset = audio_classification_dataset_from_dir(root_dir=train_dir, sample_rate=16000, class_mapping=class_mapping)
 
@@ -60,7 +60,7 @@ def test_item_data_types(mock_audio_dataset):
 @pytest.mark.parametrize("segment_duration", [0.5, 1.0])
 def test_segmentization(mock_audio_dataset, segment_duration):
     train_dir, test_dir = mock_audio_dataset
-    class_mapping = get_class_mapping(train_dir)
+    class_mapping = get_class_mapping_from_dir(train_dir)
 
     dataset = audio_classification_dataset_from_dir(
         root_dir=train_dir, sample_rate=16000, class_mapping=class_mapping, segment_duration=segment_duration
