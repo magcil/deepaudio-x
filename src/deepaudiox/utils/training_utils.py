@@ -6,8 +6,8 @@ from pathlib import Path
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 from torch import Generator, default_generator, randperm
+from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Subset
 
 from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
@@ -76,23 +76,12 @@ def pad_collate_fn(batch) -> dict:
 
     """
     # Extract data
-    features = [item["feature"] for item in batch]
+    features = [torch.from_numpy(item["feature"]) for item in batch]
     labels = torch.tensor([item["class_id"] for item in batch], dtype=torch.long)
     class_names = [item["class_name"] for item in batch]
 
-    # Ensure features are tensors
-    features = [torch.as_tensor(f) for f in features]
-
-    # Find max length in this batch
-    max_len = max(f.shape[-1] for f in features)
-
-    # Pad each tensor to max_len
-    padded_features = [
-        F.pad(f, (0, max_len - f.shape[-1])) if f.shape[-1] < max_len else f[..., :max_len] for f in features
-    ]
-
-    # Stack into a single batch tensor: (batch_size, num_channels, num_samples)
-    batch_features = torch.stack(padded_features)
+    # Stack into a single batch tensor with padding zeros on right to max_len
+    batch_features = pad_sequence(features, batch_first=True)
 
     return {"feature": batch_features, "class_id": labels, "class_name": class_names}
 
