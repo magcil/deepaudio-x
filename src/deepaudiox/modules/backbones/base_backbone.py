@@ -7,17 +7,29 @@ import torch.nn as nn
 
 
 class BaseBackbone(nn.Module, ABC):
-    """Abstract base class for all audio backbone models."""
+    """Abstract base class for all audio backbone models.
 
-    def __init__(self, out_dim: int, sample_frequency: int) -> None:
+    This class defines the common interface for backbone architectures that
+    convert raw waveforms into fixed-dimensional embeddings. Subclasses must
+    implement the core feature extraction and forward-processing logic.
+
+    Methods:
+        __init__: Initializes the embedding dimension and the sample_rate of the audios.
+        forward: Computes embeddings from pre-extracted audio features.
+        extract_features: Converts raw waveforms into model-specific features.
+        forward_pipeline: Extracts features and then applies forward().
+    """
+
+    def __init__(self, out_dim: int, sample_rate: int) -> None:
         """Initialize the BaseBackbone.
+
         Args:
             out_dim (int): Output dimension of the backbone embeddings.
-            sample_frequency (int): Sample frequency for audio input.
+            sample_rate (int): Sample rate for audio input.
         """
         super().__init__()
         self.out_dim = out_dim
-        self.sample_frequency = sample_frequency
+        self.sample_rate = sample_rate
 
     @abstractmethod
     def forward(self, x: torch.Tensor, padding_mask: torch.Tensor | None = None) -> torch.Tensor:
@@ -46,8 +58,8 @@ class BaseBackbone(nn.Module, ABC):
         pass
 
     def forward_pipeline(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Standard processing pipeline:
+        """Standard processing pipeline:
+
             1. Extract features from raw audio
             2. Pass features through forward()
 
@@ -55,8 +67,7 @@ class BaseBackbone(nn.Module, ABC):
             x (torch.Tensor): Input waveforms of shape (B, T), where T is the length of waveforms.
 
         Returns:
-            torch.Tensor:
-                Final model output of shape (B, out_dim).
+            torch.Tensor: Final model output of shape (B, out_dim).
         """
         x = self.extract_features(x)
         return self.forward(x)

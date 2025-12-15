@@ -16,6 +16,9 @@ import math
 import numpy as np
 import torch
 import torch.nn.functional as F
+from torch import Tensor, nn
+from torch.nn import LayerNorm, Parameter
+
 from deepaudiox.modules.backbones.beats.beats_modules.modules import (
     GLU_Linear,
     GradMultiply,
@@ -23,8 +26,6 @@ from deepaudiox.modules.backbones.beats.beats_modules.modules import (
     get_activation_fn,
     quant_noise,
 )
-from torch import Tensor, nn
-from torch.nn import LayerNorm, Parameter
 
 
 class TransformerEncoder(nn.Module):

@@ -1,5 +1,7 @@
 from typing import Literal
 
+import torch
+
 from deepaudiox.modules.backbones import BACKBONES
 from deepaudiox.modules.base_audio_classifier import BaseAudioClassifier
 from deepaudiox.modules.classifier.classifier import MLPHead
@@ -9,34 +11,60 @@ from deepaudiox.utils.file_utils import load_checkpoint
 
 
 class AudioClassifierConstructor(BaseAudioClassifier):
+    """Classifier model using a backbone for feature extraction.
+
+    Attributes:
+        num_classes (int): Number of output classes.
+        backbone_model (BaseBackbone): Backbone model for feature extraction.
+        projection (BaseProjection or None): Optional projection layer to adjust embedding dimensions.
+        emb_dim (int): Dimension of the embeddings after projection (if any).
+        classifier (MLPHead): Classifier head for final predictions.
+    """
+
     def __init__(
         self,
         num_classes: int,
         backbone: Literal["beats"],
         projection: BaseProjection | None = None,
         freeze_backbone: bool = False,
-        sample_frequency: int = 16000,
+        sample_rate: int = 16000,
         classifier_hidden_layers: list[int] | None = None,
         activation: Literal["relu", "gelu", "tanh", "leakyrelu"] = "relu",
         apply_batch_norm: bool = True,
         pretrained: bool = False,
     ):
-        """Classifier model using a backbone for feature extraction.
-        Attributes:
+        """Initialize the AudioClassifierConstructor.
+
+        Args:
             num_classes (int): Number of output classes.
-            backbone (str): Backbone model name.
-            freeze_backbone (bool): Whether to freeze backbone weights during training.
-            sample_frequency (int): Sample frequency for audio input.
-            classifier_hidden_layers (list[int] or None): List of hidden layer sizes for classifier head.
-            activation (str): Activation function name for classifier head.
-            apply_batch_norm (bool): Whether to use BatchNorm1d in classifier head.
-            pretrained (bool): Whether to load pretrained backbone weights from a checkpoint file.
+            backbone (Literal["beats"]): Backbone model to use for feature extraction.
+            projection (BaseProjection or None): Optional projection layer to adjust embedding dimensions.
+            freeze_backbone (bool): Whether to freeze the backbone weights during training.
+            sample_rate (int): Sample frequency for audio input.
+            classifier_hidden_layers (list[int] or None): Hidden layer sizes for the classifier head.
+            activation (Literal["relu", "gelu", "tanh", "leakyrelu"]): Activation function for the classifier head.
+            apply_batch_norm (bool): Whether to apply batch normalization in the classifier head.
+            pretrained (bool): Whether to load pretrained weights for the backbone.
+
+        Example:
+            >>> from deepaudiox.modules.audio_classifier_constructor import AudioClassifierConstructor
+            >>> model = AudioClassifierConstructor(
+            ...     num_classes=10,
+            ...     backbone="beats",
+            ...     projection=None,
+            ...     freeze_backbone=True,
+            ...     sample_rate=16000,
+            ...     classifier_hidden_layers=[512, 256],
+            ...     activation="relu",
+            ...     apply_batch_norm=True,
+            ...     pretrained=True,
+            ... )
         """
         super().__init__()
 
         self.backbone_model = BACKBONES[backbone]()
         # Set sample frequency for backbone feature extraction
-        self.backbone_model.sample_frequency = sample_frequency
+        self.backbone_model.sample_rate = sample_rate
 
         if pretrained:
             downloader = Downloader()
@@ -65,13 +93,30 @@ class AudioClassifierConstructor(BaseAudioClassifier):
             apply_batch_norm=apply_batch_norm,
         )
 
-    def forward(self, x):
+    def forward(self, x) -> torch.Tensor:
+        """Forward pass through the classifier.
+
+        Args:
+            x (torch.Tensor): Input waveforms of shape (B, T)
+
+        Returns:
+            torch.Tensor: Logits of shape (B, num_classes)
+        """
         embedding = self.get_embeddings(x)
         x = self.classifier(embedding)
 
         return x
 
-    def get_embeddings(self, x):
+    def get_embeddings(self, x) -> torch.Tensor:
+        """Extract embeddings from the backbone (with optional projection).
+
+        Args:
+            x (torch.Tensor): Input waveforms of shape (B, T).
+
+        Returns:
+            torch.Tensor: Extracted embeddings of shape (B, emb_dim).
+        """
+
         return (
             self.projection(self.backbone_model.forward_pipeline(x))
             if self.projection

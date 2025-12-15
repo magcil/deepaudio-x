@@ -14,8 +14,7 @@ from deepaudiox.utils.training_utils import get_device, get_logger, pad_collate_
 
 @dataclass
 class State:
-    """Dataclass that stores variables
-        accessed throughout the testing lifecycle.
+    """Dataclass that stores variables accessed throughout the testing lifecycle.
 
     Attributes:
         y_true (np.ndarray): A NumPy array of true labels.

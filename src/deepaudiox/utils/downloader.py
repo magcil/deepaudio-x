@@ -5,31 +5,40 @@ import requests
 from platformdirs import user_cache_dir
 from tqdm import tqdm
 
+# Repository URL where the pretrained backbone models are hosted
 BACKBONE_REPO_URL = "https://github.com/magcil/pretrained-ssl-audio-backbones/raw/refs/heads/main/models/"
 
 BACKBONE_URLS = {"beats": BACKBONE_REPO_URL + "BEATs_iter3_plus_AS2M.pt"}
 
 
 class Downloader:
+    """Downloads a checkpoint (.pt or .pth file) with pretrained weights for the backbone.
+
+    Attributes:
+        BACKBONES_URLS (dict): A dictionary mapping backbone names to their respective download URLs.
+        cache_dir (Path): Directory path where downloaded models are cached.
+
+    Cache dirs:
+            - Linux: ~/.cache/deepaudiox
+            - macOS: ~/Library/Caches/deepaudiox
+            - Windows: C:\\Users\\<Username>\\AppData\\Local\\deepaudiox\\Cache
+    """
+
     def __init__(self):
-        """Downloads a checkpoint (.pt or .pth file) with pretrained weights for the backbone.
-
-        Attributes:
-            backbone (str): Name of the backbone model to download weights for.
-
-        """
+        """Initializes the Downloader instance."""
         self.BACKBONES_URLS = BACKBONE_URLS
 
         self.cache_dir = Path(user_cache_dir("deepaudiox"))
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-    def download_checkpoint(self, backbone: Literal["beats"]):
+    def download_checkpoint(self, backbone: Literal["beats"]) -> Path:
         """Downloads the pretrained backbone weights if not already cached.
 
         Args:
             backbone (Literal["beats"]): Name of the backbone model to download weights for.
 
-        Returns:  Path to the downloaded model file.
+        Returns:
+            Path to the downloaded model file.
         """
         url = self.BACKBONES_URLS[backbone]
         model_path = self.cache_dir / url.split("/")[-1]

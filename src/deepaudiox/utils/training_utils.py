@@ -14,6 +14,7 @@ from deepaudiox.datasets.audio_classification_dataset import AudioClassification
 
 
 def get_logger() -> logging.Logger:
+    """Initialize and return a console logger."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     logger = logging.getLogger("ConsoleLogger")
     return logger
@@ -45,9 +46,9 @@ def get_class_mapping_from_dir(root_dir: str) -> dict[str, int]:
         root_dir (str): The path to root folder
 
     Returns:
-        Dict: The class mapping dictionary
-
+        dict[str, int]: The class mapping dictionary
     """
+
     root_path = Path(root_dir)
     if not root_path.is_dir():
         raise ValueError(f"The path '{root_dir}' is not a directory")
@@ -84,15 +85,13 @@ def get_device(device_index: int | None = None) -> torch.device:
 
 
 def pad_collate_fn(batch) -> dict:
-    """
-    Collate function that pads variable-length audio tensors in a batch.
+    """Collate function that pads variable-length audio tensors in a batch.
 
     Args:
         batch (list of dict): Each dict contains 'feature', 'y_true', and 'class_name'.
 
     Returns:
-        dict: Batched and padded tensors.
-
+        dict[str, torch.Tensor | list[str]]: Batched and padded tensors.
     """
     # Extract data
     features = [torch.from_numpy(item["feature"]) for item in batch]
@@ -116,6 +115,9 @@ def random_split_audio_dataset(
         dataset (AudioClassificationDataset): An AudioClassificationDataset
         train_ratio (float): Percentage of training set.
         generator (Generator): Random Generator.
+
+    Returns:
+        list[Subset[AudioClassificationDataset]]: List containing train and validation Subsets.
     """
     # Validate ratio
     if not (0 <= train_ratio <= 1):

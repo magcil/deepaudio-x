@@ -7,8 +7,6 @@ from torch.utils.data import random_split
 from deepaudiox.datasets.audio_classification_dataset import audio_classification_dataset_from_dir
 from deepaudiox.utils.training_utils import get_class_mapping_from_dir
 
-torchaudio.set_audio_backend("soundfile")
-
 
 @pytest.fixture(autouse=True)
 def mock_audio_dataset(tmp_path):

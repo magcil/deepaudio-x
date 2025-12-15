@@ -11,13 +11,13 @@ from deepaudiox.callbacks.checkpointer import Checkpointer
 from deepaudiox.callbacks.console_logger import ConsoleLogger
 from deepaudiox.callbacks.early_stopper import EarlyStopper
 from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
+from deepaudiox.modules.base_audio_classifier import BaseAudioClassifier
 from deepaudiox.utils.training_utils import get_device, get_logger, pad_collate_fn, random_split_audio_dataset
 
 
 @dataclass
 class State:
-    """Dataclass that stores variables
-        accessed throught the training lifecycle.
+    """Dataclass that stores variables accessed throught the training lifecycle.
 
     Attributes:
         current_epoch (int): The current epoch of the training process. Dafaults to 1.
@@ -48,7 +48,7 @@ class Trainer:
         logger (logging.Logger): A module used for logging messages.
         train_dloader (torch.DataLoader): The DataLoader of the training set.
         validation_dloader (torch.DataLoader): The DataLoader of the validation set.
-        model (nn.Module): The trained model.
+        model (BaseAudioClassifier): The BaseAudioClassifier to be trained.
         optimizer (torch.optim.Optimizer): The optimizer of the training process.
         lr_scheduler (torch.optim.Optimizer): The scheduler of the training process.
         loss_function (nn.Module): The loss function used for optimization.
@@ -59,7 +59,7 @@ class Trainer:
     def __init__(
         self,
         d_set: AudioClassificationDataset,
-        model: nn.Module,
+        model: BaseAudioClassifier,
         optimizer: torch.optim.Optimizer,
         loss_function: nn.Module | None = None,
         lr_scheduler: LRScheduler | None = None,
@@ -75,12 +75,12 @@ class Trainer:
 
         Args:
             d_set (AudioClassificationDataset): The training dataset.
-            model (nn.Module): The model to be trained.
+            model (BaseAudioClassifier): The model to be trained.
             optimizer (torch.optim.Optimizer): The optimizer used for training.
-            loss_function (nn.Module): The loss function used for training.
-            lr_scheduler (LRScheduler): The scheduler used for training.
+            loss_function (nn.Module | None): The loss function used for training. Uses CrossEntropy if None.
+            lr_scheduler (LRScheduler | None): The scheduler used for training. No scheduler if None.
             train_ratio (float, optional): The ratio of the train split. Defaults to 0.8.
-            epochs (int, optional): The maximum number of training epochs. Defaults to 10.
+            epochs (int, optional): The maximum number of training epochs. Defaults to 50.
             patience (int, optional): The maximum number of epochs with no decrease in loss. Defaults to 5.
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
@@ -190,7 +190,7 @@ class Trainer:
     ):
         """Generate PyTorch DataLoaders for training and validation splits.
 
-        Arguments:
+        Args:
             train_dset (AudioClassificationDataset): The training dataset.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.

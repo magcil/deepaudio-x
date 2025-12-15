@@ -1,17 +1,17 @@
+from os import PathLike
 from pathlib import Path
 
 import torch
 
 
-def load_checkpoint(model_path: Path | str):
+def load_checkpoint(model_path: str | PathLike[str]) -> dict[str, torch.Tensor]:
     """Loads a pretrained model checkpoint from a PyTorch file (.pt or .pth).
 
     Args:
-        model_path (Path or str): Path to the model checkpoint file.
+        model_path (Path or str | PathLike[str]): Path to the model checkpoint file.
 
     Returns:
-        dict: The loaded model state dictionary.
-
+        dict[str, torch.Tensor]: The loaded model state dictionary.
     """
     if not Path(model_path).exists():
         raise FileNotFoundError(
