@@ -7,8 +7,6 @@
 # https://github.com/pytorch/fairseq
 # --------------------------------------------------------
 
-import math
-import warnings
 
 import torch
 import torch.nn.functional as F
@@ -81,13 +79,6 @@ class GLU_Linear(nn.Module):
 
         return x
 
-
-def gelu_accurate(x):
-    if not hasattr(gelu_accurate, "_a"):
-        gelu_accurate._a = math.sqrt(2 / math.pi)
-    return 0.5 * x * (1 + torch.tanh(gelu_accurate._a * (x + 0.044715 * torch.pow(x, 3))))
-
-
 def gelu(x: torch.Tensor) -> torch.Tensor:
     return torch.nn.functional.gelu(x.float()).type_as(x)
 
@@ -99,11 +90,6 @@ def get_activation_fn(activation: str):
         return F.relu
     elif activation == "gelu":
         return gelu
-    elif activation == "gelu_fast":
-        warnings.warn("--activation-fn=gelu_fast has been renamed to gelu_accurate")
-        return gelu_accurate
-    elif activation == "gelu_accurate":
-        return gelu_accurate
     elif activation == "tanh":
         return torch.tanh
     elif activation == "linear" or activation == "glu":

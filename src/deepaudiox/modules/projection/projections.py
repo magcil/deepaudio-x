@@ -6,30 +6,43 @@ from deepaudiox.modules.projection.base_projection import BaseProjection
 
 
 class DivEncLayer(BaseProjection):
-    # Divided Encoder Layer for dimensionality reduction
-    def __init__(self, in_dim: int, out_dim: int, unit_dim: list[int] | None = None) -> None:
-        """Divided Encoder Layer for dimensionality reduction.
+    """Divide Encoder Layer for dimensionality reduction.
+
+    This layer implements divide encoder layer as presented in `Simultaneous Feature Learning and Hash Coding with
+    Deep Neural Networks` (arxiv.org/pdf/1504.03410). In brief, the input vector is subdivided into out_dim subvectors
+    of dimension in_dim // out_dim. Each subvector is passed through a series of linear-elu layers specified by
+    linear_layers mapped to a single value forming the final out_dim L2 norm-projected vector.
+
+    """
+
+    def __init__(self, in_dim: int, out_dim: int, linear_layers: list[int] | None = None):
+        """Initialized a divide encoder layer.
+
         Args:
-            in_dim (int): Input dimension (i.e. number of splits).
+            in_dim (int): Input embedding dimension.
             out_dim (int): Output dimension after projection.
-            unit_dim (list): List containing the dimensions of the two linear layers.
+            linear_layers (list): List containing the dimensions of the linear-elu layers.
+
+        Example:
+            >>> from deepaudiox.modules.projection.projections import DivEncLayer
+            >>> projection = DivEncLayer(in_dim=768, out_dim=128) # 768 is Beats embedding
         """
-        if unit_dim is None:
-            unit_dim = [32, 1]
+        if linear_layers is None:
+            linear_layers = [32, 1]
         super().__init__(in_dim=in_dim, out_dim=out_dim)
         assert in_dim % out_dim == 0, "in_dim must be divisible by out_dim"
         self.split_fc_layers: nn.ModuleList = nn.ModuleList()
-        self.unit_dim: list[int] = unit_dim
+        self.linear_layers: list[int] = linear_layers
         self.v: int = int(in_dim / out_dim)
         self._construct_layers()
 
     def _construct_layers(self) -> None:
         for _i in range(self.out_dim):
             seq = nn.Sequential()
-            seq.append(nn.Linear(self.v, self.unit_dim[0]))
+            seq.append(nn.Linear(self.v, self.linear_layers[0]))
             seq.append(nn.ELU())
-            seq.append(nn.LayerNorm(self.unit_dim[0]))
-            seq.append(nn.Linear(self.unit_dim[0], self.unit_dim[1]))
+            seq.append(nn.LayerNorm(self.linear_layers[0]))
+            seq.append(nn.Linear(self.linear_layers[0], self.linear_layers[1]))
             self.split_fc_layers.append(seq)
 
     def _split_encoding(self, x_slices: torch.Tensor) -> torch.Tensor:

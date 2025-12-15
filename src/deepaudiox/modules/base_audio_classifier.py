@@ -7,7 +7,18 @@ import torch.nn.functional as F
 
 
 class BaseAudioClassifier(nn.Module, ABC):
-    """Base class for creating custom audio classifiers."""
+    """Base class for creating custom audio classifiers.
+
+    This class defines the standard interface for audio classification models.
+    Subclasses must implement the core initialization and forward pass. The
+    built-in `predict` method provides a convenience wrapper to obtain predicted
+    labels, posterior probabilities, and raw logits.
+
+    Methods:
+        __init__: Initialize the classifier and its components.
+        forward: Process input waveforms and return logits.
+        predict: Compute predicted classes, posterior probabilities, and logits.
+    """
 
     @abstractmethod
     def __init__(self, *args, **kwargs):
