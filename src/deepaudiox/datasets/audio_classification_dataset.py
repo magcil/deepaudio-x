@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import librosa
@@ -28,7 +29,7 @@ class AudioClassificationDataset(Dataset):
 
     def __init__(
         self,
-        file_to_class_mapping: dict[str, str],
+        file_to_class_mapping: dict[str | os.PathLike, str],
         sample_rate: int,
         class_mapping: dict[str, int],
         segment_duration: float | None = None,
@@ -46,17 +47,13 @@ class AudioClassificationDataset(Dataset):
         self.file_to_class_mapping = file_to_class_mapping
 
         self.items = [
-            AudioClassificationItem(
-                path = Path(path),
-                class_name = class_name,
-                y_true = self.class_mapping[class_name]
-            ) for path, class_name in file_to_class_mapping.items()
+            AudioClassificationItem(path=Path(path), class_name=class_name, y_true=self.class_mapping[class_name])
+            for path, class_name in file_to_class_mapping.items()
         ]
-        
+
         self.segment_duration = segment_duration
         if self.segment_duration:
             self._apply_segmentation(segment_duration)
-
 
     def __len__(self) -> int:
         """Return the number of items in the dataset.
@@ -66,7 +63,6 @@ class AudioClassificationDataset(Dataset):
 
         """
         return len(self.items)
-
 
     def __getitem__(self, idx: int) -> dict:
         """Get a single dataset item by index.
@@ -84,12 +80,11 @@ class AudioClassificationDataset(Dataset):
             path=item.path,
             sr=self.sample_rate,
             mono=True,
-            offset=item.segment_idx*self.segment_duration if self.segment_duration else 0,
+            offset=item.segment_idx * self.segment_duration if self.segment_duration else 0,
             duration=self.segment_duration,
         )[0]
 
         return item.to_dict()
-
 
     def _apply_segmentation(self, segment_duration: float | None):
         """Segmentize all audio files into fixed-duration segments.
@@ -118,10 +113,7 @@ class AudioClassificationDataset(Dataset):
 
 
 def audio_classification_dataset_from_dir(
-    root_dir: str,
-    sample_rate: int,
-    class_mapping: dict[str, int],
-    segment_duration: float | None = None
+    root_dir: str, sample_rate: int, class_mapping: dict[str, int], segment_duration: float | None = None
 ) -> AudioClassificationDataset:
     """Create an AudioClassificationDataset from a directory structure.
 
@@ -152,7 +144,7 @@ def audio_classification_dataset_from_dir(
 
 
 def audio_classification_dataset_from_dictionary(
-    file_to_class_mapping: dict[str, str],
+    file_to_class_mapping: dict[str | os.PathLike, str],
     sample_rate: int,
     class_mapping: dict[str, int],
     segment_duration: float | None = None,

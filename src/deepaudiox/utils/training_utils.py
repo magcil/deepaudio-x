@@ -20,16 +20,15 @@ def get_logger() -> logging.Logger:
     return logger
 
 
-def get_class_mapping_from_list(labels, sort_alphabetically=True):
+def get_class_mapping_from_list(labels: list[str], sort_alphabetically: bool = True):
     """Get a class mapping dictionary given a list of class names.
 
     Args:
-        labels (list[str]): List of clas names
+        labels (list[str]): List of class names
         sort_alphabetically (boolean): Determines if alphabetical sorting should be applied to class names.
 
     Returns:
         Dict: The class mapping dictionary
-
     """
     if sort_alphabetically:
         class_mapping = {name: idx for idx, name in enumerate(sorted(labels))}
@@ -108,7 +107,7 @@ def random_split_audio_dataset(
     dataset: AudioClassificationDataset, train_ratio: float, generator: Generator = default_generator
 ) -> list[Subset[AudioClassificationDataset]]:
     """
-    Split AudioClassificationDataset into train / val subsets specified by train ratio. 
+    Split AudioClassificationDataset into train / val subsets specified by train ratio.
     Method accounts for segmentized waveforms.
 
     Args:
@@ -148,13 +147,12 @@ def random_split_audio_dataset(
         shuffled_files = unique_files[shuffled_file_indices]
 
         split_files_list = [
-            shuffled_files[offset - length : offset] 
+            shuffled_files[offset - length : offset]
             for offset, length in zip(itertools.accumulate(subset_lengths), subset_lengths, strict=False)
         ]
 
         subsets = [
-            Subset(dataset, np.where(np.isin(file_paths, split_files))[0].tolist())
-            for split_files in split_files_list
+            Subset(dataset, np.where(np.isin(file_paths, split_files))[0].tolist()) for split_files in split_files_list
         ]
 
         return subsets

@@ -61,7 +61,7 @@ class Reporter(BaseCallback):
 
         with np.printoptions(threshold=np.inf, linewidth=np.inf):
             self.logger.info(matrix)
-       
+
         self.logger.info("[REPORTER] Average Posteriors: \n")
         self.logger.info(formatted_posteriors)
 

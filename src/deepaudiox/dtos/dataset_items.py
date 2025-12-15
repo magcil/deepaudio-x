@@ -11,7 +11,7 @@ class AudioClassificationItem:
     path: str | Path
     y_true: int
     class_name: str
-    feature: np.ndarray | None =  None
+    feature: np.ndarray | None = None
     segment_idx: int = 0
 
     def __post_init__(self):
@@ -20,9 +20,9 @@ class AudioClassificationItem:
 
     def to_dict(self) -> dict:
         return {
-            "path": str(self.path), 
+            "path": str(self.path),
             "y_true": self.y_true,
             "class_name": self.class_name,
             "segment_idx": self.segment_idx,
-            "feature": self.feature
+            "feature": self.feature,
         }
