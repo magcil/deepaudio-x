@@ -93,7 +93,7 @@ class Evaluator:
             for _i, item in enumerate(vbatch, 1):
                 # Move inputs
                 features = item["feature"].to(self.device)
-                y_true = item["class_id"].cpu().numpy()
+                y_true = item["y_true"].cpu().numpy()
 
                 # Run model prediction
                 inference = self.model.predict(features)
