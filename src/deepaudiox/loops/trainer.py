@@ -58,9 +58,10 @@ class Trainer:
 
     def __init__(
         self,
-        d_set: AudioClassificationDataset,
+        train_dset: AudioClassificationDataset,
         model: BaseAudioClassifier,
         optimizer: torch.optim.Optimizer,
+        validation_dset: AudioClassificationDataset = None,
         loss_function: nn.Module | None = None,
         lr_scheduler: LRScheduler | None = None,
         train_ratio: float = 0.8,
@@ -74,7 +75,8 @@ class Trainer:
         """Initialize the Trainer.
 
         Args:
-            d_set (AudioClassificationDataset): The training dataset.
+            train_dset (AudioClassificationDataset): The training dataset.
+            validation_dset (AudioClassificationDataset): The validation dataset.
             model (BaseAudioClassifier): The model to be trained.
             optimizer (torch.optim.Optimizer): The optimizer used for training.
             loss_function (nn.Module | None): The loss function used for training. Uses CrossEntropy if None.
@@ -97,8 +99,13 @@ class Trainer:
 
         # Load datasets
         train_dl, val_dl = self._setup_dataloaders(
-            d_set=d_set, train_ratio=train_ratio, batch_size=batch_size, num_workers=num_workers
+            train_dset=train_dset, 
+            validation_dset=validation_dset,
+            train_ratio=train_ratio, 
+            batch_size=batch_size, 
+            num_workers=num_workers
         )
+
         self.train_dloader = train_dl
         self.validation_dloader = val_dl
 
@@ -186,19 +193,24 @@ class Trainer:
         return
 
     def _setup_dataloaders(
-        self, d_set: AudioClassificationDataset, train_ratio: float, batch_size: int, num_workers: int
+        self, 
+        train_dset: AudioClassificationDataset, 
+        validation_dset: AudioClassificationDataset,
+        train_ratio: float, batch_size: int, num_workers: int
     ):
         """Generate PyTorch DataLoaders for training and validation splits.
 
         Args:
-            train_dset (AudioClassificationDataset): The training dataset.
+            train_dset (AudioClassificationDataset): Training dataset.
+            validation_dset (AudioClassificationDataset): Validation dataset.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
             train_ratio (float, optional): The ratio of the train split. Defaults to 0.8.
 
         """
         # Split to train and validation
-        train_dset, validation_dset = random_split_audio_dataset(d_set, train_ratio)
+        if not validation_dset:
+            train_dset, validation_dset = random_split_audio_dataset(train_dset, train_ratio)
 
         # Produce DataLoaders
         train_dloader = DataLoader(
