@@ -24,7 +24,7 @@ class AudioClassifierConstructor(BaseAudioClassifier):
     def __init__(
         self,
         num_classes: int,
-        backbone: Literal["beats"],
+        backbone: Literal["beats", "beats_div"],
         projection: BaseProjection | None = None,
         freeze_backbone: bool = False,
         sample_rate: int = 16000,

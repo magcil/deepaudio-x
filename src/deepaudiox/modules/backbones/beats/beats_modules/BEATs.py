@@ -15,6 +15,7 @@ from deepaudiox.modules.backbones.base_backbone import BaseBackbone
 from deepaudiox.modules.backbones.beats.beats_modules.backbone import (
     TransformerEncoder,
 )
+from deepaudiox.modules.projection.projections import DivEncLayer
 from torch.nn import LayerNorm
 
 
@@ -143,3 +144,30 @@ class BEATs(BaseBackbone):
         )
 
         return x.mean(1)
+    
+
+class BEATsDiv(BaseBackbone):
+    def __init__(self, sample_rate: int = 16_000):
+        super().__init__(out_dim=128, sample_rate=sample_rate)
+        
+        self.fbank_mean, self.fbank_std = 15.41663, 6.55582
+        
+        self.backbone = BEATs()
+        self.projection_head = DivEncLayer(in_dim=768, out_dim=128)
+    
+    def extract_features(self, waveforms: torch.Tensor) -> torch.Tensor:
+        fbanks = []
+        for waveform in waveforms:
+            waveform = waveform.unsqueeze(0) * 2**15
+            fbank = ta_kaldi.fbank(
+                waveform, num_mel_bins=128, sample_frequency=self.sample_rate, frame_length=25, frame_shift=10
+            )
+            fbanks.append(fbank)
+        fbank = torch.stack(fbanks, dim=0)
+        fbank = (fbank - self.fbank_mean) / (2 * self.fbank_std)
+        return fbank.unsqueeze(1)
+    
+    def forward(self, x, padding_mask: torch.Tensor | None = None) -> torch.Tensor:
+        
+        return self.projection_head(self.backbone(x))
+    

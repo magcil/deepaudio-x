@@ -3,7 +3,7 @@
 from collections.abc import Callable
 
 from deepaudiox.modules.backbones.base_backbone import BaseBackbone as Backbone
-from deepaudiox.modules.backbones.beats.beats_modules.BEATs import BEATs
+from deepaudiox.modules.backbones.beats.beats_modules.BEATs import BEATs, BEATsDiv
 
 # A dictionary mapping backbone names to their constructor functions
 BACKBONES: dict[str, Callable[[], Backbone]] = {}
@@ -25,3 +25,8 @@ def register_backbone(name: str):
 def beats_base() -> BEATs:
     """BEATs backbone without DivEncLayer."""
     return BEATs()
+
+
+@register_backbone("beats_div")
+def beats_div() -> BEATsDiv:
+    return BEATsDiv()
