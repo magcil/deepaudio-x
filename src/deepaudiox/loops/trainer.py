@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.optim.lr_scheduler import LRScheduler
+from torch.optim.lr_scheduler import LRScheduler, ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -61,13 +61,13 @@ class Trainer:
         train_dset: AudioClassificationDataset,
         model: BaseAudioClassifier,
         optimizer: torch.optim.Optimizer,
-        loss_function: nn.Module | None,
-        lr_scheduler: LRScheduler | None,
-        device_index: int | None,
+        loss_function: nn.Module | None = None,
+        lr_scheduler: LRScheduler | None = None,
+        device_index: int | None = None,
         train_ratio: float = 0.8,
         validation_dset: AudioClassificationDataset | None = None,
-        epochs: int = 50,
-        patience: int = 5,
+        epochs: int = 80,
+        patience: int = 15,
         num_workers: int = 4,
         batch_size: int = 16,
         path_to_checkpoint: str = "checkpoint.pt",
@@ -80,7 +80,7 @@ class Trainer:
             model (BaseAudioClassifier): The model to be trained.
             optimizer (torch.optim.Optimizer): The optimizer used for training.
             loss_function (nn.Module | None): The loss function used for training. Uses CrossEntropy if None.
-            lr_scheduler (LRScheduler | None): The scheduler used for training. No scheduler if None.
+            lr_scheduler (LRScheduler | None): The scheduler used for training. ReduceOnPlateu if None.
             train_ratio (float, optional): The ratio of the train split. Defaults to 0.8.
             epochs (int, optional): The maximum number of training epochs. Defaults to 50.
             patience (int, optional): The maximum number of epochs with no decrease in loss. Defaults to 5.
