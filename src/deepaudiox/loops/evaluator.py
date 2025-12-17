@@ -89,14 +89,14 @@ class Evaluator:
 
     def evaluate(self):
         """Perform the testing process."""
-        with torch.no_grad(), tqdm(self.test_dloader, unit="batch", leave=False, desc="Evaluation phase") as vbatch:
-            for _i, item in enumerate(vbatch, 1):
+        with torch.no_grad(), tqdm(self.test_dloader, unit="batch", leave=False, desc="Evaluation phase") as tbar:
+            for batch in tbar:
                 # Move inputs
-                features = item["feature"].to(self.device)
-                y_true = item["y_true"].cpu().numpy()
+                x = batch["feature"].to(self.device)
+                y_true = batch["y_true"].cpu().numpy()
 
                 # Run model prediction
-                inference = self.model.predict(features)
+                inference = self.model.predict(x)
                 y_pred = np.array(inference["y_preds"], dtype=int)
                 post = np.array(inference["posteriors"], dtype=float)
 
