@@ -27,6 +27,7 @@ class State:
         early_stop (bool): Determines if training should be early stopped. Defaults to False.
 
     """
+
     current_epoch: int = 1
     lowest_loss: float = np.inf
     train_loss: list[float] = field(default_factory=list)
@@ -69,7 +70,7 @@ class Trainer:
         patience: int = 5,
         num_workers: int = 4,
         batch_size: int = 16,
-        path_to_checkpoint: str = "checkpoint.pt"
+        path_to_checkpoint: str = "checkpoint.pt",
     ):
         """Initialize the Trainer.
 
@@ -98,11 +99,11 @@ class Trainer:
 
         # Load datasets
         self.train_dloader, self.validation_dloader = self._setup_dataloaders(
-            train_dset=train_dset, 
+            train_dset=train_dset,
             validation_dset=validation_dset,
-            train_ratio=train_ratio, 
-            batch_size=batch_size, 
-            num_workers=num_workers
+            train_ratio=train_ratio,
+            batch_size=batch_size,
+            num_workers=num_workers,
         )
 
         # Load model and training modules
@@ -180,7 +181,7 @@ class Trainer:
             # Execute callbacks at the end of the epoch
             for cb in self.callbacks:
                 cb.on_epoch_end(self)
-                
+
         # Execute callbacks at the end of training
         for cb in self.callbacks:
             cb.on_train_end(self)
@@ -188,12 +189,12 @@ class Trainer:
         return
 
     def _setup_dataloaders(
-        self, 
-        train_dset: AudioClassificationDataset, 
+        self,
+        train_dset: AudioClassificationDataset,
         validation_dset: AudioClassificationDataset | None,
-        train_ratio: float, 
-        batch_size: int, 
-        num_workers: int
+        train_ratio: float,
+        batch_size: int,
+        num_workers: int,
     ):
         """Generate PyTorch DataLoaders for training and validation splits.
 
