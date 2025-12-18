@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import LRScheduler, ReduceLROnPlateau
+from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -60,30 +61,32 @@ class Trainer:
         self,
         train_dset: AudioClassificationDataset,
         model: BaseAudioClassifier,
-        optimizer: torch.optim.Optimizer,
-        loss_function: nn.Module | None = None,
-        lr_scheduler: LRScheduler | None = None,
-        device_index: int | None = None,
-        train_ratio: float = 0.8,
         validation_dset: AudioClassificationDataset | None = None,
-        epochs: int = 80,
+        optimizer: torch.optim.Optimizer | None = None,
+        learning_rate: float = 1e-3,
+        lr_scheduler: LRScheduler | None = None,
+        loss_function: nn.Module | None = None,
+        train_ratio: float = 0.8,
+        epochs: int = 100,
         patience: int = 15,
         num_workers: int = 4,
         batch_size: int = 16,
         path_to_checkpoint: str = "checkpoint.pt",
+        device_index: int | None = None
     ):
         """Initialize the Trainer.
 
         Args:
             train_dset (AudioClassificationDataset): The training dataset.
-            validation_dset (AudioClassificationDataset): The validation dataset.
             model (BaseAudioClassifier): The model to be trained.
-            optimizer (torch.optim.Optimizer): The optimizer used for training.
-            loss_function (nn.Module | None): The loss function used for training. Uses CrossEntropy if None.
+            validation_dset (AudioClassificationDataset): The validation dataset.
+            optimizer (torch.optim.Optimizer): The optimizer used for training. Adam if None.
+            learning_rate (float): Learning rate. Defaults to 1e-3.
             lr_scheduler (LRScheduler | None): The scheduler used for training. ReduceOnPlateu if None.
+            loss_function (nn.Module | None): The loss function used for training. Uses CrossEntropy if None.
             train_ratio (float, optional): The ratio of the train split. Defaults to 0.8.
-            epochs (int, optional): The maximum number of training epochs. Defaults to 50.
-            patience (int, optional): The maximum number of epochs with no decrease in loss. Defaults to 5.
+            epochs (int, optional): The maximum number of training epochs. Defaults to 100.
+            patience (int, optional): The maximum number of epochs with no decrease in loss. Defaults to 15.
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
             path_to_checkpoint (str, optional): The path to the saved model checpoint. Defaults to "checkpoint.pt".
@@ -109,8 +112,8 @@ class Trainer:
         # Load model and training modules
         self.model = model
         self.model.to(self.device)
-        self.optimizer = optimizer
-        self.scheduler = lr_scheduler
+        self.optimizer = optimizer or Adam(params=self.model.parameters(), lr=learning_rate)
+        self.scheduler = lr_scheduler or ReduceLROnPlateau(self.optimizer, "min")
         self.loss_function = loss_function or nn.CrossEntropyLoss()
 
         # Configure callbacks
@@ -172,7 +175,10 @@ class Trainer:
 
             # Update scheduling
             if self.scheduler:
-                self.scheduler.step()
+                if isinstance(self.scheduler, ReduceLROnPlateau):
+                    self.scheduler.step(val_loss)
+                else:
+                    self.scheduler.step()
 
             # Update training state
             self.state.train_loss.append(train_loss)
