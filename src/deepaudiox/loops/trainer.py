@@ -3,8 +3,8 @@ from dataclasses import dataclass, field
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.optim.lr_scheduler import LRScheduler, ReduceLROnPlateau
 from torch.optim import Adam
+from torch.optim.lr_scheduler import LRScheduler, ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -72,7 +72,7 @@ class Trainer:
         num_workers: int = 4,
         batch_size: int = 16,
         path_to_checkpoint: str = "checkpoint.pt",
-        device_index: int | None = None
+        device_index: int | None = None,
     ):
         """Initialize the Trainer.
 

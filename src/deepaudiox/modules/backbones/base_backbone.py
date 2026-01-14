@@ -24,7 +24,9 @@ class BaseBackbone(nn.Module, ABC):
         """Initialize the BaseBackbone.
 
         Args:
-            out_dim (int): Output dimension of the backbone embeddings.
+            out_dim (int): Output dim of the backbone feature map. For CNNs the embeddings are of shape (B, C, H, W)
+            and for Transformers of shape (B, T, D), where out_dim is either C or D respectively. The output embeddings
+            could be of shape (B, out_dim) in case of pooling backbones.
             sample_rate (int): Sample rate for audio input.
         """
         super().__init__()
@@ -40,7 +42,7 @@ class BaseBackbone(nn.Module, ABC):
             padding_mask: (torch.Tensor) Optional padding mask.
 
         Returns:
-            torch.Tensor: Embeddings of shape (B, D), where D is the embedding dimension.
+            torch.Tensor: Embeddings of shape (B, T, D) or (B, D, H, W) where D is the embedding dimension.
         """
         pass
 
@@ -67,7 +69,7 @@ class BaseBackbone(nn.Module, ABC):
             x (torch.Tensor): Input waveforms of shape (B, T), where T is the length of waveforms.
 
         Returns:
-            torch.Tensor: Final model output of shape (B, out_dim).
+            torch.Tensor: Final model output of shape (B, out_dim, H, W) for CNNs or (B, T, out_dim) for Transformers.
         """
         x = self.extract_features(x)
         return self.forward(x)
