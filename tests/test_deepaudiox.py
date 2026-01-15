@@ -34,8 +34,9 @@ def file_to_class_mapping():
         Path(__file__).parent / "testing_dataset" / "train" / "trianglewave" / "trianglewave_0.wav": "trianglewave",
     }
 
+
 def test_class_mapping():
-    class_mapping_dir = get_class_mapping_from_dir(TRAIN_DIR)
+    class_mapping_dir = get_class_mapping_from_dir(str(TRAIN_DIR))
     class_mapping_list = get_class_mapping_from_list(
         ["gaussiannoise", "sawwave", "sinewave", "squarewave", "trianglewave"]
     )
@@ -54,13 +55,12 @@ def test_class_mapping():
     assert class_mapping_dir == expected
     assert class_mapping_list == expected
 
+
 @pytest.mark.parametrize("sample_rate", [16000, 22000])
 def test_dataset_loading_from_dir(file_to_class_mapping, sample_rate):
-    class_mapping = get_class_mapping_from_dir(TRAIN_DIR)
+    class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
     dataset = audio_classification_dataset_from_dir(
-        root_dir=TRAIN_DIR, 
-        sample_rate=sample_rate, 
-        class_mapping=class_mapping
+        root_dir=str(TRAIN_DIR), sample_rate=sample_rate, class_mapping=class_mapping
     )
 
     assert len(dataset) == 100
@@ -71,13 +71,12 @@ def test_dataset_loading_from_dir(file_to_class_mapping, sample_rate):
     assert isinstance(item["y_true"], int)
     assert isinstance(item["class_name"], str)
 
+
 @pytest.mark.parametrize("sample_rate", [16000, 22000])
 def test_dataset_loading_from_dict(file_to_class_mapping, sample_rate):
-    class_mapping = get_class_mapping_from_dir(TRAIN_DIR)
+    class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
     dataset = audio_classification_dataset_from_dictionary(
-        file_to_class_mapping=file_to_class_mapping, 
-        sample_rate=sample_rate, 
-        class_mapping=class_mapping
+        file_to_class_mapping=file_to_class_mapping, sample_rate=sample_rate, class_mapping=class_mapping
     )
 
     assert len(dataset) == 5
@@ -88,33 +87,27 @@ def test_dataset_loading_from_dict(file_to_class_mapping, sample_rate):
     assert isinstance(item["y_true"], int)
     assert isinstance(item["class_name"], str)
 
+
 def test_dataset_splitting():
-    class_mapping = get_class_mapping_from_dir(TRAIN_DIR)
-    dataset = audio_classification_dataset_from_dir(
-        root_dir=TRAIN_DIR, 
-        sample_rate=16000, 
-        class_mapping=class_mapping
-    )
+    class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
+    dataset = audio_classification_dataset_from_dir(root_dir=str(TRAIN_DIR), sample_rate=16000, class_mapping=class_mapping)
 
     train_dataset, validation_dataset = random_split_audio_dataset(dataset=dataset, train_ratio=0.8)
 
     assert len(train_dataset) == 80
     assert len(validation_dataset) == 20
 
+
 @pytest.mark.parametrize("segment_duration", [0.5, 1.0])
 def test_dataset_segmentation(segment_duration):
-    class_mapping = get_class_mapping_from_dir(TRAIN_DIR)
+    class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
     dataset = audio_classification_dataset_from_dir(
-        root_dir=TRAIN_DIR, 
-        sample_rate=16000, 
-        class_mapping=class_mapping,
-        segment_duration=segment_duration
+        root_dir=str(TRAIN_DIR), sample_rate=16000, class_mapping=class_mapping, segment_duration=segment_duration
     )
 
-    expected_num_items = (
-        100 * (5 // segment_duration)
-    )  
+    expected_num_items = 100 * (5 // segment_duration)
     assert len(dataset) == expected_num_items
+
 
 @pytest.mark.parametrize("input_tensor", [torch.randn(1, 16000)])
 def test_beats_backbone(input_tensor):
@@ -123,19 +116,15 @@ def test_beats_backbone(input_tensor):
     output = backbone.forward_pipeline(input_tensor)
     assert output.shape == (1, 48, 768)
 
+
 @pytest.mark.parametrize("input_tensor", [torch.randn(1, 768)])
 @pytest.mark.parametrize("hidden_layers", [None, [128], [512, 128]])
 def test_mlp_head(input_tensor, hidden_layers):
-    head = MLPHead(
-        num_classes = 4,
-        in_dim = 768,
-        hidden_layers = hidden_layers,
-        activation = "relu",
-        apply_batch_norm = False
-    )
+    head = MLPHead(num_classes=4, in_dim=768, hidden_layers=hidden_layers, activation="relu", apply_batch_norm=False)
 
     output = head(input_tensor)
     assert output.shape == (1, 4)
+
 
 @pytest.mark.parametrize("input_tensor", [torch.randn(1, 16000)])
 @pytest.mark.parametrize("num_classes", [2, 8])
@@ -153,7 +142,7 @@ def test_model_construction(input_tensor, num_classes, backbone, pooling, freeze
         classifier_hidden_layers=None,
         activation="relu",
         apply_batch_norm=False,
-        pretrained=pretrained
+        pretrained=pretrained,
     )
 
     output = model(input_tensor)
@@ -162,18 +151,15 @@ def test_model_construction(input_tensor, num_classes, backbone, pooling, freeze
     if freeze_backbone:
         assert not any(p.requires_grad for p in model.backbone_model.parameters())
 
+
 def test_training_loop():
-    class_mapping = get_class_mapping_from_dir(TRAIN_DIR)
+    class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
 
     train_dataset = audio_classification_dataset_from_dir(
-        root_dir=TRAIN_DIR, 
-        sample_rate=16000, 
-        class_mapping=class_mapping
+        root_dir=str(TRAIN_DIR), sample_rate=16000, class_mapping=class_mapping
     )
     validation_dataset = audio_classification_dataset_from_dir(
-        root_dir=VALIDATION_DIR, 
-        sample_rate=16000, 
-        class_mapping=class_mapping
+        root_dir=str(VALIDATION_DIR), sample_rate=16000, class_mapping=class_mapping
     )
 
     model = AudioClassifierConstructor(
@@ -185,19 +171,19 @@ def test_training_loop():
         classifier_hidden_layers=None,
         activation="relu",
         apply_batch_norm=False,
-        pretrained=True
+        pretrained=True,
     )
 
     trainer = Trainer(
-        train_dset = train_dataset,
-        model = model,
-        validation_dset = validation_dataset,
-        learning_rate = 1e-3,
-        epochs = 5,
-        patience = 5,
-        num_workers = 4,
-        batch_size = 16,
-        path_to_checkpoint = "testing_checkpoint.pt"
+        train_dset=train_dataset,
+        model=model,
+        validation_dset=validation_dataset,
+        learning_rate=1e-3,
+        epochs=5,
+        patience=5,
+        num_workers=4,
+        batch_size=16,
+        path_to_checkpoint="testing_checkpoint.pt",
     )
 
     trainer.train()
@@ -211,13 +197,12 @@ def test_training_loop():
     assert val_loss[-2:].mean() < val_loss[:2].mean()
     assert (Path(__file__).resolve().parents[1] / "testing_checkpoint.pt").exists()
 
+
 def test_evaluation_loop():
-    class_mapping = get_class_mapping_from_dir(TRAIN_DIR)
+    class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
 
     test_dataset = audio_classification_dataset_from_dir(
-        root_dir=TEST_DIR, 
-        sample_rate=16000, 
-        class_mapping=class_mapping
+        root_dir=str(TEST_DIR), sample_rate=16000, class_mapping=class_mapping
     )
 
     model = AudioClassifierConstructor(
@@ -229,7 +214,7 @@ def test_evaluation_loop():
         classifier_hidden_layers=None,
         activation="relu",
         apply_batch_norm=False,
-        pretrained=True
+        pretrained=True,
     )
 
     path_to_checkpoint = Path(__file__).resolve().parents[1] / "testing_checkpoint.pt"
@@ -237,11 +222,7 @@ def test_evaluation_loop():
     model.load_state_dict(state_dict)
 
     evaluator = Evaluator(
-        test_dset = test_dataset,
-        model = model,
-        num_workers = 4,
-        batch_size = 16,
-        class_mapping = class_mapping
+        test_dset=test_dataset, model=model, num_workers=4, batch_size=16, class_mapping=class_mapping
     )
 
     evaluator.evaluate()
@@ -253,4 +234,3 @@ def test_evaluation_loop():
     assert len(y_true) == 25
     assert len(y_pred) == 25
     assert len(posteriors) == 25
-
