@@ -5,7 +5,8 @@ import torch
 from deepaudiox.modules.backbones import BACKBONES
 from deepaudiox.modules.base_audio_classifier import BaseAudioClassifier
 from deepaudiox.modules.classifier.classifier import MLPHead
-from deepaudiox.modules.projection.base_projection import BaseProjection
+from deepaudiox.modules.pooling.base_pooling import BasePooling
+from deepaudiox.modules.pooling.gap import GAP
 from deepaudiox.utils.downloader import Downloader
 from deepaudiox.utils.file_utils import load_checkpoint
 
@@ -16,7 +17,7 @@ class AudioClassifierConstructor(BaseAudioClassifier):
     Attributes:
         num_classes (int): Number of output classes.
         backbone_model (BaseBackbone): Backbone model for feature extraction.
-        projection (BaseProjection or None): Optional projection layer to adjust embedding dimensions.
+        pooling (BasePooling or None): Optional pooling layer to aggregate features. If None, GAP is used.
         emb_dim (int): Dimension of the embeddings after projection (if any).
         classifier (MLPHead): Classifier head for final predictions.
     """
@@ -25,7 +26,7 @@ class AudioClassifierConstructor(BaseAudioClassifier):
         self,
         num_classes: int,
         backbone: Literal["beats"],
-        projection: BaseProjection | None = None,
+        pooling: BasePooling | None = None,
         freeze_backbone: bool = False,
         sample_rate: int = 16000,
         classifier_hidden_layers: list[int] | None = None,
@@ -38,7 +39,7 @@ class AudioClassifierConstructor(BaseAudioClassifier):
         Args:
             num_classes (int): Number of output classes.
             backbone (Literal["beats"]): Backbone model to use for feature extraction.
-            projection (BaseProjection or None): Optional projection layer to adjust embedding dimensions.
+            pooling (BasePooling | None): Optional pooling layer to aggregate features. If None, GAP is used.
             freeze_backbone (bool): Whether to freeze the backbone weights during training.
             sample_rate (int): Sample frequency for audio input.
             classifier_hidden_layers (list[int] or None): Hidden layer sizes for the classifier head.
@@ -51,7 +52,7 @@ class AudioClassifierConstructor(BaseAudioClassifier):
             >>> model = AudioClassifierConstructor(
             ...     num_classes=10,
             ...     backbone="beats",
-            ...     projection=None,
+            ...     pooling=None,
             ...     freeze_backbone=True,
             ...     sample_rate=16000,
             ...     classifier_hidden_layers=[512, 256],
@@ -77,17 +78,11 @@ class AudioClassifierConstructor(BaseAudioClassifier):
             for p in self.backbone_model.parameters():
                 p.requires_grad = False
 
-        self.projection: BaseProjection | None = None
-
-        if projection is not None:
-            self.projection = projection
-            self.emb_dim = self.projection.out_dim
-        else:
-            self.emb_dim = self.backbone_model.out_dim
+        self.pooling = pooling or GAP()
 
         self.classifier = MLPHead(
             num_classes=num_classes,
-            in_dim=self.emb_dim,
+            in_dim=self.backbone_model.out_dim,
             hidden_layers=classifier_hidden_layers,
             activation=activation,
             apply_batch_norm=apply_batch_norm,
@@ -103,7 +98,8 @@ class AudioClassifierConstructor(BaseAudioClassifier):
             torch.Tensor: Logits of shape (B, num_classes)
         """
         embedding = self.get_embeddings(x)
-        x = self.classifier(embedding)
+        x = self.apply_pooling(embedding)
+        x = self.classifier(x)
 
         return x
 
@@ -114,11 +110,18 @@ class AudioClassifierConstructor(BaseAudioClassifier):
             x (torch.Tensor): Input waveforms of shape (B, T).
 
         Returns:
-            torch.Tensor: Extracted embeddings of shape (B, emb_dim).
+            torch.Tensor: Returns the feature map of the backbone model.
         """
 
-        return (
-            self.projection(self.backbone_model.forward_pipeline(x))
-            if self.projection
-            else self.backbone_model.forward_pipeline(x)
-        )
+        return self.backbone_model.forward_pipeline(x)
+
+    def apply_pooling(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply pooling to the input feature map.
+
+        Args:
+            x (torch.Tensor): Input feature map of shape (B, D, H, W) for CNNs or (B, T, D) for Transformers.
+
+        Returns:
+            torch.Tensor: Pooled tensor of shape (B, D).
+        """
+        return self.pooling(x)

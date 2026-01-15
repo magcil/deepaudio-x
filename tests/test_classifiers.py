@@ -2,38 +2,30 @@ import pytest
 import torch
 
 from deepaudiox.modules.audio_classifier_constructor import AudioClassifierConstructor
-from deepaudiox.modules.projection.projections import DivEncLayer
 
 
 @pytest.mark.parametrize(
-    "div_encoder_layer,sample_rate,duration_sec",
+    "sample_rate,duration_sec",
     [
-        (True, 8000, 3),
-        (True, 16000, 1),
-        (True, 22050, 5),
-        (False, 8000, 10),
-        (False, 16000, 1),
-        (False, 22050, 1),
+        (8000, 3),
+        (16000, 1),
+        (22050, 5),
+        (8000, 10),
+        (16000, 1),
+        (22050, 1),
     ],
 )
 class TestAudioClassifierConstructor:
     """Tests for AudioClassifierConstructor logic."""
 
     @pytest.fixture(autouse=True)
-    def setup_model(self, div_encoder_layer, sample_rate, duration_sec):
+    def setup_model(self, sample_rate, duration_sec):
         self.num_classes = 10
         self.duration_sec = duration_sec
         self.sample_rate = sample_rate
         self.samp_len = self.duration_sec * self.sample_rate
-        self.div_encoder_layer = div_encoder_layer
 
-        projection = None
-        if div_encoder_layer:
-            projection = DivEncLayer(in_dim=768, out_dim=128)
-
-        self.model = AudioClassifierConstructor(
-            num_classes=self.num_classes, backbone="beats", sample_rate=sample_rate, projection=projection
-        )
+        self.model = AudioClassifierConstructor(num_classes=self.num_classes, backbone="beats", sample_rate=sample_rate)
 
     def test_forward_waveform(self):
         x = torch.randn(4, self.samp_len)
@@ -46,8 +38,5 @@ class TestAudioClassifierConstructor:
         x = torch.randn(4, self.samp_len)
         embeddings = self.model.get_embeddings(x)
         assert embeddings.shape[0] == 4
-        assert embeddings.ndim == 2
-        if self.div_encoder_layer:
-            assert embeddings.shape[1] == 128
-        else:
-            assert embeddings.shape[1] == 768
+        assert embeddings.ndim == 3
+        assert embeddings.shape[-1] == 768

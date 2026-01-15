@@ -142,4 +142,4 @@ class BEATs(BaseBackbone):
             padding_mask=padding_mask,
         )
 
-        return x.mean(1)
+        return x
