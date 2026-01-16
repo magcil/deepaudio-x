@@ -28,7 +28,7 @@ class AudioClassifierConstructor(BaseAudioClassifier):
         self,
         num_classes: int,
         backbone: Literal["beats"] | BaseBackbone,
-        pooling: Literal["gap", "simpool"] | BasePooling | None = None,
+        pooling: Literal["gap", "simpool", "ep"] | BasePooling | None = None,
         freeze_backbone: bool = False,
         sample_rate: int = 16000,
         classifier_hidden_layers: list[int] | None = None,
@@ -108,7 +108,7 @@ class AudioClassifierConstructor(BaseAudioClassifier):
         model.sample_rate = sample_rate
         return model
 
-    def _resolve_pooling(self, pooling: Literal["gap", "simpool"] | BasePooling | None) -> BasePooling:
+    def _resolve_pooling(self, pooling: Literal["gap", "simpool", "ep"] | BasePooling | None) -> BasePooling:
         """Resolve pooling layer from literal, BasePooling instance, or None.
 
         Args:

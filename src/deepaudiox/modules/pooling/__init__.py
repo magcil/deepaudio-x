@@ -7,6 +7,7 @@ The 'pooling' package contains pooling modules for pooling the embeddings of the
 from collections.abc import Callable
 
 from deepaudiox.modules.pooling.base_pooling import BasePooling
+from deepaudiox.modules.pooling.ep import EfficientProbing
 from deepaudiox.modules.pooling.gap import GAP
 from deepaudiox.modules.pooling.simpool import SimPool
 
@@ -40,3 +41,13 @@ def simpool(dim: int, **kwargs) -> SimPool:
         dim (int): Input feature dimension.
     """
     return SimPool(dim=dim)
+
+
+@register_pooling("ep")
+def efficient_probing(dim: int, **kwargs) -> EfficientProbing:
+    """Efficient Probing Pooling.
+
+    Args:
+        dim (int): Input feature dimension.
+    """
+    return EfficientProbing(dim=dim, **kwargs)
