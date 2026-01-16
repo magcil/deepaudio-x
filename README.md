@@ -20,7 +20,7 @@ It is designed to let users train, evaluate, and run inference on **custom audio
 ## Installation
 
 ```bash
-pip install deepaudiox
+pip install deepaudio-x
 ```
 
 Or install from source:
