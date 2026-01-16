@@ -6,3 +6,5 @@ This package provides modules for:
 - Model architectures
 - Training, evaluation, and inference utilities
 """
+
+__version__ = "0.1.0"
