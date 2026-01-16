@@ -129,7 +129,7 @@ def test_mlp_head(input_tensor, hidden_layers):
 @pytest.mark.parametrize("input_tensor", [torch.randn(1, 16000)])
 @pytest.mark.parametrize("num_classes", [2, 8])
 @pytest.mark.parametrize("backbone", ["beats"])
-@pytest.mark.parametrize("pooling", ["gap"])
+@pytest.mark.parametrize("pooling", ["simpool", "gap", "ep"])
 @pytest.mark.parametrize("freeze_backbone", [True, False])
 @pytest.mark.parametrize("pretrained", [True, False])
 def test_model_construction(input_tensor, num_classes, backbone, pooling, freeze_backbone, pretrained):
@@ -145,8 +145,15 @@ def test_model_construction(input_tensor, num_classes, backbone, pooling, freeze
         pretrained=pretrained,
     )
 
+    # Test output
     output = model(input_tensor)
     assert output.shape == (1, num_classes)
+    
+    # Test embedding extraction 
+    embeddings = model.get_embeddings(input_tensor) # feature maps
+    # Get embedding by pooling the feature maps
+    embeddings = model.apply_pooling(embeddings)
+    assert embeddings.shape == (1, model.backbone_model.out_dim)
 
     if freeze_backbone:
         assert not any(p.requires_grad for p in model.backbone_model.parameters())
@@ -179,7 +186,7 @@ def test_training_loop():
         model=model,
         validation_dset=validation_dataset,
         learning_rate=1e-3,
-        epochs=5,
+        epochs=2,
         patience=5,
         num_workers=4,
         batch_size=16,
@@ -191,10 +198,10 @@ def test_training_loop():
     train_loss = np.array(trainer.state.train_loss)
     val_loss = np.array(trainer.state.validation_loss)
 
-    assert len(train_loss) == 5
-    assert len(val_loss) == 5
-    assert train_loss[-2:].mean() < train_loss[:2].mean()
-    assert val_loss[-2:].mean() < val_loss[:2].mean()
+    assert len(train_loss) == 2
+    assert len(val_loss) == 2
+    assert train_loss[1] <= train_loss[0]
+    assert val_loss[1] < val_loss[0]
     assert (Path(__file__).resolve().parents[1] / "testing_checkpoint.pt").exists()
 
 

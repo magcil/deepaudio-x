@@ -1,5 +1,28 @@
 # deepaudiox/modules/pooling/simpool.py
 
+# This file is derived from:
+# https://github.com/billpsomas/efficient-probing/blob/master/poolings/simpool.py
+
+# Copyright 2022 billpsomas
+# Copyright 2026 magcil
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Modifications:
+# - Adapted for audio classification pipelines in DeepAudioX.
+# - Changed class and method names to fit DeepAudioX conventions.
+# - Updated type hints and added docstrings for clarity.
+
 # Implementation of the SimPool pooling module: https://arxiv.org/abs/2309.06891
 import torch
 import torch.nn as nn
@@ -124,4 +147,4 @@ class SimPool(BasePooling):
             # Compute the weighted sum using attention scores
             x = (attn @ vv).transpose(1, 2).reshape(Bq, Nq, dq)
 
-        return x.squeeze()
+        return x.reshape(Bq, dq)
