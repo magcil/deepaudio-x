@@ -74,32 +74,34 @@ class EfficientProbing(BasePooling):
         self.cls_token = nn.Parameter(torch.randn(1, num_queries, dim) * 0.02)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        B, N, C = x.shape
+        if len(x.shape) == 4:  # CNN feature map (B, D, H, W)
+            B, N, H, W = x.shape
+            C = H * W
+            x = x.permute(0, 2, 3, 1).reshape(B, N, C)  # (B, N, C) where C=H*W
+        elif len(x.shape) == 3:  # Transformer feature map (B, N, C)
+            B, N, C = x.shape
+        else:
+            raise ValueError("Input tensor must be of shape (B, D, H, W) or (B, N, C)")
+
         C_prime = C // self.d_out
 
         cls_token = self.cls_token.expand(B, -1, -1)  # newly created class token
 
         # q: (B, num_queries, num_heads, head_dim) -> (B, num_heads, num_queries, head_dim)
         q = cls_token.reshape(B, self.num_queries, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
-        print(f"q shape: {q.shape}")
 
         # k: (B, N, num_heads, head_dim) -> (B, num_heads, N, head_dim)
         k = x.reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
-        print(f"k shape: {k.shape}")
 
         q = q * self.scale
 
         # self.v(x): (B, N, C // d_out) -> (B, N, num_queries, dv) -> (B, num_queries, N, dv)
         v = self.v(x).reshape(B, N, self.num_queries, C // (self.d_out * self.num_queries)).permute(0, 2, 1, 3)
-        print(f"v shape: {v.shape}")
 
         attn = q @ k.transpose(-2, -1)  # (B, num_heads, num_queries, N)
         attn = attn.softmax(dim=-1)
-        print(f"attn shape: {attn.shape}")
 
         x_cls = torch.matmul(attn.squeeze(1).unsqueeze(2), v)  # (B, num_heads, 1, num_queries, dv))
-        print(f"x_cls shape before reshape: {x_cls.shape}")
         x_cls = x_cls.view(B, C_prime)
-        print(f"x_cls shape after reshape: {x_cls.shape}")
 
         return x_cls
