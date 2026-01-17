@@ -58,10 +58,14 @@ data/
     └── ...
 ```
 
-You can load the dataset with a single function call:
+You can load the dataset as follows:
 
 ```python
-from deepaudiox.datasets.audio_classification_dataset import audio_classification_dataset_from_path
+from deepaudiox.datasets.audio_classification_dataset import audio_classification_dataset_from_dir
+from deepaudiox.utils.training_utils import get_class_mapping_from_dir
+
+# Define a class mapping
+class_mapping = get_class_mapping_from_dir(root_dir="path/to/data")
 
 dataset = audio_classification_dataset_from_path(
     root_path="path/to/data",
@@ -74,7 +78,6 @@ dataset = audio_classification_dataset_from_path(
 If your audio files aren't organized in subdirectories, or you need custom mappings, you can create a dictionary mapping file paths to class labels:
 
 ```python
-from pathlib import Path
 from deepaudiox.datasets.audio_classification_dataset import audio_classification_dataset_from_dictionary
 from deepaudiox.utils.training_utils import get_class_mapping
 
@@ -87,7 +90,6 @@ file_to_class_mapping = {
 }
 
 # Create a class-to-id mapping
-class_mapping = get_class_mapping("path/to/data")  # or create manually
 class_mapping = {"speech": 0, "music": 1, "noise": 2}
 
 # Initialize the dataset
@@ -104,8 +106,8 @@ To split long audio files into fixed-duration segments, use the `segment_duratio
 
 ```python
 # Create dataset with 2-second audio segments
-dataset = audio_classification_dataset_from_path(
-    root_path="path/to/data",
+dataset = audio_classification_dataset_from_dir(
+    root_dir="path/to/data",
     sample_rate=16_000,
     segment_duration=2.0  # Duration in seconds
     class_mapping=class_mapping
@@ -160,7 +162,7 @@ from deepaudiox.modules.audio_classifier_constructor import AudioClassifierConst
 classifier = AudioClassifierConstructor(
     num_classes=10,              # Number of output classes
     backbone="beats",            # Pretrained backbone (e.g., "beats")
-    sample_frequency=16_000,     # Audio sample rate
+    sample_rate=16_000,          # Audio sample rate
     pretrained=True,             # Use pretrained weights
     freeze_backbone=True         # Freeze backbone for fine-tuning
 )
@@ -175,7 +177,7 @@ classifier = AudioClassifierConstructor(
 ### Key Parameters
 
 - `num_classes`: Number of output classification classes
-- `sample_frequency`: Audio sampling rate (Hz) - must match your dataset
+- `sample_rate`: Audio sampling rate (Hz) - must match your dataset
 - `pretrained`: Whether to use pretrained weights (recommended)
 - `freeze_backbone`: Freeze backbone parameters during training (reduces parameters to fine-tune)
 
@@ -188,7 +190,7 @@ You can customize the pooling strategy used to aggregate audio features:
 classifier = AudioClassifierConstructor(
     num_classes=10,
     backbone="beats",
-    sample_frequency=16_000,
+    sample_rate=16_000,
     pretrained=True,
     freeze_backbone=True,
     pooling="gap"
@@ -197,8 +199,10 @@ classifier = AudioClassifierConstructor(
 
 Available pooling strategies include:
 - **GAP**: Simple average pooling
-- **SimPool**: As presented in Keep It SimPool: Who Said Supervised Transformers Suffer from Attention Deficit? (https://arxiv.org/pdf/2309.06891)
-- **EP**: Attention, Please! Revisiting Attentive Probing Through the Lens of Efficiency (https://arxiv.org/abs/2506.10178)
+- **SimPool**: As presented in "Keep It SimPool: Who Said Supervised Transformers Suffer from Attention Deficit?" (https://arxiv.org/pdf/2309.06891)
+- **EP**: As presented in "Attention, Please! Revisiting Attentive Probing Through the Lens of Efficiency"(https://arxiv.org/abs/2506.10178)
+
+Normally, attentive pooling methods like ep and simpool will perform better than the Global Average Pooling (GAP).
 
 The classifier is now ready for training or inference.
 
@@ -283,6 +287,8 @@ trainer.train()
 Evaluate your trained classifier on a test dataset using the `Evaluator` class:
 
 ```python
+import torch
+
 from deepaudiox.loops.evaluator import Evaluator
 
 # Initialize evaluator
@@ -293,6 +299,9 @@ evaluator = Evaluator(
     batch_size=32,
     num_workers=4
 )
+
+# Load model
+classifier.load_state_dict(torch.load("checkpoint.pt"))
 
 # Run evaluation
 evaluator.evaluate()
