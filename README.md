@@ -67,9 +67,10 @@ from deepaudiox.utils.training_utils import get_class_mapping_from_dir
 # Define a class mapping
 class_mapping = get_class_mapping_from_dir(root_dir="path/to/data")
 
-dataset = audio_classification_dataset_from_path(
-    root_path="path/to/data",
-    sample_rate=16_000  # sampling rate in Hz
+dataset = audio_classification_dataset_from_dir(
+    root_dir="path/to/data",
+    sample_rate=16_000,  # sampling rate in Hz
+    class_mapping=class_mapping
 )
 ```
 

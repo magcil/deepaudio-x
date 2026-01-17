@@ -1,6 +1,6 @@
 [project]
 name = "deepaudio-x"
-version = "0.1.4"
+version = "0.1.5"
 description = "DeepAudio-X: Self-supervised audio toolkit for audio classification and beyond."
 authors = [
   { name = "Christos Nikou", email = "chrisnick92@gmail.com" }, 
