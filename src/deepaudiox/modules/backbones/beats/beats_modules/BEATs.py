@@ -65,7 +65,10 @@ class BEATsConfig:
 
 class BEATs(BaseBackbone):
     def __init__(
-        self, cfg: BEATsConfig = BEATsConfig(), preprocess_flag: bool = True, sample_rate: int = 16_000
+        self, 
+        cfg: BEATsConfig = BEATsConfig(), 
+        preprocess_flag: bool = True, 
+        sample_rate: int = 16_000
     ) -> None:
         super().__init__(out_dim=768, sample_rate=sample_rate)
 

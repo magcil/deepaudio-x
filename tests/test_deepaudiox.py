@@ -90,7 +90,11 @@ def test_dataset_loading_from_dict(file_to_class_mapping, sample_rate):
 
 def test_dataset_splitting():
     class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
-    dataset = audio_classification_dataset_from_dir(root_dir=str(TRAIN_DIR), sample_rate=16000, class_mapping=class_mapping)
+    dataset = audio_classification_dataset_from_dir(
+        root_dir=str(TRAIN_DIR), 
+        sample_rate=16000, 
+        class_mapping=class_mapping
+    )
 
     train_dataset, validation_dataset = random_split_audio_dataset(dataset=dataset, train_ratio=0.8)
 

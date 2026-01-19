@@ -8,7 +8,10 @@ from tqdm import tqdm
 # Repository URL where the pretrained backbone models are hosted
 BACKBONE_REPO_URL = "https://github.com/magcil/pretrained-ssl-audio-backbones/raw/refs/heads/main/models/"
 
-BACKBONE_URLS = {"beats": BACKBONE_REPO_URL + "BEATs_iter3_plus_AS2M.pt"}
+BACKBONE_URLS = {
+    "beats": BACKBONE_REPO_URL + "BEATs_iter3_plus_AS2M.pt",
+    "passt": BACKBONE_REPO_URL + "passt-s-kd-ap.486.pt"
+}
 
 
 class Downloader:
