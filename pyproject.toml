@@ -15,6 +15,7 @@ dependencies = [
     "numpy>=2.3.3",
     "platformdirs>=4.5.0",
     "soundfile>=0.13.1",
+    "timm>=1.0.24",
     "torch>=2.8.0",
     "torchaudio>=2.8.0",
     "tqdm>=4.67.1",
@@ -30,7 +31,8 @@ dev = [
 # Set the maximum line length to 120
 line-length = 120
 exclude = [
-    "src/deepaudiox/modules/backbones/beats/beats_modules"
+    "src/deepaudiox/modules/backbones/beats/beats_modules",
+    "src/deepaudiox/modules/backbones/passt"
 ]
 
 [tool.ruff.lint]
