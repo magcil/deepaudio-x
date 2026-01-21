@@ -1,5 +1,4 @@
 import collections
-import warnings
 from itertools import repeat
 
 import torch
@@ -9,7 +8,18 @@ from deepaudiox.modules.backbones.passt.vit_helpers import DropPath
 
 
 class Mlp(nn.Module):
-    """ MLP as used in Vision Transformer, MLP-Mixer and related networks
+    """
+    Multilayer Perceptron (MLP) used in Vision Transformers.
+
+    Consists of two linear layers with an activation and dropout applied
+    between and after the layers.
+
+    Args:
+        in_features (int): Input feature dimension.
+        hidden_features (int, optional): Hidden layer dimension. Defaults to in_features.
+        out_features (int, optional): Output feature dimension. Defaults to in_features.
+        act_layer (nn.Module, optional): Activation function. Defaults to nn.GELU.
+        drop (float, optional): Dropout probability. Defaults to 0.
     """
     def __init__(
         self, 
@@ -28,6 +38,15 @@ class Mlp(nn.Module):
         self.drop = nn.Dropout(drop)
 
     def forward(self, x):
+        """
+        Forward pass through the MLP.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch, seq_len, in_features).
+
+        Returns:
+            torch.Tensor: Output tensor of shape (batch, seq_len, out_features).
+        """
         x = self.fc1(x)
         x = self.act(x)
         x = self.drop(x)
@@ -36,7 +55,20 @@ class Mlp(nn.Module):
         return x
 
 class PatchEmbed(nn.Module):
-    """ 2D Image to Patch Embedding
+    """
+    2D Patch Embedding layer for spectrogram or image input.
+
+    Converts an input image/spectrogram into non-overlapping or strided patches,
+    then projects each patch to a given embedding dimension.
+
+    Args:
+        img_size (int | tuple): Input image size (height, width).
+        patch_size (int | tuple): Size of each patch.
+        stride (int | tuple): Stride for patch extraction. Defaults to patch_size.
+        in_chans (int): Number of input channels. Defaults to 3.
+        embed_dim (int): Dimension of the output embeddings.
+        norm_layer (nn.Module, optional): Optional normalization layer. Defaults to None.
+        flatten (bool): If True, flattens patches into sequence (B, N, C). Defaults to True.
     """
     def __init__(
         self, 
@@ -65,6 +97,15 @@ class PatchEmbed(nn.Module):
 
     # From PyTorch internals
     def _ntuple(self, n):
+        """
+        Converts input into a tuple of length n.
+
+        Args:
+            n (int): Length of tuple.
+
+        Returns:
+            Callable: Function that converts input into tuple of length n.
+        """
         def parse(x):
             if isinstance(x, collections.abc.Iterable) and not isinstance(x, str):
                 return tuple(x)
@@ -72,13 +113,17 @@ class PatchEmbed(nn.Module):
         return parse
 
     def forward(self, x):
+        """
+        Forward pass to convert input image/spectrogram to patch embeddings.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (B, C, H, W).
+
+        Returns:
+            torch.Tensor: Patch embeddings of shape (B, N, embed_dim) if flatten=True,
+                          else (B, embed_dim, H_patch, W_patch).
+        """
         B, C, H, W = x.shape
-        if not (self.img_size[0] == H and self.img_size[1] == W):
-            warnings.warn(
-                f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]}).",
-                stacklevel=2
-            )
-        # to do maybe replace weights
         x = self.proj(x)
         if self.flatten:
             x = x.flatten(2).transpose(1, 2)  # BCHW -> BNC
@@ -86,6 +131,16 @@ class PatchEmbed(nn.Module):
         return x
 
 class Attention(nn.Module):
+    """
+    Multi-Head Self-Attention module.
+
+    Args:
+        dim (int): Input embedding dimension.
+        num_heads (int): Number of attention heads. Defaults to 8.
+        qkv_bias (bool): If True, include bias in Q/K/V projections. Defaults to False.
+        attn_drop (float): Dropout probability on attention weights. Defaults to 0.
+        proj_drop (float): Dropout probability on output projection. Defaults to 0.
+    """
     def __init__(
         self, 
         dim: int, 
@@ -106,6 +161,15 @@ class Attention(nn.Module):
         self.plus1_trick = False
         
     def forward(self, x):
+        """
+        Forward pass for multi-head attention.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (B, N, C).
+
+        Returns:
+            torch.Tensor: Output tensor of shape (B, N, C).
+        """
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]  # make torchscript happy (cannot use tensor as tuple)
@@ -126,6 +190,23 @@ class Attention(nn.Module):
         return x
 
 class Block(nn.Module):
+    """
+    Transformer encoder block.
+
+    Consists of LayerNorm -> Multi-Head Attention -> Add & Norm -> MLP -> Add & Norm,
+    with optional stochastic depth (DropPath).
+
+    Args:
+        dim (int): Input embedding dimension.
+        num_heads (int): Number of attention heads.
+        mlp_ratio (float): Hidden dimension ratio for MLP. Defaults to 4.0.
+        qkv_bias (bool): If True, include bias in Q/K/V projections. Defaults to False.
+        drop (float): Dropout probability. Defaults to 0.
+        attn_drop (float): Dropout probability for attention. Defaults to 0.
+        drop_path (float): Stochastic depth rate. Defaults to 0.
+        act_layer (nn.Module): Activation function for MLP. Defaults to nn.GELU.
+        norm_layer (nn.Module): Normalization layer. Defaults to nn.LayerNorm.
+    """
     def __init__(
         self, 
         dim: int, 
@@ -148,6 +229,15 @@ class Block(nn.Module):
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
 
     def forward(self, x):
+        """
+        Forward pass through the transformer block.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (B, N, C).
+
+        Returns:
+            torch.Tensor: Output tensor of same shape as input.
+        """
         x = x + self.drop_path(self.attn(self.norm1(x)))
         x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
