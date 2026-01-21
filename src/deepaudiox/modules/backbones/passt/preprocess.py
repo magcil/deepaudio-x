@@ -2,7 +2,31 @@ import torch
 import torch.nn as nn
 import torchaudio
 
+
 class AugmentMelSTFT(nn.Module):
+    """
+    Computes a Mel-scaled spectrogram from audio waveforms with optional 
+    frequency and time masking for data augmentation.
+
+    This module applies pre-emphasis filtering, short-time Fourier transform 
+    (STFT), conversion to power spectrogram, Mel filterbank, log compression,
+    and optional frequency/time masking augmentation during training.
+
+    Args:
+        n_mels (int): Number of Mel bands. Defaults to 128.
+        sr (int): Sampling rate of input audio. Defaults to 32000.
+        win_length (int): Window size for STFT. Defaults to 800.
+        hopsize (int): Hop size for STFT. Defaults to 320.
+        n_fft (int): Number of FFT points. Defaults to 1024.
+        freqm (int): Maximum width for frequency masking. 0 disables masking. Defaults to 48.
+        timem (int): Maximum width for time masking. 0 disables masking. Defaults to 192.
+        htk (bool): Whether to use HTK formula for Mel scale. Defaults to False.
+        fmin (float): Minimum frequency for Mel scale. Defaults to 0.0 Hz.
+        fmax (float): Maximum frequency for Mel scale. Defaults to sr/2 minus half of fmax_aug_range.
+        norm (int): Normalization mode for Mel filterbanks. Defaults to 1.
+        fmin_aug_range (int): Frequency augmentation range for fmin. Must be >=1. Defaults to 10.
+        fmax_aug_range (int): Frequency augmentation range for fmax. Must be >=1. Defaults to 2000.
+    """
     def __init__(
         self,
         n_mels = 128, 
@@ -20,8 +44,6 @@ class AugmentMelSTFT(nn.Module):
         fmax_aug_range = 2000
     ):
         torch.nn.Module.__init__(self)
-        # adapted from: https://github.com/CPJKU/kagglebirds2020/commit/70f8308b39011b09d41eb0f4ace5aa7d2b0e806e
-        # Similar config to the spectrograms used in AST: https://github.com/YuanGongND/ast
         self.win_length = win_length
         self.n_mels = n_mels
         self.n_fft = n_fft
@@ -30,7 +52,6 @@ class AugmentMelSTFT(nn.Module):
         self.fmin = fmin
         if fmax is None:
             fmax = sr // 2 - fmax_aug_range // 2
-            print(f"Warning: FMAX is None setting to {fmax} ")
         self.fmax = fmax
         self.norm = norm
         self.hopsize = hopsize
@@ -39,8 +60,11 @@ class AugmentMelSTFT(nn.Module):
             torch.hann_window(win_length, periodic=False),
             persistent=False
         )
-        assert fmin_aug_range >= 1, f"fmin_aug_range={fmin_aug_range} should be >=1; 1 means no augmentation"
-        assert fmin_aug_range >= 1, f"fmax_aug_range={fmax_aug_range} should be >=1; 1 means no augmentation"
+        if fmin_aug_range < 1:
+            raise ValueError(f"fmin_aug_range={fmin_aug_range} should be >=1; 1 means no augmentation")
+        if fmax_aug_range < 1:
+            raise ValueError(f"fmax_aug_range={fmax_aug_range} should be >=1; 1 means no augmentation")
+            
         self.fmin_aug_range = fmin_aug_range
         self.fmax_aug_range = fmax_aug_range
 
@@ -55,6 +79,16 @@ class AugmentMelSTFT(nn.Module):
             self.timem = torchaudio.transforms.TimeMasking(timem, iid_masks=True)
 
     def forward(self, x):
+        """
+        Compute augmented Mel spectrogram.
+
+        Args:
+            x (torch.Tensor): Input waveform tensor of shape (batch, time).
+
+        Returns:
+            torch.Tensor: Mel spectrogram tensor of shape (batch, n_mels, time_frames),
+                          log-compressed and optionally augmented during training.
+        """
         x = nn.functional.conv1d(x.unsqueeze(1), self.preemphasis_coefficient).squeeze(1)
         x = torch.stft(
             x, 
@@ -64,8 +98,9 @@ class AugmentMelSTFT(nn.Module):
             center=True, 
             normalized=False, 
             window=self.window, 
-            return_complex=False
+            return_complex=True
         )
+        x = torch.view_as_real(x)
         x = (x ** 2).sum(dim=-1)  # power mag
         fmin = self.fmin + torch.randint(self.fmin_aug_range, (1,)).item()
         fmax = self.fmax + self.fmax_aug_range // 2 - torch.randint(self.fmax_aug_range, (1,)).item()
@@ -92,7 +127,7 @@ class AugmentMelSTFT(nn.Module):
             ),
              device=x.device
         )
-        with torch.cuda.amp.autocast(enabled=False):
+        with torch.amp.autocast("cuda", enabled=False):
             melspec = torch.matmul(mel_basis, x)
 
         melspec = (melspec + 0.00001).log()
@@ -106,5 +141,11 @@ class AugmentMelSTFT(nn.Module):
         return melspec
 
     def extra_repr(self):
+        """
+        Extra representation for printing.
+
+        Returns:
+            str: Information about window and hop size.
+        """
         return f'winsize={self.win_length}, hopsize={self.hopsize}'
 

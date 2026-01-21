@@ -5,9 +5,7 @@ We tried to disentangle from the timm library version.
 Adapted from https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py
 
 """
-import logging
 import math
-import warnings
 from collections import OrderedDict
 from functools import partial
 
@@ -18,18 +16,49 @@ import torch.nn.functional as F
 from deepaudiox.modules.backbones.base_backbone import BaseBackbone
 from deepaudiox.modules.backbones.passt.modules import Block, PatchEmbed
 from deepaudiox.modules.backbones.passt.preprocess import AugmentMelSTFT
-from deepaudiox.modules.backbones.passt.vit_helpers import (
-    init_vit_weights,
-    load_pretrained_weights,
-    trunc_normal_,
-)
+from deepaudiox.modules.backbones.passt.vit_helpers import init_vit_weights, trunc_normal_
 
-# Global variables
-_logger = logging.getLogger()
 
 class PaSSTConfig:
+    """
+    Configuration class for PaSST (Patchout Spectrogram Transformer).
+
+    Stores all hyperparameters and settings for the PaSST model,
+    including model architecture, patch sizes, positional embeddings,
+    dropout rates, and other training-related options.
+
+    Args:
+        cfg (dict, optional): A dictionary of config overrides. Defaults to None.
+
+    Attributes:
+        num_classes (int): Number of output classes.
+        pool_size (tuple | None): Pooling size for feature maps.
+        crop_pct (float): Fraction of the image to crop when resizing.
+        interpolation (str): Interpolation method for resizing ('bicubic', 'bilinear', etc.).
+        fixed_input_size (bool): Whether the input size is fixed.
+        mean (tuple): Input normalization mean.
+        std (tuple): Input normalization std.
+        first_conv (str): Name of the first convolutional layer.
+        classifiers (tuple): Names of classifier layers.
+        u_patchout, s_patchout_t, s_patchout_f (int): Patchout parameters for data augmentation.
+        embed_dim (int): Embedding dimension.
+        distilled (bool): Whether to use knowledge distillation token.
+        pretrained (bool): Whether pretrained weights are used.
+        img_size (tuple): Input image/spectrogram size (frequency x time).
+        patch_size (int): Patch size.
+        fstride, tstride (int): Frequency and time stride for patching.
+        in_chans (int): Number of input channels.
+        depth (int): Number of transformer blocks.
+        num_heads (int): Number of attention heads.
+        mlp_ratio (float): Ratio of hidden dimension in MLP relative to embedding.
+        qkv_bias (bool): If True, include bias in Q/K/V projections.
+        representation_size (int | None): Size of the representation layer, if used.
+        drop_rate, attn_drop_rate, drop_path_rate (float): Dropout rates.
+        norm_layer, act_layer (nn.Module | None): Normalization and activation layers.
+        weight_init (str): Weight initialization method.
+    """
+
     def __init__(self, cfg=None):
-        self.url = 'https://github.com/kkoutini/PaSST/releases/download/v.0.0.9/passt-s-kd-ap.486.pt'
         self.num_classes = 527, 
         self.pool_size = None
         self.crop_pct = 1.0
@@ -66,16 +95,55 @@ class PaSSTConfig:
             self.update(cfg)
 
     def update(self, cfg: dict):
+        """
+        Update the configuration using a dictionary.
+
+        Args:
+            cfg (dict): Dictionary containing configuration keys and values to update.
+        """
         self.__dict__.update(cfg)
 
 class PaSST(BaseBackbone):
-    def __init__(
-        self, 
-        cfg: PaSSTConfig = PaSSTConfig(),
-        sample_rate: int = 16_000
-    ):
+    """
+    Patchout Spectrogram Transformer (PaSST) backbone.
+
+    A transformer-based model for audio classification that operates
+    on spectrogram inputs and uses patchout regularization. Supports
+    distillation tokens, positional embeddings in both time and frequency
+    dimensions, and multiple patchout strategies.
+
+    Pretrained checkpoint: https://github.com/kkoutini/PaSST/releases/download/v.0.0.9/passt-s-kd-ap.486.pt
+
+    Args:
+        cfg (PaSSTConfig | None): Model configuration. Defaults to None.
+        sample_rate (int): Input audio sample rate. Defaults to 16_000 Hz.
+
+    Attributes:
+        feature_extractor (nn.Module): Converts waveforms to spectrograms.
+        patch_embed (PatchEmbed): Converts spectrograms to patch embeddings.
+        cls_token (nn.Parameter): Class token embedding.
+        dist_token (nn.Parameter | None): Distillation token embedding.
+        new_pos_embed, freq_new_pos_embed, time_new_pos_embed (nn.Parameter): Positional embeddings.
+        blocks (nn.Sequential): Transformer blocks.
+        norm (nn.Module): Layer normalization applied to final features.
+        pre_logits (nn.Module): Optional representation layer before classifier.
+    """
+    
+    def __init__(self, cfg: PaSSTConfig | None = None, sample_rate: int = 16_000):
+        """_summary_
+
+        Args:
+            cfg (PaSSTConfig | None, optional): _description_. Defaults to None.
+            sample_rate (int, optional): _description_. Defaults to 16_000.
+
+        Raises:
+            ValueError: _description_
+        """
         super().__init__(out_dim=768, sample_rate=sample_rate)
-        self.cfg = cfg
+        if cfg is None:
+            self.cfg = PaSSTConfig()
+        else:
+            self.cfg = cfg
         self.feature_extractor = AugmentMelSTFT()
 
         self.num_classes = self.cfg.num_classes
@@ -144,25 +212,32 @@ class PaSST(BaseBackbone):
         trunc_normal_(self.cls_token, std=.02)
         self.apply(init_vit_weights)
 
-        # Load pre-trained weights
-        if self.cfg.url is not None:
-            load_pretrained_weights(
-                model = self,
-                pretrained_url = self.cfg.url,
-                num_classes = self.num_classes,
-                in_chans = self.cfg.in_chans,
-                filter_fn = checkpoint_filter_fn,
-                strict = True,
-                first_conv = self.cfg.first_conv,
-                classifiers = self.classifiers
-            )
-
     def extract_features(self, waveforms: torch.Tensor) -> torch.Tensor:
+        """
+        Convert raw audio waveforms into spectrogram features.
+
+        Args:
+            waveforms (torch.Tensor): Audio tensor of shape (batch, time).
+
+        Returns:
+            torch.Tensor: Spectrogram features of shape (batch, 1, freq, time).
+        """
         features = self.feature_extractor(waveforms)
         features = features.unsqueeze(1)
         return features
 
     def forward(self, features: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass of the PaSST backbone.
+
+        Args:
+            features (torch.Tensor): Input spectrogram features (batch, channels, freq, time).
+
+        Returns:
+            torch.Tensor: Transformer features after patch embedding, positional encoding, 
+                          transformer blocks, and normalization. Returns features excluding
+                          class/distillation tokens.
+        """
         features = self.patch_embed(features)
         B_dim, E_dim, F_dim, T_dim = features.shape 
         time_new_pos_embed = self.time_new_pos_embed
@@ -204,9 +279,9 @@ class PaSST(BaseBackbone):
         # else:
         #     return features[:, 0], features[:, 1]
         if self.dist_token is None:
-            return self.pre_logits(features)
+            return self.pre_logits(features[:, 1:])
         else:
-            return features
+            return self.pre_logits(features[:, 2:])
 
 def adapt_image_pos_embed_to_passt(
     posemb, 
@@ -214,9 +289,21 @@ def adapt_image_pos_embed_to_passt(
     gs_new=(), 
     mode='bicubic'
 ):
-    # Rescale the grid of position embeddings when loading from state_dict. Adapted from
-    # https://github.com/google-research/vision_transformer/blob/00883dd691c63a6830751563748663526e811cee/vit_jax/checkpoint.py#L224
-    _logger.info('Resized position embedding: %s to %s with %s cls/dis tokens', posemb.shape, gs_new, num_tokens)
+    """
+    Adapt a 2D positional embedding from an image model to the PaSST spectrogram.
+
+    Args:
+        posemb (torch.Tensor): Original positional embeddings (1, num_patches + num_tokens, dim).
+        num_tokens (int): Number of special tokens (class/distillation).
+        gs_new (tuple): New grid size (freq, time) for the spectrogram.
+        mode (str): Interpolation mode for resizing ('bicubic', 'bilinear', etc.).
+
+    Returns:
+        tuple: (posemb_tok, freq_new_pos_embed, time_new_pos_embed)
+            - posemb_tok: Token embeddings.
+            - freq_new_pos_embed: Frequency-wise positional embedding.
+            - time_new_pos_embed: Time-wise positional embedding.
+    """
     
     if num_tokens:
         posemb_tok, posemb_grid = posemb[:, :num_tokens], posemb[0, num_tokens:]
@@ -225,18 +312,13 @@ def adapt_image_pos_embed_to_passt(
         
     gs_old = int(math.sqrt(len(posemb_grid)))
 
-    assert len(gs_new) >= 2
-
-    _logger.info('Position embedding grid-size from %s to %s', [gs_old, gs_old], gs_new)
+    if (len(gs_new) < 2):
+        raise ValueError(f"Variable gs_old can not be smaller than 2, given value: {gs_new}")
 
     posemb_grid = posemb_grid.reshape(1, gs_old, gs_old, -1).permute(0, 3, 1, 2)
     posemb_grid = F.interpolate(posemb_grid, size=gs_new, mode=mode, align_corners=False)
     freq_new_pos_embed = posemb_grid.mean(dim=3, keepdim=True)
     time_new_pos_embed = posemb_grid.mean(dim=2, keepdim=True)
-
-    _logger.info('New Position cls/dstl embedding %s', posemb_tok.shape)
-    _logger.info('New FREQ Position embedding %s', freq_new_pos_embed.shape)
-    _logger.info('New TIME Position embedding %s', time_new_pos_embed.shape)
     
     return posemb_tok, freq_new_pos_embed, time_new_pos_embed
 
@@ -247,9 +329,21 @@ def resize_pos_embed(
     gs_new=(), 
     mode='bicubic'
 ):
-    # Rescale the grid of position embeddings when loading from state_dict. Adapted from
-    # https://github.com/google-research/vision_transformer/blob/00883dd691c63a6830751563748663526e811cee/vit_jax/checkpoint.py#L224
-    _logger.info('Resized position embedding: %s to %s with %s cls/dis tokens', posemb.shape, posemb_new.shape, num_tokens)
+    """
+    Resize the positional embeddings to match a new model configuration.
+
+    Used when loading pretrained weights from a different input resolution.
+
+    Args:
+        posemb (torch.Tensor): Original positional embeddings.
+        posemb_new (torch.Tensor): Target positional embeddings shape.
+        num_tokens (int): Number of special tokens.
+        gs_new (tuple): New grid size (freq, time). If empty, inferred from target.
+        mode (str): Interpolation mode for resizing.
+
+    Returns:
+        torch.Tensor: Resized positional embeddings.
+    """
     ntok_new = posemb_new.shape[1]
     if num_tokens:
         posemb_tok, posemb_grid = posemb[:, :num_tokens], posemb[0, num_tokens:]
@@ -259,79 +353,10 @@ def resize_pos_embed(
     gs_old = int(math.sqrt(len(posemb_grid)))
     if not len(gs_new):  # backwards compatibility
         gs_new = [int(math.sqrt(ntok_new))] * 2
-    assert len(gs_new) >= 2
-    _logger.info('Position embedding grid-size from %s to %s', [gs_old, gs_old], gs_new)
+
     posemb_grid = posemb_grid.reshape(1, gs_old, gs_old, -1).permute(0, 3, 1, 2)
     posemb_grid = F.interpolate(posemb_grid, size=gs_new, mode=mode, align_corners=False)
     posemb_grid = posemb_grid.permute(0, 2, 3, 1).reshape(1, gs_new[0] * gs_new[1], -1)
     posemb = torch.cat([posemb_tok, posemb_grid], dim=1)
+    
     return posemb
-
-def checkpoint_filter_fn(state_dict, model):
-    """
-    Convert patch embedding weights from manual patchify + linear projection
-    to convolution-based patch embedding and adapt positional embeddings.
-    """
-    out_dict = {}
-
-    # Handle checkpoints saved as {"model": state_dict}
-    if "model" in state_dict:
-        state_dict = state_dict["model"]
-
-    state_dict = {k: v for k, v in state_dict.items()}
-
-    # --------------------------------------------------
-    # Adapt ImageNet positional embeddings to PaSST
-    # --------------------------------------------------
-    if "time_new_pos_embed" not in state_dict:
-        _logger.info(
-            "Adapting pos embedding from ImageNet pretrained model to PaSST."
-        )
-
-        pos_embed = state_dict.pop("pos_embed")
-        (
-            new_pos_embed,
-            freq_new_pos_embed,
-            time_new_pos_embed,
-        ) = adapt_image_pos_embed_to_passt(
-            pos_embed,
-            getattr(model, "num_tokens", 1),
-            model.patch_embed.grid_size,
-        )
-
-        state_dict["new_pos_embed"] = new_pos_embed
-        state_dict["freq_new_pos_embed"] = freq_new_pos_embed
-        state_dict["time_new_pos_embed"] = time_new_pos_embed
-
-    # --------------------------------------------------
-    # Process remaining parameters
-    # --------------------------------------------------
-    for key, value in state_dict.items():
-        if "patch_embed.proj.weight" in key and value.ndim < 4:
-            # Old models: linear patch embedding → conv patch embedding
-            (
-                out_channels,
-                in_channels,
-                kernel_height,
-                kernel_width,
-            ) = model.patch_embed.proj.weight.shape
-
-            value = value.reshape(
-                out_channels,
-                -1,
-                kernel_height,
-                kernel_width,
-            )
-
-        elif key == "pos_embed" and value.shape != model.new_pos_embed.shape:
-            # Defensive resize (should rarely occur)
-            value = resize_pos_embed(
-                value,
-                model.new_pos_embed,
-                getattr(model, "num_tokens", 1),
-                model.patch_embed.grid_size,
-            )
-
-        out_dict[key] = value
-
-    return out_dict
