@@ -50,6 +50,7 @@ class BEATsConfig:
         predictor_dropout (float): Dropout probability for the predictor.
         predictor_class (int): Number of target classes for predictor.
     """
+
     def __init__(self, cfg=None):
         self.input_patch_size: int = 16
         self.embed_dim: int = 512
@@ -101,12 +102,8 @@ class BEATs(BaseBackbone):
         preprocess_flag (bool): Whether to perform preprocessing on input waveforms.
         sample_rate (int): Sampling rate of input audio.
     """
-    def __init__(
-        self, 
-        cfg: BEATsConfig | None = None, 
-        preprocess_flag: bool = True, 
-        sample_rate: int = 16_000
-    ) -> None:
+
+    def __init__(self, cfg: BEATsConfig | None = None, preprocess_flag: bool = True, sample_rate: int = 16_000) -> None:
         super().__init__(out_dim=768, sample_rate=sample_rate)
 
         if cfg is None:
@@ -119,9 +116,7 @@ class BEATs(BaseBackbone):
 
         self.embed = self.cfg.embed_dim
         self.post_extract_proj = (
-            nn.Linear(self.embed, self.cfg.encoder_embed_dim) 
-            if self.embed != self.cfg.encoder_embed_dim 
-            else None
+            nn.Linear(self.embed, self.cfg.encoder_embed_dim) if self.embed != self.cfg.encoder_embed_dim else None
         )
 
         self.input_patch_size = self.cfg.input_patch_size
@@ -132,10 +127,8 @@ class BEATs(BaseBackbone):
         self.dropout_input = nn.Dropout(self.cfg.dropout_input)
 
         if self.cfg.deep_norm and self.cfg.layer_norm_first:
-            raise ValueError(
-                "deep_norm and layer_norm_first cannot both be True at the same time"
-            )
-            
+            raise ValueError("deep_norm and layer_norm_first cannot both be True at the same time")
+
         self.encoder = TransformerEncoder(self.cfg)
         self.layer_norm = LayerNorm(self.embed)
 
@@ -157,7 +150,7 @@ class BEATs(BaseBackbone):
             padding_mask (torch.Tensor): Input padding mask.
 
         Returns:
-            torch.Tensor: Adjusted padding mask, 
+            torch.Tensor: Adjusted padding mask,
                           True for valid tokens, False for padded positions.
         """
         extra = padding_mask.size(1) % features.size(1)

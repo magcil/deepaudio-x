@@ -27,7 +27,7 @@ class AudioClassifierConstructor(BaseAudioClassifier):
     def __init__(
         self,
         num_classes: int,
-        backbone: Literal["beats"] | BaseBackbone,
+        backbone: Literal["beats", "passt"] | BaseBackbone,
         pooling: Literal["gap", "simpool", "ep"] | BasePooling | None = None,
         freeze_backbone: bool = False,
         sample_rate: int = 16000,
@@ -83,7 +83,7 @@ class AudioClassifierConstructor(BaseAudioClassifier):
         )
 
     def _resolve_backbone(
-        self, backbone: Literal["beats"] | BaseBackbone, pretrained: bool, sample_rate: int
+        self, backbone: Literal["beats", "passt"] | BaseBackbone, pretrained: bool, sample_rate: int
     ) -> BaseBackbone:
         """Resolve backbone from literal or BaseBackbone instance.
 

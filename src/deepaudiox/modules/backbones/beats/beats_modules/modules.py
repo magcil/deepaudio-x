@@ -19,6 +19,7 @@ class GradMultiply(torch.autograd.Function):
     Scales the gradient during the backward pass by a given factor while
     leaving the forward pass unchanged. Useful for custom gradient manipulation.
     """
+
     @staticmethod
     def forward(ctx, x, scale):
         """Forward pass.
@@ -54,6 +55,7 @@ class SamePad(nn.Module):
 
     Can be used for causal or non-causal padding in convolutional layers.
     """
+
     def __init__(self, kernel_size: int, causal: bool = False):
         """
         Args:
@@ -76,12 +78,13 @@ class SamePad(nn.Module):
             torch.Tensor: Tensor after removing extra positions for "same" padding.
         """
         if self.remove > 0:
-            x = x[:, :, :-self.remove]
+            x = x[:, :, : -self.remove]
         return x
 
 
 class Swish(nn.Module):
     """Swish activation function: x * sigmoid(x)."""
+
     def __init__(self):
         super().__init__()
         self.act = torch.nn.Sigmoid()
@@ -103,6 +106,7 @@ class GLU_Linear(nn.Module):
 
     Supports different GLU types including sigmoid, swish, relu, and gelu.
     """
+
     def __init__(self, input_dim: int, output_dim: int, glu_type: str = "sigmoid", bias_in_glu: bool = True):
         """
         Args:
@@ -139,9 +143,9 @@ class GLU_Linear(nn.Module):
         x = self.linear(x)
 
         if self.glu_type == "bilinear":
-            x = x[:, :, :self.output_dim] * x[:, :, self.output_dim: self.output_dim * 2]
+            x = x[:, :, : self.output_dim] * x[:, :, self.output_dim : self.output_dim * 2]
         else:
-            x = x[:, :, :self.output_dim] * self.glu_act(x[:, :, self.output_dim: self.output_dim * 2])
+            x = x[:, :, : self.output_dim] * self.glu_act(x[:, :, self.output_dim : self.output_dim * 2])
 
         return x
 
@@ -203,10 +207,7 @@ def quant_noise(module: nn.Module, p: float, block_size: int) -> nn.Module:
         return module
 
     if not isinstance(module, (nn.Linear, nn.Embedding, nn.Conv2d)):
-        raise ValueError(
-            f"Expected module to be one of (nn.Linear, nn.Embedding, nn.Conv2d), "
-            f"but got {type(module)}"
-        )
+        raise ValueError(f"Expected module to be one of (nn.Linear, nn.Embedding, nn.Conv2d), but got {type(module)}")
 
     is_conv = module.weight.ndim == 4
 
