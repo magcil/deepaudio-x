@@ -5,6 +5,7 @@ We tried to disentangle from the timm library version.
 Adapted from https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py
 
 """
+
 import math
 from collections import OrderedDict
 from functools import partial
@@ -59,15 +60,15 @@ class PaSSTConfig:
     """
 
     def __init__(self, cfg=None):
-        self.num_classes = 527, 
+        self.num_classes = (527,)
         self.pool_size = None
         self.crop_pct = 1.0
-        self.interpolation = 'bicubic'
+        self.interpolation = "bicubic"
         self.fixed_input_size = True
         self.mean = (0.485, 0.456, 0.406)
         self.std = (0.229, 0.224, 0.225)
-        self.first_conv = 'patch_embed.proj' 
-        self.classifiers = ('head.1', 'head_dist')
+        self.first_conv = "patch_embed.proj"
+        self.classifiers = ("head.1", "head_dist")
         self.u_patchout = 0
         self.s_patchout_t = 0
         self.s_patchout_f = 0
@@ -81,15 +82,15 @@ class PaSSTConfig:
         self.in_chans = 1
         self.depth = 12
         self.num_heads = 12
-        self.mlp_ratio = 4.
+        self.mlp_ratio = 4.0
         self.qkv_bias = True
         self.representation_size = None
-        self.drop_rate = 0.
-        self.attn_drop_rate = 0.
-        self.drop_path_rate = 0.
+        self.drop_rate = 0.0
+        self.attn_drop_rate = 0.0
+        self.drop_path_rate = 0.0
         self.norm_layer = None
         self.act_layer = None
-        self.weight_init = ''
+        self.weight_init = ""
 
         if cfg is not None:
             self.update(cfg)
@@ -102,6 +103,7 @@ class PaSSTConfig:
             cfg (dict): Dictionary containing configuration keys and values to update.
         """
         self.__dict__.update(cfg)
+
 
 class PaSST(BaseBackbone):
     """
@@ -128,7 +130,7 @@ class PaSST(BaseBackbone):
         norm (nn.Module): Layer normalization applied to final features.
         pre_logits (nn.Module): Optional representation layer before classifier.
     """
-    
+
     def __init__(self, cfg: PaSSTConfig | None = None, sample_rate: int = 16_000):
         """_summary_
 
@@ -150,17 +152,17 @@ class PaSST(BaseBackbone):
         self.u_patchout = self.cfg.u_patchout
         self.s_patchout_t = self.cfg.s_patchout_t
         self.s_patchout_f = self.cfg.s_patchout_f
-        self.num_features = self.embed_dim = self.cfg.embed_dim 
+        self.num_features = self.embed_dim = self.cfg.embed_dim
         self.num_tokens = 2 if self.cfg.distilled else 1
         self.embed_dim = self.cfg.embed_dim
         self.classifiers = self.cfg.classifiers
         self.patch_embed = PatchEmbed(
-            img_size=self.cfg.img_size, 
-            patch_size=self.cfg.patch_size, 
-            stride=(self.cfg.fstride, self.cfg.tstride), 
-            in_chans=self.cfg.in_chans, 
+            img_size=self.cfg.img_size,
+            patch_size=self.cfg.patch_size,
+            stride=(self.cfg.fstride, self.cfg.tstride),
+            in_chans=self.cfg.in_chans,
             embed_dim=self.embed_dim,
-            flatten=False
+            flatten=False,
         )
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, self.embed_dim))
@@ -173,43 +175,43 @@ class PaSST(BaseBackbone):
 
         norm_layer = self.cfg.norm_layer or partial(nn.LayerNorm, eps=1e-6)
         dpr = [x.item() for x in torch.linspace(0, self.cfg.drop_path_rate, self.cfg.depth)]
-        self.blocks = nn.Sequential(*[
-            Block(
-                dim=self.embed_dim, 
-                num_heads=self.cfg.num_heads, 
-                mlp_ratio=self.cfg.mlp_ratio, 
-                qkv_bias=self.cfg.qkv_bias, 
-                drop=self.cfg.drop_rate,
-                attn_drop=self.cfg.attn_drop_rate, 
-                drop_path=dpr[i], 
-                norm_layer=norm_layer, 
-                act_layer=self.cfg.act_layer or nn.GELU
-            )
-            for i in range(self.cfg.depth)])
+        self.blocks = nn.Sequential(
+            *[
+                Block(
+                    dim=self.embed_dim,
+                    num_heads=self.cfg.num_heads,
+                    mlp_ratio=self.cfg.mlp_ratio,
+                    qkv_bias=self.cfg.qkv_bias,
+                    drop=self.cfg.drop_rate,
+                    attn_drop=self.cfg.attn_drop_rate,
+                    drop_path=dpr[i],
+                    norm_layer=norm_layer,
+                    act_layer=self.cfg.act_layer or nn.GELU,
+                )
+                for i in range(self.cfg.depth)
+            ]
+        )
         self.norm = norm_layer(self.embed_dim)
 
         # Representation layer
         if self.cfg.representation_size and not self.distilled:
             self.num_features = self.cfg.representation_size
             self.pre_logits = nn.Sequential(
-                OrderedDict([
-                    ('fc', nn.Linear(self.embed_dim, self.cfg.representation_size)),
-                    ('act', nn.Tanh())
-                ])
+                OrderedDict([("fc", nn.Linear(self.embed_dim, self.cfg.representation_size)), ("act", nn.Tanh())])
             )
         else:
-            self.pre_logits = nn.Identity()        
-        
+            self.pre_logits = nn.Identity()
+
         # Initialize weights
-        if self.cfg.weight_init not in ['nlhb', '']:
+        if self.cfg.weight_init not in ["nlhb", ""]:
             raise ValueError(f"Unsuported weight initialization mode: {self.cfg.weight_init}")
 
-        trunc_normal_(self.new_pos_embed, std=.02)
-        trunc_normal_(self.freq_new_pos_embed, std=.02)
-        trunc_normal_(self.time_new_pos_embed, std=.02)
+        trunc_normal_(self.new_pos_embed, std=0.02)
+        trunc_normal_(self.freq_new_pos_embed, std=0.02)
+        trunc_normal_(self.time_new_pos_embed, std=0.02)
         if self.dist_token is not None:
-            trunc_normal_(self.dist_token, std=.02)
-        trunc_normal_(self.cls_token, std=.02)
+            trunc_normal_(self.dist_token, std=0.02)
+        trunc_normal_(self.cls_token, std=0.02)
         self.apply(init_vit_weights)
 
     def extract_features(self, waveforms: torch.Tensor) -> torch.Tensor:
@@ -234,32 +236,32 @@ class PaSST(BaseBackbone):
             features (torch.Tensor): Input spectrogram features (batch, channels, freq, time).
 
         Returns:
-            torch.Tensor: Transformer features after patch embedding, positional encoding, 
+            torch.Tensor: Transformer features after patch embedding, positional encoding,
                           transformer blocks, and normalization. Returns features excluding
                           class/distillation tokens.
         """
         features = self.patch_embed(features)
-        B_dim, E_dim, F_dim, T_dim = features.shape 
+        B_dim, E_dim, F_dim, T_dim = features.shape
         time_new_pos_embed = self.time_new_pos_embed
         if features.shape[-1] != time_new_pos_embed.shape[-1]:
-            time_new_pos_embed = time_new_pos_embed[:, :, :, :features.shape[-1]]    
+            time_new_pos_embed = time_new_pos_embed[:, :, :, : features.shape[-1]]
         features = features + time_new_pos_embed
         features = features + self.freq_new_pos_embed
 
         if self.training and self.s_patchout_t:
             # ([1, 768, 1, 82])
-            random_indices = torch.randperm(T_dim)[:T_dim - self.s_patchout_t].sort().values
+            random_indices = torch.randperm(T_dim)[: T_dim - self.s_patchout_t].sort().values
             features = features[:, :, :, random_indices]
         if self.training and self.s_patchout_f:
             # [1, 768, 12, 1]
-            random_indices = torch.randperm(F_dim)[:F_dim - self.s_patchout_f].sort().values
+            random_indices = torch.randperm(F_dim)[: F_dim - self.s_patchout_f].sort().values
             features = features[:, :, random_indices, :]
 
         # Flatten the sequence
         features = features.flatten(2).transpose(1, 2)
         if self.training and self.u_patchout:
             seq_len = features.shape[1]
-            random_indices = torch.randperm(seq_len)[:seq_len - self.u_patchout].sort().values
+            random_indices = torch.randperm(seq_len)[: seq_len - self.u_patchout].sort().values
             features = features[:, random_indices, :]
 
         cls_tokens = self.cls_token.expand(B_dim, -1, -1) + self.new_pos_embed[:, :1, :]
@@ -283,12 +285,8 @@ class PaSST(BaseBackbone):
         else:
             return self.pre_logits(features[:, 2:])
 
-def adapt_image_pos_embed_to_passt(
-    posemb, 
-    num_tokens=1, 
-    gs_new=(), 
-    mode='bicubic'
-):
+
+def adapt_image_pos_embed_to_passt(posemb, num_tokens=1, gs_new=(), mode="bicubic"):
     """
     Adapt a 2D positional embedding from an image model to the PaSST spectrogram.
 
@@ -304,31 +302,26 @@ def adapt_image_pos_embed_to_passt(
             - freq_new_pos_embed: Frequency-wise positional embedding.
             - time_new_pos_embed: Time-wise positional embedding.
     """
-    
+
     if num_tokens:
         posemb_tok, posemb_grid = posemb[:, :num_tokens], posemb[0, num_tokens:]
     else:
         posemb_tok, posemb_grid = posemb[:, :0], posemb[0]
-        
+
     gs_old = int(math.sqrt(len(posemb_grid)))
 
-    if (len(gs_new) < 2):
+    if len(gs_new) < 2:
         raise ValueError(f"Variable gs_old can not be smaller than 2, given value: {gs_new}")
 
     posemb_grid = posemb_grid.reshape(1, gs_old, gs_old, -1).permute(0, 3, 1, 2)
     posemb_grid = F.interpolate(posemb_grid, size=gs_new, mode=mode, align_corners=False)
     freq_new_pos_embed = posemb_grid.mean(dim=3, keepdim=True)
     time_new_pos_embed = posemb_grid.mean(dim=2, keepdim=True)
-    
+
     return posemb_tok, freq_new_pos_embed, time_new_pos_embed
 
-def resize_pos_embed(
-    posemb, 
-    posemb_new, 
-    num_tokens=1, 
-    gs_new=(), 
-    mode='bicubic'
-):
+
+def resize_pos_embed(posemb, posemb_new, num_tokens=1, gs_new=(), mode="bicubic"):
     """
     Resize the positional embeddings to match a new model configuration.
 
@@ -358,5 +351,5 @@ def resize_pos_embed(
     posemb_grid = F.interpolate(posemb_grid, size=gs_new, mode=mode, align_corners=False)
     posemb_grid = posemb_grid.permute(0, 2, 3, 1).reshape(1, gs_new[0] * gs_new[1], -1)
     posemb = torch.cat([posemb_tok, posemb_grid], dim=1)
-    
+
     return posemb

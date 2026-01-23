@@ -53,6 +53,7 @@ class TransformerEncoder(nn.Module):
             - gru_rel_pos
             - encoder_layerdrop
     """
+
     def __init__(self, args):
         super().__init__()
 
@@ -229,6 +230,7 @@ class TransformerSentenceEncoderLayer(nn.Module):
         gru_rel_pos (bool): If True, uses GRU-based relative positional encoding.
         encoder_layers (int): Total number of encoder layers for DeepNorm.
     """
+
     def __init__(
         self,
         embedding_dim: float = 768,
@@ -428,7 +430,7 @@ class MultiheadAttention(nn.Module):
         self.head_dim = embed_dim // num_heads
         self.q_head_dim = self.head_dim
         self.k_head_dim = self.head_dim
-        
+
         if self.head_dim * num_heads != self.embed_dim:
             raise ValueError(f"embed_dim={self.embed_dim} must be divisible by num_heads={num_heads}")
 
@@ -438,9 +440,7 @@ class MultiheadAttention(nn.Module):
         self.encoder_decoder_attention = encoder_decoder_attention
 
         if self.self_attention and not self.qkv_same_dim:
-            raise ValueError(
-                "Self-attention requires query, key and value to be of the same size"
-            )
+            raise ValueError("Self-attention requires query, key and value to be of the same size")
 
         k_bias = True
         if rescale_init:
@@ -474,7 +474,7 @@ class MultiheadAttention(nn.Module):
         """
         Initialize parameters of the attention module.
 
-        Uses Xavier uniform initialization for linear layers. 
+        Uses Xavier uniform initialization for linear layers.
         If Q/K/V dimensions are the same, scaled initialization is applied.
         Relative positional embeddings, bias vectors, and output projections
         are initialized appropriately.
@@ -603,9 +603,7 @@ class MultiheadAttention(nn.Module):
         if embed_dim != self.embed_dim:
             raise ValueError(f"embed_dim={embed_dim} does not match self.embed_dim={self.embed_dim}")
         if list(query.size()) != [tgt_len, bsz, embed_dim]:
-            raise ValueError(
-                f"Expected query size {[tgt_len, bsz, embed_dim]}, but got {list(query.size())}"
-            )
+            raise ValueError(f"Expected query size {[tgt_len, bsz, embed_dim]}, but got {list(query.size())}")
         if key is not None:
             src_len, key_bsz, _ = key.size()
             if not torch.jit.is_scripting():
@@ -745,15 +743,11 @@ class MultiheadAttention(nn.Module):
 
         if key_padding_mask is not None:
             if key_padding_mask.size(0) != bsz:
-                raise ValueError(
-                    f"Expected key_padding_mask.size(0) to be {bsz}, "
-                    f"but got {key_padding_mask.size(0)}"
-                )
+                raise ValueError(f"Expected key_padding_mask.size(0) to be {bsz}, but got {key_padding_mask.size(0)}")
 
             if key_padding_mask.size(1) != src_len:
                 raise ValueError(
-                    f"Expected key_padding_mask.size(1) to be {src_len}, "
-                    f"but got {key_padding_mask.size(1)}"
+                    f"Expected key_padding_mask.size(1) to be {src_len}, but got {key_padding_mask.size(1)}"
                 )
 
         if self.add_zero_attn:
@@ -779,9 +773,7 @@ class MultiheadAttention(nn.Module):
 
         expected_shape = [bsz * self.num_heads, tgt_len, src_len]
         if list(attn_weights.size()) != expected_shape:
-            raise ValueError(
-                f"Expected attn_weights shape {expected_shape}, but got {list(attn_weights.size())}"
-            )
+            raise ValueError(f"Expected attn_weights shape {expected_shape}, but got {list(attn_weights.size())}")
 
         if attn_mask is not None:
             attn_mask = attn_mask.unsqueeze(0)
@@ -829,9 +821,7 @@ class MultiheadAttention(nn.Module):
         attn = torch.bmm(attn_probs, v)
         expected_shape = [bsz * self.num_heads, tgt_len, self.head_dim]
         if list(attn.size()) != expected_shape:
-            raise ValueError(
-                f"Expected attn shape {expected_shape}, but got {list(attn.size())}"
-            )
+            raise ValueError(f"Expected attn shape {expected_shape}, but got {list(attn.size())}")
         attn = attn.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         attn = self.out_proj(attn)
         attn_weights: Tensor | None = None

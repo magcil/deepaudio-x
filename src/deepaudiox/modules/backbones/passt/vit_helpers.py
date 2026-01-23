@@ -3,6 +3,7 @@ Adapted from https://github.com/rwightman/pytorch-image-models/blob/master/timm/
 Credit to @leo19941227  for remove timm dependencies here : https://github.com/s3prl/passt_hear21/blob/48a0dc1b824641ca59884ced53f5b86053fed141/hear21passt/models/helpers/vit_helpers.py
 
 """
+
 import math
 
 import torch
@@ -10,17 +11,12 @@ from torch import nn
 from torch.nn.init import _calculate_fan_in_and_fan_out
 
 
-def init_vit_weights(
-    module: nn.Module, 
-    name: str = '', 
-    head_bias: float = 0., 
-    jax_impl: bool = False
-):
+def init_vit_weights(module: nn.Module, name: str = "", head_bias: float = 0.0, jax_impl: bool = False):
     """
     Initialize weights for Vision Transformer (ViT) modules.
 
-    This function handles initialization for Linear layers, Conv2d layers, 
-    and normalization layers according to the original ViT / DeiT schemes.  
+    This function handles initialization for Linear layers, Conv2d layers,
+    and normalization layers according to the original ViT / DeiT schemes.
     It optionally matches the JAX implementation of ViT when `jax_impl=True`.
 
     Args:
@@ -29,24 +25,24 @@ def init_vit_weights(
         head_bias (float, optional): Bias for classifier heads. Defaults to 0.
         jax_impl (bool, optional): Whether to use initialization compatible with JAX ViT. Defaults to False.
     """
-    
+
     if isinstance(module, nn.Linear):
-        if name.startswith('head'):
+        if name.startswith("head"):
             nn.init.zeros_(module.weight)
             nn.init.constant_(module.bias, head_bias)
-        elif name.startswith('pre_logits'):
+        elif name.startswith("pre_logits"):
             lecun_normal_(module.weight)
             nn.init.zeros_(module.bias)
         else:
             if jax_impl:
                 nn.init.xavier_uniform_(module.weight)
                 if module.bias is not None:
-                    if 'mlp' in name:
+                    if "mlp" in name:
                         nn.init.normal_(module.bias, std=1e-6)
                     else:
                         nn.init.zeros_(module.bias)
             else:
-                trunc_normal_(module.weight, std=.02)
+                trunc_normal_(module.weight, std=0.02)
                 if module.bias is not None:
                     nn.init.zeros_(module.bias)
     elif jax_impl and isinstance(module, nn.Conv2d):
@@ -57,6 +53,7 @@ def init_vit_weights(
     elif isinstance(module, (nn.LayerNorm, nn.GroupNorm, nn.BatchNorm2d)):
         nn.init.zeros_(module.bias)
         nn.init.ones_(module.weight)
+
 
 def adapt_input_conv(in_chans: int, conv_weight: torch.Tensor) -> torch.Tensor:
     """
@@ -69,7 +66,7 @@ def adapt_input_conv(in_chans: int, conv_weight: torch.Tensor) -> torch.Tensor:
 
     Args:
         in_chans (int): Number of input channels for the new model.
-        conv_weight (torch.Tensor): Pretrained Conv2d weight tensor 
+        conv_weight (torch.Tensor): Pretrained Conv2d weight tensor
                                     of shape (out_channels, in_channels, kernel_h, kernel_w)
 
     Returns:
@@ -107,9 +104,7 @@ def adapt_input_conv(in_chans: int, conv_weight: torch.Tensor) -> torch.Tensor:
     elif in_chans != 3:
         # Adapt RGB weights to arbitrary number of input channels
         if in_channels != 3:
-            raise NotImplementedError(
-                "Weight format not supported for non-RGB input."
-            )
+            raise NotImplementedError("Weight format not supported for non-RGB input.")
 
         repeat = int(math.ceil(in_chans / 3))
         conv_weight = conv_weight.repeat(1, repeat, 1, 1)[:, :in_chans, :, :]
@@ -119,6 +114,7 @@ def adapt_input_conv(in_chans: int, conv_weight: torch.Tensor) -> torch.Tensor:
     conv_weight = conv_weight.to(original_dtype)
 
     return conv_weight
+
 
 def drop_path(x, drop_prob: float = 0.0, training: bool = False):
     """
@@ -137,9 +133,7 @@ def drop_path(x, drop_prob: float = 0.0, training: bool = False):
     if drop_prob == 0.0 or not training:
         return x
     keep_prob = 1 - drop_prob
-    shape = (x.shape[0],) + (1,) * (
-        x.ndim - 1
-    )  # work with diff dim tensors, not just 2D ConvNets
+    shape = (x.shape[0],) + (1,) * (x.ndim - 1)  # work with diff dim tensors, not just 2D ConvNets
     random_tensor = keep_prob + torch.rand(shape, dtype=x.dtype, device=x.device)
     random_tensor.floor_()  # binarize
     output = x.div(keep_prob) * random_tensor
@@ -161,12 +155,14 @@ class DropPath(nn.Module):
     Returns:
         torch.Tensor: Tensor with stochastic depth applied.
     """
+
     def __init__(self, drop_prob=None):
         super().__init__()
         self.drop_prob = drop_prob
 
     def forward(self, x):
         return drop_path(x, self.drop_prob, self.training)
+
 
 def _no_grad_trunc_normal_(tensor, mean, std, a, b):
     """
@@ -183,6 +179,7 @@ def _no_grad_trunc_normal_(tensor, mean, std, a, b):
     Returns:
         torch.Tensor: The same tensor filled in-place.
     """
+
     def norm_cdf(x):
         """
         Standard normal cumulative distribution function.
@@ -248,7 +245,7 @@ def variance_scaling_(tensor, scale=1.0, mode="fan_in", distribution="normal"):
         tensor (torch.Tensor): Tensor to initialize.
         scale (float, optional): Scaling factor. Defaults to 1.0.
         mode (str, optional): One of ['fan_in', 'fan_out', 'fan_avg']. Defaults to 'fan_in'.
-        distribution (str, optional): Distribution type. One of ['normal', 'truncated_normal', 'uniform']. 
+        distribution (str, optional): Distribution type. One of ['normal', 'truncated_normal', 'uniform'].
                                         Defaults to 'normal'.
 
     Raises:
@@ -274,6 +271,7 @@ def variance_scaling_(tensor, scale=1.0, mode="fan_in", distribution="normal"):
         tensor.uniform_(-bound, bound)
     else:
         raise ValueError(f"invalid distribution {distribution}")
+
 
 def lecun_normal_(tensor):
     """

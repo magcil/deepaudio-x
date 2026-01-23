@@ -27,6 +27,7 @@ def beats_base() -> BEATs:
     """BEATs backbone without DivEncLayer."""
     return BEATs()
 
+
 @register_backbone("passt")
 def passt_base() -> PaSST:
     """PaSST backbone"""

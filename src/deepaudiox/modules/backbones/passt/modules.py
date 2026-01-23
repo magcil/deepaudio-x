@@ -21,14 +21,8 @@ class Mlp(nn.Module):
         act_layer (nn.Module, optional): Activation function. Defaults to nn.GELU.
         drop (float, optional): Dropout probability. Defaults to 0.
     """
-    def __init__(
-        self, 
-        in_features: int, 
-        hidden_features = None, 
-        out_features = None, 
-        act_layer  =nn.GELU, 
-        drop: float = 0.
-    ):
+
+    def __init__(self, in_features: int, hidden_features=None, out_features=None, act_layer=nn.GELU, drop: float = 0.0):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -54,6 +48,7 @@ class Mlp(nn.Module):
         x = self.drop(x)
         return x
 
+
 class PatchEmbed(nn.Module):
     """
     2D Patch Embedding layer for spectrogram or image input.
@@ -70,18 +65,19 @@ class PatchEmbed(nn.Module):
         norm_layer (nn.Module, optional): Optional normalization layer. Defaults to None.
         flatten (bool): If True, flattens patches into sequence (B, N, C). Defaults to True.
     """
+
     def __init__(
-        self, 
-        img_size: int = 224, 
-        patch_size: int = 16, 
-        stride: int =16, 
-        in_chans: int = 3, 
-        embed_dim: int = 768, 
+        self,
+        img_size: int = 224,
+        patch_size: int = 16,
+        stride: int = 16,
+        in_chans: int = 3,
+        embed_dim: int = 768,
         norm_layer: nn.Module | None = None,
-        flatten: bool = True
+        flatten: bool = True,
     ):
         super().__init__()
-        to_2tuple =  self._ntuple(2)
+        to_2tuple = self._ntuple(2)
         img_size = to_2tuple(img_size)
         patch_size = to_2tuple(patch_size)
         stride = to_2tuple(stride)
@@ -106,10 +102,12 @@ class PatchEmbed(nn.Module):
         Returns:
             Callable: Function that converts input into tuple of length n.
         """
+
         def parse(x):
             if isinstance(x, collections.abc.Iterable) and not isinstance(x, str):
                 return tuple(x)
             return tuple(repeat(x, n))
+
         return parse
 
     def forward(self, x):
@@ -130,6 +128,7 @@ class PatchEmbed(nn.Module):
         x = self.norm(x)
         return x
 
+
 class Attention(nn.Module):
     """
     Multi-Head Self-Attention module.
@@ -141,25 +140,21 @@ class Attention(nn.Module):
         attn_drop (float): Dropout probability on attention weights. Defaults to 0.
         proj_drop (float): Dropout probability on output projection. Defaults to 0.
     """
+
     def __init__(
-        self, 
-        dim: int, 
-        num_heads: int = 8, 
-        qkv_bias: bool = False, 
-        attn_drop: float = 0., 
-        proj_drop: float = 0.
+        self, dim: int, num_heads: int = 8, qkv_bias: bool = False, attn_drop: float = 0.0, proj_drop: float = 0.0
     ):
         super().__init__()
         self.num_heads = num_heads
         head_dim = dim // num_heads
-        self.scale = head_dim ** -0.5
+        self.scale = head_dim**-0.5
 
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
         self.plus1_trick = False
-        
+
     def forward(self, x):
         """
         Forward pass for multi-head attention.
@@ -177,17 +172,18 @@ class Attention(nn.Module):
         attn = (q @ k.transpose(-2, -1)) * self.scale
         if self.plus1_trick:
             # +1 trick
-            attn = torch.cat([attn, torch.zeros(attn.shape[:-1]+(1,), dtype=attn.dtype, device=attn.device)], dim=-1)
+            attn = torch.cat([attn, torch.zeros(attn.shape[:-1] + (1,), dtype=attn.dtype, device=attn.device)], dim=-1)
         attn = attn.softmax(dim=-1)
         if self.plus1_trick:
             # +1 trick
-            attn = attn[...,:-1]
+            attn = attn[..., :-1]
         attn = self.attn_drop(attn)
 
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
         x = self.proj(x)
         x = self.proj_drop(x)
         return x
+
 
 class Block(nn.Module):
     """
@@ -207,23 +203,24 @@ class Block(nn.Module):
         act_layer (nn.Module): Activation function for MLP. Defaults to nn.GELU.
         norm_layer (nn.Module): Normalization layer. Defaults to nn.LayerNorm.
     """
+
     def __init__(
-        self, 
-        dim: int, 
-        num_heads: int, 
-        mlp_ratio: float = 4., 
-        qkv_bias: bool =False, 
-        drop: float = 0., 
-        attn_drop: float = 0.,
-        drop_path: float = 0., 
-        act_layer: nn.Module = nn.GELU, 
-        norm_layer: nn.Module = nn.LayerNorm
+        self,
+        dim: int,
+        num_heads: int,
+        mlp_ratio: float = 4.0,
+        qkv_bias: bool = False,
+        drop: float = 0.0,
+        attn_drop: float = 0.0,
+        drop_path: float = 0.0,
+        act_layer: nn.Module = nn.GELU,
+        norm_layer: nn.Module = nn.LayerNorm,
     ):
         super().__init__()
         self.norm1 = norm_layer(dim)
         self.attn = Attention(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=drop)
         # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here
-        self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+        self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)

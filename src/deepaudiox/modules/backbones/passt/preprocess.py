@@ -5,10 +5,10 @@ import torchaudio
 
 class AugmentMelSTFT(nn.Module):
     """
-    Computes a Mel-scaled spectrogram from audio waveforms with optional 
+    Computes a Mel-scaled spectrogram from audio waveforms with optional
     frequency and time masking for data augmentation.
 
-    This module applies pre-emphasis filtering, short-time Fourier transform 
+    This module applies pre-emphasis filtering, short-time Fourier transform
     (STFT), conversion to power spectrogram, Mel filterbank, log compression,
     and optional frequency/time masking augmentation during training.
 
@@ -27,21 +27,22 @@ class AugmentMelSTFT(nn.Module):
         fmin_aug_range (int): Frequency augmentation range for fmin. Must be >=1. Defaults to 10.
         fmax_aug_range (int): Frequency augmentation range for fmax. Must be >=1. Defaults to 2000.
     """
+
     def __init__(
         self,
-        n_mels = 128, 
-        sr = 32000, 
-        win_length = 800, 
-        hopsize = 320, 
-        n_fft = 1024, 
-        freqm = 48, 
-        timem = 192,
-        htk = False, 
-        fmin = 0.0, 
-        fmax = None, 
-        norm = 1, 
-        fmin_aug_range = 10, 
-        fmax_aug_range = 2000
+        n_mels=128,
+        sr=32000,
+        win_length=800,
+        hopsize=320,
+        n_fft=1024,
+        freqm=48,
+        timem=192,
+        htk=False,
+        fmin=0.0,
+        fmax=None,
+        norm=1,
+        fmin_aug_range=10,
+        fmax_aug_range=2000,
     ):
         torch.nn.Module.__init__(self)
         self.win_length = win_length
@@ -55,20 +56,16 @@ class AugmentMelSTFT(nn.Module):
         self.fmax = fmax
         self.norm = norm
         self.hopsize = hopsize
-        self.register_buffer(
-            'window',
-            torch.hann_window(win_length, periodic=False),
-            persistent=False
-        )
+        self.register_buffer("window", torch.hann_window(win_length, periodic=False), persistent=False)
         if fmin_aug_range < 1:
             raise ValueError(f"fmin_aug_range={fmin_aug_range} should be >=1; 1 means no augmentation")
         if fmax_aug_range < 1:
             raise ValueError(f"fmax_aug_range={fmax_aug_range} should be >=1; 1 means no augmentation")
-            
+
         self.fmin_aug_range = fmin_aug_range
         self.fmax_aug_range = fmax_aug_range
 
-        self.register_buffer("preemphasis_coefficient", torch.as_tensor([[[-.97, 1]]]), persistent=False)
+        self.register_buffer("preemphasis_coefficient", torch.as_tensor([[[-0.97, 1]]]), persistent=False)
         if freqm == 0:
             self.freqm = torch.nn.Identity()
         else:
@@ -91,17 +88,17 @@ class AugmentMelSTFT(nn.Module):
         """
         x = nn.functional.conv1d(x.unsqueeze(1), self.preemphasis_coefficient).squeeze(1)
         x = torch.stft(
-            x, 
-            self.n_fft, 
-            hop_length=self.hopsize, 
+            x,
+            self.n_fft,
+            hop_length=self.hopsize,
             win_length=self.win_length,
-            center=True, 
-            normalized=False, 
-            window=self.window, 
-            return_complex=True
+            center=True,
+            normalized=False,
+            window=self.window,
+            return_complex=True,
         )
         x = torch.view_as_real(x)
-        x = (x ** 2).sum(dim=-1)  # power mag
+        x = (x**2).sum(dim=-1)  # power mag
         fmin = self.fmin + torch.randint(self.fmin_aug_range, (1,)).item()
         fmax = self.fmax + self.fmax_aug_range // 2 - torch.randint(self.fmax_aug_range, (1,)).item()
         # don't augment eval data
@@ -110,22 +107,10 @@ class AugmentMelSTFT(nn.Module):
             fmax = self.fmax
 
         mel_basis, _ = torchaudio.compliance.kaldi.get_mel_banks(
-            self.n_mels,  
-            self.n_fft, 
-            self.sr,
-            fmin, 
-            fmax, 
-            vtln_low=100.0, 
-            vtln_high=-500., 
-            vtln_warp_factor=1.0
+            self.n_mels, self.n_fft, self.sr, fmin, fmax, vtln_low=100.0, vtln_high=-500.0, vtln_warp_factor=1.0
         )
         mel_basis = torch.as_tensor(
-            torch.nn.functional.pad(
-                mel_basis, (0, 1), 
-                mode='constant', 
-                value=0
-            ),
-             device=x.device
+            torch.nn.functional.pad(mel_basis, (0, 1), mode="constant", value=0), device=x.device
         )
         with torch.amp.autocast("cuda", enabled=False):
             melspec = torch.matmul(mel_basis, x)
@@ -136,7 +121,7 @@ class AugmentMelSTFT(nn.Module):
             melspec = self.freqm(melspec)
             melspec = self.timem(melspec)
 
-        melspec = (melspec + 4.5) / 5.  # fast normalization
+        melspec = (melspec + 4.5) / 5.0  # fast normalization
 
         return melspec
 
@@ -147,5 +132,4 @@ class AugmentMelSTFT(nn.Module):
         Returns:
             str: Information about window and hop size.
         """
-        return f'winsize={self.win_length}, hopsize={self.hopsize}'
-
+        return f"winsize={self.win_length}, hopsize={self.hopsize}"
