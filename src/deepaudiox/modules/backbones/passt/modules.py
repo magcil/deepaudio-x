@@ -1,5 +1,4 @@
-import collections
-from itertools import repeat
+from collections.abc import Callable
 
 import torch
 import torch.nn as nn
@@ -22,7 +21,14 @@ class Mlp(nn.Module):
         drop (float, optional): Dropout probability. Defaults to 0.
     """
 
-    def __init__(self, in_features: int, hidden_features=None, out_features=None, act_layer=nn.GELU, drop: float = 0.0):
+    def __init__(
+        self,
+        in_features: int,
+        hidden_features=None,
+        out_features=None,
+        act_layer: Callable[..., nn.Module] = nn.GELU,
+        drop: float = 0.0,
+    ):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
@@ -68,19 +74,18 @@ class PatchEmbed(nn.Module):
 
     def __init__(
         self,
-        img_size: int = 224,
-        patch_size: int = 16,
-        stride: int = 16,
+        img_size: int | tuple[int, int] = 224,
+        patch_size: int | tuple[int, int] = 16,
+        stride: int | tuple[int, int] = 16,
         in_chans: int = 3,
         embed_dim: int = 768,
         norm_layer: nn.Module | None = None,
         flatten: bool = True,
     ):
         super().__init__()
-        to_2tuple = self._ntuple(2)
-        img_size = to_2tuple(img_size)
-        patch_size = to_2tuple(patch_size)
-        stride = to_2tuple(stride)
+        img_size = self._to_2tuple(img_size)
+        patch_size = self._to_2tuple(patch_size)
+        stride = self._to_2tuple(stride)
         self.img_size = img_size
         self.patch_size = patch_size
         self.stride = stride
@@ -92,23 +97,19 @@ class PatchEmbed(nn.Module):
         self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
 
     # From PyTorch internals
-    def _ntuple(self, n):
+    def _to_2tuple(self, x: int | tuple[int, int]) -> tuple[int, int]:
         """
-        Converts input into a tuple of length n.
+        Converts input into a tuple of length 2.
 
         Args:
-            n (int): Length of tuple.
+            x (int | tuple[int, int]): Input size.
 
         Returns:
-            Callable: Function that converts input into tuple of length n.
+            tuple[int, int]: Normalized 2-tuple.
         """
-
-        def parse(x):
-            if isinstance(x, collections.abc.Iterable) and not isinstance(x, str):
-                return tuple(x)
-            return tuple(repeat(x, n))
-
-        return parse
+        if isinstance(x, tuple):
+            return x
+        return (x, x)
 
     def forward(self, x):
         """
@@ -213,8 +214,8 @@ class Block(nn.Module):
         drop: float = 0.0,
         attn_drop: float = 0.0,
         drop_path: float = 0.0,
-        act_layer: nn.Module = nn.GELU,
-        norm_layer: nn.Module = nn.LayerNorm,
+        act_layer: Callable[..., nn.Module] = nn.GELU,
+        norm_layer: Callable[[int], nn.Module] = nn.LayerNorm,
     ):
         super().__init__()
         self.norm1 = norm_layer(dim)

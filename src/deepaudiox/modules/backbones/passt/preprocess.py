@@ -1,3 +1,5 @@
+from typing import cast
+
 import torch
 import torch.nn as nn
 import torchaudio
@@ -86,7 +88,10 @@ class AugmentMelSTFT(nn.Module):
             torch.Tensor: Mel spectrogram tensor of shape (batch, n_mels, time_frames),
                           log-compressed and optionally augmented during training.
         """
-        x = nn.functional.conv1d(x.unsqueeze(1), self.preemphasis_coefficient).squeeze(1)
+        x = nn.functional.conv1d(
+            x.unsqueeze(1),
+            cast(torch.Tensor, self.preemphasis_coefficient),
+        ).squeeze(1)
         x = torch.stft(
             x,
             self.n_fft,
@@ -94,7 +99,7 @@ class AugmentMelSTFT(nn.Module):
             win_length=self.win_length,
             center=True,
             normalized=False,
-            window=self.window,
+            window=cast(torch.Tensor, self.window),
             return_complex=True,
         )
         x = torch.view_as_real(x)
@@ -112,7 +117,7 @@ class AugmentMelSTFT(nn.Module):
         mel_basis = torch.as_tensor(
             torch.nn.functional.pad(mel_basis, (0, 1), mode="constant", value=0), device=x.device
         )
-        with torch.amp.autocast("cuda", enabled=False):
+        with torch.cuda.amp.autocast(enabled=False):
             melspec = torch.matmul(mel_basis, x)
 
         melspec = (melspec + 0.00001).log()
