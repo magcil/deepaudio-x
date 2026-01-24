@@ -156,9 +156,9 @@ class DropPath(nn.Module):
         torch.Tensor: Tensor with stochastic depth applied.
     """
 
-    def __init__(self, drop_prob=None):
+    def __init__(self, drop_prob: float | None = None):
         super().__init__()
-        self.drop_prob = drop_prob
+        self.drop_prob: float = 0.0 if drop_prob is None else drop_prob
 
     def forward(self, x):
         return drop_path(x, self.drop_prob, self.training)
@@ -258,6 +258,8 @@ def variance_scaling_(tensor, scale=1.0, mode="fan_in", distribution="normal"):
         denom = fan_out
     elif mode == "fan_avg":
         denom = (fan_in + fan_out) / 2
+    else:
+        raise ValueError(f"invalid mode {mode}")
 
     variance = scale / denom
 

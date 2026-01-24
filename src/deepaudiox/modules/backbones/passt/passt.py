@@ -146,7 +146,7 @@ class PaSST(BaseBackbone):
             self.cfg = PaSSTConfig()
         else:
             self.cfg = cfg
-        self.feature_extractor = AugmentMelSTFT()
+        self.feature_extractor = AugmentMelSTFT(sr=sample_rate)
 
         self.num_classes = self.cfg.num_classes
         self.u_patchout = self.cfg.u_patchout
@@ -228,7 +228,7 @@ class PaSST(BaseBackbone):
         features = features.unsqueeze(1)
         return features
 
-    def forward(self, features: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, padding_mask: torch.Tensor | None = None) -> torch.Tensor:
         """
         Forward pass of the PaSST backbone.
 
@@ -240,50 +240,50 @@ class PaSST(BaseBackbone):
                           transformer blocks, and normalization. Returns features excluding
                           class/distillation tokens.
         """
-        features = self.patch_embed(features)
-        B_dim, E_dim, F_dim, T_dim = features.shape
+        x = self.patch_embed(x)
+        B_dim, E_dim, F_dim, T_dim = x.shape
         time_new_pos_embed = self.time_new_pos_embed
-        if features.shape[-1] != time_new_pos_embed.shape[-1]:
-            time_new_pos_embed = time_new_pos_embed[:, :, :, : features.shape[-1]]
-        features = features + time_new_pos_embed
-        features = features + self.freq_new_pos_embed
+        if x.shape[-1] != time_new_pos_embed.shape[-1]:
+            time_new_pos_embed = time_new_pos_embed[:, :, :, : x.shape[-1]]
+        x = x + time_new_pos_embed
+        x = x + self.freq_new_pos_embed
 
         if self.training and self.s_patchout_t:
             # ([1, 768, 1, 82])
             random_indices = torch.randperm(T_dim)[: T_dim - self.s_patchout_t].sort().values
-            features = features[:, :, :, random_indices]
+            x = x[:, :, :, random_indices]
         if self.training and self.s_patchout_f:
             # [1, 768, 12, 1]
             random_indices = torch.randperm(F_dim)[: F_dim - self.s_patchout_f].sort().values
-            features = features[:, :, random_indices, :]
+            x = x[:, :, random_indices, :]
 
         # Flatten the sequence
-        features = features.flatten(2).transpose(1, 2)
+        x = x.flatten(2).transpose(1, 2)
         if self.training and self.u_patchout:
-            seq_len = features.shape[1]
+            seq_len = x.shape[1]
             random_indices = torch.randperm(seq_len)[: seq_len - self.u_patchout].sort().values
-            features = features[:, random_indices, :]
+            x = x[:, random_indices, :]
 
         cls_tokens = self.cls_token.expand(B_dim, -1, -1) + self.new_pos_embed[:, :1, :]
         if self.dist_token is None:
-            features = torch.cat((cls_tokens, features), dim=1)
+            x = torch.cat((cls_tokens, x), dim=1)
         else:
             dist_token = self.dist_token.expand(B_dim, -1, -1) + self.new_pos_embed[:, 1:, :]
-            features = torch.cat((cls_tokens, dist_token, features), dim=1)
+            x = torch.cat((cls_tokens, dist_token, x), dim=1)
 
-        features = self.pos_drop(features)
-        features = self.blocks(features)
+        x = self.pos_drop(x)
+        x = self.blocks(x)
 
-        features = self.norm(features)
+        x = self.norm(x)
 
         # if self.dist_token is None:
         #     return self.pre_logits(features[:, 0])
         # else:
         #     return features[:, 0], features[:, 1]
         if self.dist_token is None:
-            return self.pre_logits(features[:, 1:])
+            return self.pre_logits(x[:, 1:])
         else:
-            return self.pre_logits(features[:, 2:])
+            return self.pre_logits(x[:, 2:])
 
 
 def adapt_image_pos_embed_to_passt(posemb, num_tokens=1, gs_new=(), mode="bicubic"):
