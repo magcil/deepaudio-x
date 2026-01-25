@@ -4,14 +4,7 @@ import numpy as np
 import pytest
 import torch
 
-from deepaudiox.datasets.audio_classification_dataset import (
-    audio_classification_dataset_from_dictionary,
-    audio_classification_dataset_from_dir,
-)
-from deepaudiox.loops.evaluator import Evaluator
-from deepaudiox.loops.trainer import Trainer
-from deepaudiox.modules.constructors import AudioClassifierConstructor, BackboneConstructor
-from deepaudiox.modules.backbones import BACKBONES
+import deepaudiox as dax
 from deepaudiox.modules.classifier.classifier import MLPHead
 from deepaudiox.utils.training_utils import (
     get_class_mapping_from_dir,
@@ -59,7 +52,7 @@ def test_class_mapping():
 @pytest.mark.parametrize("sample_rate", [16000, 22000])
 def test_dataset_loading_from_dir(file_to_class_mapping, sample_rate):
     class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
-    dataset = audio_classification_dataset_from_dir(
+    dataset = dax.audio_classification_dataset_from_dir(
         root_dir=str(TRAIN_DIR), sample_rate=sample_rate, class_mapping=class_mapping
     )
 
@@ -75,7 +68,7 @@ def test_dataset_loading_from_dir(file_to_class_mapping, sample_rate):
 @pytest.mark.parametrize("sample_rate", [16000, 22000])
 def test_dataset_loading_from_dict(file_to_class_mapping, sample_rate):
     class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
-    dataset = audio_classification_dataset_from_dictionary(
+    dataset = dax.audio_classification_dataset_from_dictionary(
         file_to_class_mapping=file_to_class_mapping, sample_rate=sample_rate, class_mapping=class_mapping
     )
 
@@ -90,7 +83,7 @@ def test_dataset_loading_from_dict(file_to_class_mapping, sample_rate):
 
 def test_dataset_splitting():
     class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
-    dataset = audio_classification_dataset_from_dir(
+    dataset = dax.audio_classification_dataset_from_dir(
         root_dir=str(TRAIN_DIR), sample_rate=16000, class_mapping=class_mapping
     )
 
@@ -103,7 +96,7 @@ def test_dataset_splitting():
 @pytest.mark.parametrize("segment_duration", [0.5, 1.0])
 def test_dataset_segmentation(segment_duration):
     class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
-    dataset = audio_classification_dataset_from_dir(
+    dataset = dax.audio_classification_dataset_from_dir(
         root_dir=str(TRAIN_DIR), sample_rate=16000, class_mapping=class_mapping, segment_duration=segment_duration
     )
 
@@ -113,7 +106,7 @@ def test_dataset_segmentation(segment_duration):
 
 @pytest.mark.parametrize("input_tensor", [torch.randn(1, 16000)])
 def test_beats_backbone(input_tensor):
-    backbone = BACKBONES["beats"]()
+    backbone = dax.BACKBONES["beats"]()
 
     output = backbone.forward_pipeline(input_tensor)
     assert output.shape == (1, 48, 768)
@@ -121,7 +114,7 @@ def test_beats_backbone(input_tensor):
 
 @pytest.mark.parametrize("input_tensor", [torch.randn(1, 32000)])
 def test_passt_backbone(input_tensor):
-    passt = BACKBONES["passt"]()
+    passt = dax.BACKBONES["passt"]()
 
     output = passt.forward_pipeline(input_tensor)
     print(output.shape)
@@ -144,7 +137,7 @@ def test_mlp_head(input_tensor, hidden_layers):
 @pytest.mark.parametrize("freeze_backbone", [True, False])
 @pytest.mark.parametrize("pretrained", [True, False])
 def test_backbone_constructor(backbone, pretrained, freeze_backbone, pooling, x):
-    backbone_constructor = BackboneConstructor(
+    backbone_constructor = dax.BackboneConstructor(
         backbone=backbone, pretrained=pretrained, freeze_backbone=freeze_backbone, pooling=pooling, sample_rate=16_000
     )
 
@@ -169,7 +162,7 @@ def test_backbone_constructor(backbone, pretrained, freeze_backbone, pooling, x)
 @pytest.mark.parametrize("freeze_backbone", [True, False])
 @pytest.mark.parametrize("pretrained", [True, False])
 def test_model_construction(input_tensor, num_classes, backbone, pooling, freeze_backbone, pretrained):
-    model = AudioClassifierConstructor(
+    model = dax.AudioClassifierConstructor(
         num_classes=num_classes,
         backbone=backbone,
         pooling=pooling,
@@ -196,14 +189,14 @@ def test_model_construction(input_tensor, num_classes, backbone, pooling, freeze
 def test_training_loop():
     class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
 
-    train_dataset = audio_classification_dataset_from_dir(
+    train_dataset = dax.audio_classification_dataset_from_dir(
         root_dir=str(TRAIN_DIR), sample_rate=16000, class_mapping=class_mapping
     )
-    validation_dataset = audio_classification_dataset_from_dir(
+    validation_dataset = dax.audio_classification_dataset_from_dir(
         root_dir=str(VALIDATION_DIR), sample_rate=16000, class_mapping=class_mapping
     )
 
-    model = AudioClassifierConstructor(
+    model = dax.AudioClassifierConstructor(
         num_classes=5,
         backbone="beats",
         pooling="gap",
@@ -215,7 +208,7 @@ def test_training_loop():
         pretrained=True,
     )
 
-    trainer = Trainer(
+    trainer = dax.Trainer(
         train_dset=train_dataset,
         model=model,
         validation_dset=validation_dataset,
@@ -242,11 +235,11 @@ def test_training_loop():
 def test_evaluation_loop():
     class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
 
-    test_dataset = audio_classification_dataset_from_dir(
+    test_dataset = dax.audio_classification_dataset_from_dir(
         root_dir=str(TEST_DIR), sample_rate=16000, class_mapping=class_mapping
     )
 
-    model = AudioClassifierConstructor(
+    model = dax.AudioClassifierConstructor(
         num_classes=5,
         backbone="beats",
         pooling="gap",
@@ -262,7 +255,7 @@ def test_evaluation_loop():
     state_dict = torch.load(path_to_checkpoint, map_location="cpu")
     model.load_state_dict(state_dict)
 
-    evaluator = Evaluator(
+    evaluator = dax.Evaluator(
         test_dset=test_dataset, model=model, num_workers=4, batch_size=16, class_mapping=class_mapping
     )
 

@@ -9,7 +9,7 @@ It is designed to let users train, evaluate, and run inference on **custom audio
 ## Key Features
 
 - 🔊 **Pretrained audio backbones** for feature extraction  
-- 🧠 **Modular pooling strategies** (e.g. mean, attentive, learnable pooling)
+- 🧠 **Modular pooling strategies** (e.g. GAP, SimPool, EfficientProbing)
 - 🧩 **Custom classifier heads** for downstream audio classification
 - 🚀 **High-level training, evaluation, and inference APIs**
 - 🔁 Fully **PyTorch-native** and extensible
@@ -61,7 +61,7 @@ data/
 You can load the dataset as follows:
 
 ```python
-from deepaudiox.datasets.audio_classification_dataset import audio_classification_dataset_from_dir
+from deepaudiox import audio_classification_dataset_from_dir
 from deepaudiox.utils.training_utils import get_class_mapping_from_dir
 
 # Define a class mapping
@@ -79,8 +79,7 @@ dataset = audio_classification_dataset_from_dir(
 If your audio files aren't organized in subdirectories, or you need custom mappings, you can create a dictionary mapping file paths to class labels:
 
 ```python
-from deepaudiox.datasets.audio_classification_dataset import audio_classification_dataset_from_dictionary
-from deepaudiox.utils.training_utils import get_class_mapping
+from deepaudiox import audio_classification_dataset_from_dictionary
 
 # Create a file-to-class mapping
 file_to_class_mapping = {
@@ -110,7 +109,7 @@ To split long audio files into fixed-duration segments, use the `segment_duratio
 dataset = audio_classification_dataset_from_dir(
     root_dir="path/to/data",
     sample_rate=16_000,
-    segment_duration=2.0  # Duration in seconds
+    segment_duration=2.0,  # Duration in seconds
     class_mapping=class_mapping
 )
 ```
@@ -157,10 +156,10 @@ DeepAudioX simplifies the creation of audio classifiers by combining pretrained 
 ### Basic Setup
 
 ```python
-from deepaudiox.modules.audio_classifier_constructor import AudioClassifierConstructor
+from deepaudiox import AudioClassifier
 
 # Initialize classifier with pretrained BEATs backbone
-classifier = AudioClassifierConstructor(
+classifier = AudioClassifier(
     num_classes=10,              # Number of output classes
     backbone="beats",            # Pretrained backbone (e.g., "beats")
     sample_rate=16_000,          # Audio sample rate
@@ -173,7 +172,8 @@ classifier = AudioClassifierConstructor(
 
 ### Available Backbones
 
-- **BEATs**: BEATs: Audio Pre-Training with Acoustic Tokenizers (https://arxiv.org/abs/2212.09058)
+- **BEATs** (`"beats"`): BEATs: Audio Pre-Training with Acoustic Tokenizers (https://arxiv.org/abs/2212.09058)
+- **PaSST** (`"passt"`): Efficient Training of Audio Transformers with Patchout (https://arxiv.org/abs/2110.05069)
 
 ### Key Parameters
 
@@ -188,7 +188,7 @@ You can customize the pooling strategy used to aggregate audio features:
 
 ```python
 
-classifier = AudioClassifierConstructor(
+classifier = AudioClassifier(
     num_classes=10,
     backbone="beats",
     sample_rate=16_000,
@@ -197,6 +197,42 @@ classifier = AudioClassifierConstructor(
     pooling="gap"
 )
 ```
+
+**Supported pooling names**: `"gap"`, `"simpool"`, `"ep"`
+
+### Backbone-Only Usage
+
+If you only need the pretrained backbone (for feature extraction or custom heads), you can instantiate it directly with `Backbone`:
+
+```python
+from deepaudiox import Backbone
+
+backbone = Backbone(
+    backbone="beats",
+    pretrained=True,
+    freeze_backbone=True,
+    pooling="gap",
+    sample_rate=16_000
+)
+```
+
+You can access both the raw backbone output and the pooled embeddings:
+
+```python
+import torch
+
+waveforms = torch.randn(2, 5 * 16_000)  # (batch, samples)
+
+features = backbone.forward(waveforms)  # raw backbone features: (B, N, D) for Transformer or (B, D, H, W) for CNN
+embeddings = backbone.forward_with_pooling(waveforms)  # pooled embeddings
+```
+
+### Input and Output Expectations
+
+- Inputs to backbones and classifiers are mono waveforms shaped `(B, T)` where `T` depends on sample rate and duration.
+- `AudioClassifier` outputs logits shaped `(B, num_classes)`.
+- `Backbone.forward(...)` returns either `(B, N, D)` for Transformer backbones or `(B, D, H, W)` for CNN backbones.
+- `Backbone.forward_with_pooling(...)` returns pooled embeddings shaped `(B, D)`.
 
 Available pooling strategies include:
 - **GAP**: Simple average pooling
@@ -214,7 +250,7 @@ Train your audio classifier with a few lines of code using the built-in `Trainer
 #### Minimal Example (Recommended)
 
 ```python
-from deepaudiox.loops.trainer import Trainer
+from deepaudiox import Trainer
 
 # Initialize trainer with defaults
 trainer = Trainer(
@@ -242,7 +278,7 @@ For more control, you can provide custom optimizer and learning rate scheduler:
 ```python
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from deepaudiox.loops.trainer import Trainer
+from deepaudiox import Trainer
 
 optimizer = Adam(classifier.parameters(), lr=1e-2)
 lr_scheduler = CosineAnnealingLR(optimizer=optimizer, T_max=100, eta_min=1e-6)
@@ -290,7 +326,7 @@ Evaluate your trained classifier on a test dataset using the `Evaluator` class:
 ```python
 import torch
 
-from deepaudiox.loops.evaluator import Evaluator
+from deepaudiox import Evaluator
 
 # Initialize evaluator
 evaluator = Evaluator(
@@ -341,6 +377,39 @@ print(classification_report(evaluator.state.y_true, evaluator.state.y_pred))
 
 ---
 
+## End-to-End Example
+
+```python
+from deepaudiox import AudioClassifier, Trainer, Evaluator, audio_classification_dataset_from_dir
+from deepaudiox.utils.training_utils import get_class_mapping_from_dir
+
+class_mapping = get_class_mapping_from_dir("path/to/data/train")
+train_dataset = audio_classification_dataset_from_dir(
+    root_dir="path/to/data/train", sample_rate=16_000, class_mapping=class_mapping
+)
+val_dataset = audio_classification_dataset_from_dir(
+    root_dir="path/to/data/val", sample_rate=16_000, class_mapping=class_mapping
+)
+test_dataset = audio_classification_dataset_from_dir(
+    root_dir="path/to/data/test", sample_rate=16_000, class_mapping=class_mapping
+)
+
+classifier = AudioClassifier(
+    num_classes=len(class_mapping),
+    backbone="beats",
+    pooling="gap",
+    pretrained=True,
+    freeze_backbone=True,
+    sample_rate=16_000,
+)
+
+trainer = Trainer(train_dset=train_dataset, model=classifier, validation_dset=val_dataset, epochs=10)
+trainer.train()
+
+evaluator = Evaluator(test_dset=test_dataset, model=classifier, class_mapping=class_mapping)
+evaluator.evaluate()
+```
+
 ## Customization
 
 Advanced users can:
@@ -378,7 +447,7 @@ If you use this library in academic work, please cite:
 
 ```bibtex
 @software{DeepAudioX,
-  author = {Nikou, Christos and Vlachos, Stefanos and Vakalaki, Ellie},
+  author = {Nikou, Christos and Vlachos, Stefanos and Vakalaki, Ellie and Giannakopoulos, Theodoros},
   title = {DeepAudioX: A PyTorch-based audio classification framework},
   year = {2026},
   url = {https://github.com/magcil/deepaudio-x}
