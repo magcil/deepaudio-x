@@ -127,7 +127,7 @@ class BaseBackbone(nn.Module, ABC):
             padding_mask: (torch.Tensor) Optional padding mask.
 
         Returns:
-            torch.Tensor: Embeddings of shape (B, T, D) or (B, D, H, W) where D is the embedding dimension.
+            torch.Tensor: Embeddings of shape (B, N, D) or (B, D, H, W) where D is the embedding dimension.
         """
         pass
 
