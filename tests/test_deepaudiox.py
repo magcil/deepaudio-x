@@ -10,7 +10,7 @@ from deepaudiox.datasets.audio_classification_dataset import (
 )
 from deepaudiox.loops.evaluator import Evaluator
 from deepaudiox.loops.trainer import Trainer
-from deepaudiox.modules.audio_classifier_constructor import AudioClassifierConstructor
+from deepaudiox.modules.constructors import AudioClassifierConstructor, BackboneConstructor
 from deepaudiox.modules.backbones import BACKBONES
 from deepaudiox.modules.classifier.classifier import MLPHead
 from deepaudiox.utils.training_utils import (
@@ -91,9 +91,7 @@ def test_dataset_loading_from_dict(file_to_class_mapping, sample_rate):
 def test_dataset_splitting():
     class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
     dataset = audio_classification_dataset_from_dir(
-        root_dir=str(TRAIN_DIR), 
-        sample_rate=16000, 
-        class_mapping=class_mapping
+        root_dir=str(TRAIN_DIR), sample_rate=16000, class_mapping=class_mapping
     )
 
     train_dataset, validation_dataset = random_split_audio_dataset(dataset=dataset, train_ratio=0.8)
@@ -140,6 +138,30 @@ def test_mlp_head(input_tensor, hidden_layers):
     assert output.shape == (1, 4)
 
 
+@pytest.mark.parametrize("x", [torch.randn(1, 5 * 16_000)])
+@pytest.mark.parametrize("backbone", ["beats", "passt"])
+@pytest.mark.parametrize("pooling", ["simpool", "gap", "ep"])
+@pytest.mark.parametrize("freeze_backbone", [True, False])
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_backbone_constructor(backbone, pretrained, freeze_backbone, pooling, x):
+    backbone_constructor = BackboneConstructor(
+        backbone=backbone, pretrained=pretrained, freeze_backbone=freeze_backbone, pooling=pooling, sample_rate=16_000
+    )
+
+    # Test feature forward
+    with torch.no_grad():
+        z = backbone_constructor(x)
+        if backbone == "beats":
+            assert z.shape == (1, 248, 768)
+        elif backbone == "passt":
+            assert z.shape == (1, 288, 768)
+        w = backbone_constructor.forward_with_pooling(x)
+        assert w.shape == (1, backbone_constructor.out_dim)
+
+        if freeze_backbone:
+            assert not any(p.requires_grad for p in backbone_constructor.backbone.parameters())
+
+
 @pytest.mark.parametrize("input_tensor", [torch.randn(1, 16000)])
 @pytest.mark.parametrize("num_classes", [2, 8])
 @pytest.mark.parametrize("backbone", ["beats", "passt"])
@@ -162,15 +184,13 @@ def test_model_construction(input_tensor, num_classes, backbone, pooling, freeze
     # Test output
     output = model(input_tensor)
     assert output.shape == (1, num_classes)
-    
-    # Test embedding extraction 
-    embeddings = model.get_embeddings(input_tensor) # feature maps
-    # Get embedding by pooling the feature maps
-    embeddings = model.apply_pooling(embeddings)
-    assert embeddings.shape == (1, model.backbone_model.out_dim)
+
+    # Test embedding extraction
+    embeddings = model.forward_with_pooling(input_tensor)
+    assert embeddings.shape == (1, model.backbone_constructor.out_dim)
 
     if freeze_backbone:
-        assert not any(p.requires_grad for p in model.backbone_model.parameters())
+        assert not any(p.requires_grad for p in model.backbone_constructor.backbone.parameters())
 
 
 def test_training_loop():
