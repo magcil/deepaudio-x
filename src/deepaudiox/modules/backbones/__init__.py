@@ -2,9 +2,9 @@
 
 from collections.abc import Callable
 
-from deepaudiox.modules.backbones.base_backbone import BaseBackbone as Backbone
 from deepaudiox.modules.backbones.beats.beats_modules.BEATs import BEATs
 from deepaudiox.modules.backbones.passt.passt import PaSST
+from deepaudiox.modules.baseclasses import BaseBackbone as Backbone
 
 # A dictionary mapping backbone names to their constructor functions
 BACKBONES: dict[str, Callable[[], Backbone]] = {}

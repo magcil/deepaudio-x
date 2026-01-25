@@ -14,10 +14,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from deepaudiox.modules.backbones.base_backbone import BaseBackbone
 from deepaudiox.modules.backbones.passt.modules import Block, PatchEmbed
 from deepaudiox.modules.backbones.passt.preprocess import AugmentMelSTFT
 from deepaudiox.modules.backbones.passt.vit_helpers import init_vit_weights, trunc_normal_
+from deepaudiox.modules.baseclasses import BaseBackbone
 
 
 class PaSSTConfig:

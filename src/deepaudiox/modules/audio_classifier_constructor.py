@@ -3,11 +3,9 @@ from typing import Literal
 import torch
 
 from deepaudiox.modules.backbones import BACKBONES
-from deepaudiox.modules.backbones.base_backbone import BaseBackbone
-from deepaudiox.modules.base_audio_classifier import BaseAudioClassifier
+from deepaudiox.modules.baseclasses import BaseAudioClassifier, BaseBackbone, BasePooling
 from deepaudiox.modules.classifier.classifier import MLPHead
 from deepaudiox.modules.pooling import POOLING
-from deepaudiox.modules.pooling.base_pooling import BasePooling
 from deepaudiox.modules.pooling.gap import GAP
 from deepaudiox.utils.downloader import Downloader
 from deepaudiox.utils.file_utils import load_checkpoint

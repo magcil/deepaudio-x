@@ -8,7 +8,7 @@ from tqdm import tqdm
 from deepaudiox.callbacks.console_logger import ConsoleLogger
 from deepaudiox.callbacks.reporter import Reporter
 from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
-from deepaudiox.modules.base_audio_classifier import BaseAudioClassifier
+from deepaudiox.modules.baseclasses import BaseAudioClassifier
 from deepaudiox.utils.training_utils import get_device, get_logger, pad_collate_fn
 
 
