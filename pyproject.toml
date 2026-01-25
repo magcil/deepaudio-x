@@ -7,7 +7,7 @@ authors = [
   { name = "Stefanos Vlachos", email = "stevenvlaxos@gmail.com " }, 
   { name = "Ellie Vakalaki", email = "evakalakiaidl@gmail.com" }
 ]
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
