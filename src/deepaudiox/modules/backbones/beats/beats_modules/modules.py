@@ -37,17 +37,18 @@ class GradMultiply(torch.autograd.Function):
         return res
 
     @staticmethod
-    def backward(ctx, grad):
+    def backward(ctx, *grad_outputs):
         """Backward pass: scales the gradient by `scale`.
 
         Args:
             ctx: Context object containing saved information.
-            grad (torch.Tensor): Gradient of the output.
+            grad_outputs (tuple[torch.Tensor]): Gradients of the outputs.
 
         Returns:
             tuple: Scaled gradient for input `x` and `None` for `scale`.
         """
-        return grad * ctx.scale, None
+        grad_output = grad_outputs[0]
+        return grad_output * ctx.scale, None
 
 
 class SamePad(nn.Module):
@@ -213,18 +214,29 @@ def quant_noise(module: nn.Module, p: float, block_size: int) -> nn.Module:
 
     # Check input dimensions are compatible with block_size
     if not is_conv:
-        if module.weight.size(1) % block_size != 0:
-            raise ValueError(
-                f"Input features ({module.weight.size(1)}) must be a multiple of block size ({block_size})"
-            )
-    else:
-        if module.kernel_size == (1, 1):
-            if module.in_channels % block_size != 0:
+        if isinstance(module, nn.Linear):
+            linear = module
+            if linear.weight.size(1) % block_size != 0:
                 raise ValueError(
-                    f"Input channels ({module.in_channels}) must be a multiple of block size ({block_size})"
+                    f"Input features ({linear.weight.size(1)}) must be a multiple of block size ({block_size})"
+                )
+        elif isinstance(module, nn.Embedding):
+            embed = module
+            if embed.weight.size(1) % block_size != 0:
+                raise ValueError(
+                    f"Input features ({embed.weight.size(1)}) must be a multiple of block size ({block_size})"
                 )
         else:
-            k = module.kernel_size[0] * module.kernel_size[1]
+            raise ValueError(f"Expected Linear or Embedding when not conv, got {type(module)}")
+    else:
+        conv = module
+        if not isinstance(conv, nn.Conv2d):
+            raise ValueError(f"Expected Conv2d when conv, got {type(module)}")
+        if conv.kernel_size == (1, 1):
+            if conv.in_channels % block_size != 0:
+                raise ValueError(f"Input channels ({conv.in_channels}) must be a multiple of block size ({block_size})")
+        else:
+            k = conv.kernel_size[0] * conv.kernel_size[1]
             if k % block_size != 0:
                 raise ValueError(f"Kernel size ({k}) must be a multiple of block size ({block_size})")
 
@@ -239,6 +251,8 @@ def quant_noise(module: nn.Module, p: float, block_size: int) -> nn.Module:
             return
 
         weight = mod.weight
+        if not isinstance(weight, torch.Tensor):
+            raise ValueError(f"Expected weight to be a Tensor, got {type(weight)}")
         if not is_conv:
             in_features = weight.size(1)
             out_features = weight.size(0)
@@ -246,16 +260,19 @@ def quant_noise(module: nn.Module, p: float, block_size: int) -> nn.Module:
             mask.bernoulli_(p)
             mask = mask.repeat_interleave(block_size, -1).view(-1, in_features)
         else:
-            in_channels = mod.in_channels
-            out_channels = mod.out_channels
-            if mod.kernel_size == (1, 1):
+            conv_mod = mod
+            if not isinstance(conv_mod, nn.Conv2d):
+                raise ValueError(f"Expected Conv2d module, got {type(mod)}")
+            in_channels = conv_mod.in_channels
+            out_channels = conv_mod.out_channels
+            if conv_mod.kernel_size == (1, 1):
                 mask = torch.zeros(int(in_channels // block_size * out_channels), device=weight.device)
                 mask.bernoulli_(p)
                 mask = mask.repeat_interleave(block_size, -1).view(-1, in_channels)
             else:
                 mask = torch.zeros(weight.size(0), weight.size(1), device=weight.device)
                 mask.bernoulli_(p)
-                mask = mask.unsqueeze(2).unsqueeze(3).repeat(1, 1, mod.kernel_size[0], mod.kernel_size[1])
+                mask = mask.unsqueeze(2).unsqueeze(3).repeat(1, 1, conv_mod.kernel_size[0], conv_mod.kernel_size[1])
 
         mask = mask.to(torch.bool)
         s = 1 / (1 - p)

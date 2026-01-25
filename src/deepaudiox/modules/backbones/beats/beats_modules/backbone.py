@@ -12,6 +12,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import math
+from typing import cast
 
 import numpy as np
 import torch
@@ -70,7 +71,8 @@ class TransformerEncoder(nn.Module):
         dropout = 0
         std = math.sqrt((4 * (1.0 - dropout)) / (args.conv_pos * self.embedding_dim))
         nn.init.normal_(self.pos_conv.weight, mean=0, std=std)
-        nn.init.constant_(self.pos_conv.bias, 0)
+        if self.pos_conv.bias is not None:
+            nn.init.constant_(self.pos_conv.bias, 0)
 
         self.pos_conv = nn.utils.weight_norm(self.pos_conv, name="weight", dim=2)
         self.pos_conv = nn.Sequential(self.pos_conv, SamePad(args.conv_pos), nn.GELU())
@@ -106,9 +108,11 @@ class TransformerEncoder(nn.Module):
             ]
         )
         if self.relative_position_embedding:
+            first_layer = cast(TransformerSentenceEncoderLayer, self.layers[0])
+            shared_bias = first_layer.self_attn.relative_attention_bias
             for i in range(1, args.encoder_layers):
-                del self.layers[i].self_attn.relative_attention_bias
-                self.layers[i].self_attn.relative_attention_bias = self.layers[0].self_attn.relative_attention_bias
+                layer = cast(TransformerSentenceEncoderLayer, self.layers[i])
+                layer.self_attn.relative_attention_bias = shared_bias
 
         self.layer_norm_first = args.layer_norm_first
         self.layer_norm = LayerNorm(self.embedding_dim)
@@ -119,12 +123,13 @@ class TransformerEncoder(nn.Module):
         if args.deep_norm:
             deep_norm_beta = math.pow(8 * args.encoder_layers, -1 / 4)
             for i in range(args.encoder_layers):
-                nn.init.xavier_normal_(self.layers[i].self_attn.k_proj.weight, gain=1)
-                nn.init.xavier_normal_(self.layers[i].self_attn.v_proj.weight, gain=deep_norm_beta)
-                nn.init.xavier_normal_(self.layers[i].self_attn.q_proj.weight, gain=1)
-                nn.init.xavier_normal_(self.layers[i].self_attn.out_proj.weight, gain=deep_norm_beta)
-                nn.init.xavier_normal_(self.layers[i].fc1.weight, gain=deep_norm_beta)
-                nn.init.xavier_normal_(self.layers[i].fc2.weight, gain=deep_norm_beta)
+                layer = cast(TransformerSentenceEncoderLayer, self.layers[i])
+                nn.init.xavier_normal_(cast(Tensor, layer.self_attn.k_proj.weight), gain=1)
+                nn.init.xavier_normal_(cast(Tensor, layer.self_attn.v_proj.weight), gain=deep_norm_beta)
+                nn.init.xavier_normal_(cast(Tensor, layer.self_attn.q_proj.weight), gain=1)
+                nn.init.xavier_normal_(cast(Tensor, layer.self_attn.out_proj.weight), gain=deep_norm_beta)
+                nn.init.xavier_normal_(cast(Tensor, layer.fc1.weight), gain=deep_norm_beta)
+                nn.init.xavier_normal_(cast(Tensor, layer.fc2.weight), gain=deep_norm_beta)
 
         self.layer_wise_gradient_decay_ratio = getattr(args, "layer_wise_gradient_decay_ratio", 1)
 
@@ -150,7 +155,12 @@ class TransformerEncoder(nn.Module):
 
         return x, layer_results
 
-    def extract_features(self, x, padding_mask=None, tgt_layer=None):
+    def extract_features(
+        self,
+        x: Tensor,
+        padding_mask: Tensor | None = None,
+        tgt_layer: int | None = None,
+    ) -> tuple[Tensor, list[tuple[Tensor, Tensor | None]]]:
         """
         Extract features from input through convolutional positional encoding and Transformer layers.
 
@@ -187,7 +197,7 @@ class TransformerEncoder(nn.Module):
         pos_bias = None
         for i, layer in enumerate(self.layers):
             if self.layer_wise_gradient_decay_ratio != 1.0:
-                x = GradMultiply.apply(x, self.layer_wise_gradient_decay_ratio)
+                x = cast(Tensor, GradMultiply.apply(x, self.layer_wise_gradient_decay_ratio))
             dropout_probability = np.random.random()
             if not self.training or (dropout_probability > self.layerdrop):
                 x, z, pos_bias = layer(x, self_attn_padding_mask=padding_mask, need_weights=False, pos_bias=pos_bias)
@@ -233,9 +243,9 @@ class TransformerSentenceEncoderLayer(nn.Module):
 
     def __init__(
         self,
-        embedding_dim: float = 768,
-        ffn_embedding_dim: float = 3072,
-        num_attention_heads: float = 8,
+        embedding_dim: int = 768,
+        ffn_embedding_dim: int = 3072,
+        num_attention_heads: int = 8,
         dropout: float = 0.1,
         attention_dropout: float = 0.1,
         activation_dropout: float = 0.1,
@@ -293,10 +303,10 @@ class TransformerSentenceEncoderLayer(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
-        self_attn_mask: torch.Tensor = None,
-        self_attn_padding_mask: torch.Tensor = None,
+        self_attn_mask: torch.Tensor | None = None,
+        self_attn_padding_mask: torch.Tensor | None = None,
         need_weights: bool = False,
-        pos_bias=None,
+        pos_bias: torch.Tensor | None = None,
     ):
         """
         Forward pass through one Transformer encoder layer.
@@ -422,6 +432,7 @@ class MultiheadAttention(nn.Module):
         self.dropout_module = nn.Dropout(dropout)
 
         self.has_relative_attention_bias = has_relative_attention_bias
+        self.relative_attention_bias: nn.Embedding | None = None
         self.num_buckets = num_buckets
         self.max_distance = max_distance
         if self.has_relative_attention_bias:
@@ -482,23 +493,24 @@ class MultiheadAttention(nn.Module):
         if self.qkv_same_dim:
             # Empirically observed the convergence to be much better with
             # the scaled initialization
-            nn.init.xavier_uniform_(self.k_proj.weight, gain=1 / math.sqrt(2))
-            nn.init.xavier_uniform_(self.v_proj.weight, gain=1 / math.sqrt(2))
-            nn.init.xavier_uniform_(self.q_proj.weight, gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(cast(Tensor, self.k_proj.weight), gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(cast(Tensor, self.v_proj.weight), gain=1 / math.sqrt(2))
+            nn.init.xavier_uniform_(cast(Tensor, self.q_proj.weight), gain=1 / math.sqrt(2))
         else:
-            nn.init.xavier_uniform_(self.k_proj.weight)
-            nn.init.xavier_uniform_(self.v_proj.weight)
-            nn.init.xavier_uniform_(self.q_proj.weight)
+            nn.init.xavier_uniform_(cast(Tensor, self.k_proj.weight))
+            nn.init.xavier_uniform_(cast(Tensor, self.v_proj.weight))
+            nn.init.xavier_uniform_(cast(Tensor, self.q_proj.weight))
 
-        nn.init.xavier_uniform_(self.out_proj.weight)
+        nn.init.xavier_uniform_(cast(Tensor, self.out_proj.weight))
         if self.out_proj.bias is not None:
-            nn.init.constant_(self.out_proj.bias, 0.0)
+            nn.init.constant_(cast(Tensor, self.out_proj.bias), 0.0)
         if self.bias_k is not None:
-            nn.init.xavier_normal_(self.bias_k)
+            nn.init.xavier_normal_(cast(Tensor, self.bias_k))
         if self.bias_v is not None:
-            nn.init.xavier_normal_(self.bias_v)
+            nn.init.xavier_normal_(cast(Tensor, self.bias_v))
         if self.has_relative_attention_bias:
-            nn.init.xavier_normal_(self.relative_attention_bias.weight)
+            rel_bias = cast(nn.Embedding, self.relative_attention_bias)
+            nn.init.xavier_normal_(rel_bias.weight)
 
     def _relative_positions_bucket(self, relative_positions, bidirectional=True):
         """
@@ -548,12 +560,15 @@ class MultiheadAttention(nn.Module):
         Returns:
             Tensor: Positional bias of shape (num_heads, query_length, key_length).
         """
+        if self.relative_attention_bias is None:
+            raise ValueError("relative_attention_bias must not be None")
         context_position = torch.arange(query_length, dtype=torch.long)[:, None]
         memory_position = torch.arange(key_length, dtype=torch.long)[None, :]
         relative_position = memory_position - context_position
         relative_position_bucket = self._relative_positions_bucket(relative_position, bidirectional=True)
-        relative_position_bucket = relative_position_bucket.to(self.relative_attention_bias.weight.device)
-        values = self.relative_attention_bias(relative_position_bucket)
+        rel_bias = cast(nn.Embedding, self.relative_attention_bias)
+        relative_position_bucket = relative_position_bucket.to(rel_bias.weight.device)
+        values = rel_bias(relative_position_bucket)
         values = values.permute([2, 0, 1])
         return values
 
@@ -606,7 +621,8 @@ class MultiheadAttention(nn.Module):
             raise ValueError(f"Expected query size {[tgt_len, bsz, embed_dim]}, but got {list(query.size())}")
         if key is not None:
             src_len, key_bsz, _ = key.size()
-            if not torch.jit.is_scripting():
+            is_scripting = getattr(torch.jit, "is_scripting", None)
+            if not (is_scripting() if callable(is_scripting) else False):
                 if key_bsz != bsz:
                     raise ValueError(f"key_bsz={key_bsz} does not match batch size bsz={bsz}")
 
@@ -621,6 +637,7 @@ class MultiheadAttention(nn.Module):
 
         if self.has_relative_attention_bias and position_bias is None:
             position_bias = self.compute_bias(tgt_len, src_len)
+            position_bias = cast(Tensor, position_bias)
             position_bias = position_bias.unsqueeze(0).repeat(bsz, 1, 1, 1).view(bsz * self.num_heads, tgt_len, src_len)
 
         if incremental_state is not None:
@@ -664,6 +681,10 @@ class MultiheadAttention(nn.Module):
         if self.bias_k is not None:
             if self.bias_v is None:
                 raise ValueError("bias_v must not be None")
+            if k is None or v is None:
+                raise ValueError("k and v must not be None when bias_k/bias_v are set")
+            k = cast(Tensor, k)
+            v = cast(Tensor, v)
             k = torch.cat([k, self.bias_k.repeat(1, bsz, 1)])
             v = torch.cat([v, self.bias_v.repeat(1, bsz, 1)])
             if attn_mask is not None:
@@ -732,6 +753,7 @@ class MultiheadAttention(nn.Module):
             incremental_state = self._set_input_buffer(incremental_state, saved_state)
         if k is None:
             raise ValueError("k must not be None")
+        k = cast(Tensor, k)
 
         if k.size(1) != src_len:
             raise ValueError(f"Expected k.size(1) to be {src_len}, but got {k.size(1)}")
@@ -919,6 +941,22 @@ class MultiheadAttention(nn.Module):
             dict: Updated incremental_state dictionary.
         """
         return self.set_incremental_state(incremental_state, "attn_state", buffer)
+
+    def get_incremental_state(
+        self, incremental_state: dict[str, dict[str, Tensor | None]] | None, key: str
+    ) -> dict[str, Tensor | None] | None:
+        if incremental_state is None:
+            return None
+        return incremental_state.get(key)
+
+    def set_incremental_state(
+        self,
+        incremental_state: dict[str, dict[str, Tensor | None]],
+        key: str,
+        value: dict[str, Tensor | None],
+    ) -> dict[str, dict[str, Tensor | None]]:
+        incremental_state[key] = value
+        return incremental_state
 
     def apply_sparse_mask(self, attn_weights, tgt_len: int, src_len: int, bsz: int):
         """
