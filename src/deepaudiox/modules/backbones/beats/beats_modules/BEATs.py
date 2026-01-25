@@ -12,10 +12,10 @@ import torch.nn as nn
 import torchaudio.compliance.kaldi as ta_kaldi
 from torch.nn import LayerNorm
 
-from deepaudiox.modules.backbones.base_backbone import BaseBackbone
 from deepaudiox.modules.backbones.beats.beats_modules.backbone import (
     TransformerEncoder,
 )
+from deepaudiox.modules.baseclasses import BaseBackbone
 
 
 class BEATsConfig:

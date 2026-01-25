@@ -27,7 +27,7 @@
 import torch
 from torch import nn
 
-from deepaudiox.modules.pooling.base_pooling import BasePooling
+from deepaudiox.modules.baseclasses import BasePooling
 
 
 class EfficientProbing(BasePooling):
