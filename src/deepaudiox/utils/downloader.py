@@ -8,7 +8,10 @@ from tqdm import tqdm
 # Repository URL where the pretrained backbone models are hosted
 BACKBONE_REPO_URL = "https://github.com/magcil/pretrained-ssl-audio-backbones/raw/refs/heads/main/models/"
 
-BACKBONE_URLS = {"beats": BACKBONE_REPO_URL + "BEATs_iter3_plus_AS2M.pt"}
+BACKBONE_URLS = {
+    "beats": BACKBONE_REPO_URL + "BEATs_iter3_plus_AS2M.pt",
+    "passt": BACKBONE_REPO_URL + "passt-s-kd-ap.486.pt",
+}
 
 
 class Downloader:
@@ -31,7 +34,7 @@ class Downloader:
         self.cache_dir = Path(user_cache_dir("deepaudiox"))
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-    def download_checkpoint(self, backbone: Literal["beats"]) -> Path:
+    def download_checkpoint(self, backbone: Literal["beats", "passt"]) -> Path:
         """Downloads the pretrained backbone weights if not already cached.
 
         Args:

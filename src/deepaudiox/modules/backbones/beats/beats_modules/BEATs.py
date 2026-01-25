@@ -10,89 +10,131 @@
 import torch
 import torch.nn as nn
 import torchaudio.compliance.kaldi as ta_kaldi
+from torch.nn import LayerNorm
 
 from deepaudiox.modules.backbones.base_backbone import BaseBackbone
 from deepaudiox.modules.backbones.beats.beats_modules.backbone import (
     TransformerEncoder,
 )
-from torch.nn import LayerNorm
 
 
 class BEATsConfig:
+    """Configuration class for BEATs audio backbone.
+
+    Holds model hyperparameters, architecture settings, and preprocessing options.
+
+    Attributes:
+        input_patch_size (int): Patch size for patch embedding.
+        embed_dim (int): Dimension of patch embedding.
+        conv_bias (bool): Whether to include bias in convolutional encoder.
+        encoder_layers (int): Number of transformer encoder layers.
+        encoder_embed_dim (int): Transformer embedding dimension.
+        encoder_ffn_embed_dim (int): Transformer feed-forward dimension.
+        encoder_attention_heads (int): Number of attention heads in the transformer.
+        activation_fn (str): Activation function to use in the transformer.
+        layer_wise_gradient_decay_ratio (float): Decay ratio for layer-wise gradient decay.
+        layer_norm_first (bool): Whether to apply LayerNorm first in transformer.
+        deep_norm (bool): Whether to apply DeepNorm.
+        dropout (float): Transformer dropout probability.
+        attention_dropout (float): Dropout for attention weights.
+        activation_dropout (float): Dropout after activation in FFN.
+        encoder_layerdrop (float): Probability of dropping a transformer layer.
+        dropout_input (float): Dropout applied to input features.
+        conv_pos (int): Number of filters for convolutional positional embeddings.
+        conv_pos_groups (int): Number of groups for convolutional positional embedding.
+        relative_position_embedding (bool): Apply relative positional embeddings.
+        num_buckets (int): Number of buckets for relative positional embedding.
+        max_distance (int): Maximum distance for relative positional embedding.
+        gru_rel_pos (bool): Apply gated relative positional embedding.
+        finetuned_model (bool): Whether the model is fine-tuned.
+        predictor_dropout (float): Dropout probability for the predictor.
+        predictor_class (int): Number of target classes for predictor.
+    """
+
     def __init__(self, cfg=None):
-        self.input_patch_size: int = 16  # path size of patch embedding
-        self.embed_dim: int = 512  # patch embedding dimension
-        self.conv_bias: bool = False  # include bias in conv encoder
-
-        self.encoder_layers: int = 12  # num encoder layers in the transformer
-        self.encoder_embed_dim: int = 768  # encoder embedding dimension
-        self.encoder_ffn_embed_dim: int = 3072  # encoder embedding dimension for FFN
-        self.encoder_attention_heads: int = 12  # num encoder attention heads
-        self.activation_fn: str = "gelu"  # activation function to use
-
-        self.layer_wise_gradient_decay_ratio: float = 0.6  # ratio for layer-wise gradient decay
-        self.layer_norm_first: bool = False  # apply layernorm first in the transformer
-        self.deep_norm: bool = True  # apply deep_norm first in the transformer
-
-        # dropouts
-        self.dropout: float = 0.1  # dropout probability for the transformer
-        self.attention_dropout: float = 0.1  # dropout probability for attention weights
-        self.activation_dropout: float = 0.0  # dropout probability after activation in FFN
-        self.encoder_layerdrop: float = 0.05  # probability of dropping a tarnsformer layer
-        self.dropout_input: float = 0.0  # dropout to apply to the input (after feat extr)
-
-        # positional embeddings
-        self.conv_pos: int = 128  # number of filters for convolutional positional embeddings
-        self.conv_pos_groups: int = 16  # number of groups for convolutional positional embedding
-
-        # relative position embedding
-        self.relative_position_embedding: bool = True  # apply relative position embedding
-        self.num_buckets: int = 320  # number of buckets for relative position embedding
-        self.max_distance: int = 800  # maximum distance for relative position embedding
-        self.gru_rel_pos: bool = True  # apply gated relative position embedding
-
-        # label predictor
-        self.finetuned_model: bool = False  # whether the model is a fine-tuned model.
-        self.predictor_dropout: float = 0.1  # dropout probability for the predictor
-        self.predictor_class: int = 527  # target class number for the predictor
+        self.input_patch_size: int = 16
+        self.embed_dim: int = 512
+        self.conv_bias: bool = False
+        self.encoder_layers: int = 12
+        self.encoder_embed_dim: int = 768
+        self.encoder_ffn_embed_dim: int = 3072
+        self.encoder_attention_heads: int = 12
+        self.activation_fn: str = "gelu"
+        self.layer_wise_gradient_decay_ratio: float = 0.6
+        self.layer_norm_first: bool = False
+        self.deep_norm: bool = True
+        self.dropout: float = 0.1
+        self.attention_dropout: float = 0.1
+        self.activation_dropout: float = 0.0
+        self.encoder_layerdrop: float = 0.05
+        self.dropout_input: float = 0.0
+        self.conv_pos: int = 128
+        self.conv_pos_groups: int = 16
+        self.relative_position_embedding: bool = True
+        self.num_buckets: int = 320
+        self.max_distance: int = 800
+        self.gru_rel_pos: bool = True
+        self.finetuned_model: bool = False
+        self.predictor_dropout: float = 0.1
+        self.predictor_class: int = 527
 
         if cfg is not None:
             self.update(cfg)
 
     def update(self, cfg: dict):
+        """Update configuration with a dictionary of values.
+
+        Args:
+            cfg (dict): Dictionary containing configuration overrides.
+        """
         self.__dict__.update(cfg)
 
 
 class BEATs(BaseBackbone):
-    def __init__(
-        self, cfg: BEATsConfig = BEATsConfig(), preprocess_flag: bool = True, sample_rate: int = 16_000
-    ) -> None:
+    """BEATs audio backbone.
+
+    Implements the BEATs model for audio representation learning, including
+    patch embedding, transformer encoder, and optional classifier.
+
+    Args:
+        cfg (BEATsConfig | None): Configuration object for model parameters.
+            If None, a default BEATsConfig is used.
+        preprocess_flag (bool): Whether to perform preprocessing on input waveforms.
+        sample_rate (int): Sampling rate of input audio.
+    """
+
+    def __init__(self, cfg: BEATsConfig | None = None, preprocess_flag: bool = True, sample_rate: int = 16_000) -> None:
         super().__init__(out_dim=768, sample_rate=sample_rate)
 
-        self.cfg = cfg
+        if cfg is None:
+            self.cfg = BEATsConfig()
+        else:
+            self.cfg = cfg
         self.preprocess_flag: bool = preprocess_flag
 
         self.fbank_mean, self.fbank_std = 15.41663, 6.55582
 
-        self.embed = cfg.embed_dim
+        self.embed = self.cfg.embed_dim
         self.post_extract_proj = (
-            nn.Linear(self.embed, cfg.encoder_embed_dim) if self.embed != cfg.encoder_embed_dim else None
+            nn.Linear(self.embed, self.cfg.encoder_embed_dim) if self.embed != self.cfg.encoder_embed_dim else None
         )
 
-        self.input_patch_size = cfg.input_patch_size
+        self.input_patch_size = self.cfg.input_patch_size
         self.patch_embedding = nn.Conv2d(
-            1, self.embed, kernel_size=self.input_patch_size, stride=self.input_patch_size, bias=cfg.conv_bias
+            1, self.embed, kernel_size=self.input_patch_size, stride=self.input_patch_size, bias=self.cfg.conv_bias
         )
 
-        self.dropout_input = nn.Dropout(cfg.dropout_input)
+        self.dropout_input = nn.Dropout(self.cfg.dropout_input)
 
-        assert not cfg.deep_norm or not cfg.layer_norm_first
-        self.encoder = TransformerEncoder(cfg)
+        if self.cfg.deep_norm and self.cfg.layer_norm_first:
+            raise ValueError("deep_norm and layer_norm_first cannot both be True at the same time")
+
+        self.encoder = TransformerEncoder(self.cfg)
         self.layer_norm = LayerNorm(self.embed)
 
-        if cfg.finetuned_model:
-            self.predictor_dropout = nn.Dropout(cfg.predictor_dropout)
-            self.predictor = nn.Linear(cfg.encoder_embed_dim, cfg.predictor_class)
+        if self.cfg.finetuned_model:
+            self.predictor_dropout = nn.Dropout(self.cfg.predictor_dropout)
+            self.predictor = nn.Linear(self.cfg.encoder_embed_dim, self.cfg.predictor_class)
         else:
             self.predictor = None
 
@@ -101,6 +143,16 @@ class BEATs(BaseBackbone):
         features: torch.Tensor,
         padding_mask: torch.Tensor,
     ) -> torch.Tensor:
+        """Compute a padding mask aligned with feature sequence length.
+
+        Args:
+            features (torch.Tensor): Feature tensor.
+            padding_mask (torch.Tensor): Input padding mask.
+
+        Returns:
+            torch.Tensor: Adjusted padding mask,
+                          True for valid tokens, False for padded positions.
+        """
         extra = padding_mask.size(1) % features.size(1)
         if extra > 0:
             padding_mask = padding_mask[:, :-extra]
@@ -109,6 +161,14 @@ class BEATs(BaseBackbone):
         return padding_mask
 
     def extract_features(self, waveforms: torch.Tensor) -> torch.Tensor:
+        """Convert raw waveforms to normalized log-Mel filterbank features.
+
+        Args:
+            waveforms (torch.Tensor): Input audio tensor.
+
+        Returns:
+            torch.Tensor: Filterbank features normalized by mean and std.
+        """
         fbanks = []
         for waveform in waveforms:
             waveform = waveform.unsqueeze(0) * 2**15
@@ -121,6 +181,15 @@ class BEATs(BaseBackbone):
         return fbank.unsqueeze(1)
 
     def forward(self, x: torch.Tensor, padding_mask: torch.Tensor | None = None):
+        """Forward pass through BEATs backbone.
+
+        Args:
+            x (torch.Tensor): Input tensor.
+            padding_mask (torch.Tensor | None): Optional padding mask.
+
+        Returns:
+            torch.Tensor: Output feature tensor after transformer encoding.
+        """
         if padding_mask is not None:
             padding_mask = self.forward_padding_mask(x, padding_mask)
 

@@ -7,7 +7,7 @@ authors = [
   { name = "Stefanos Vlachos", email = "stevenvlaxos@gmail.com " }, 
   { name = "Ellie Vakalaki", email = "evakalakiaidl@gmail.com" }
 ]
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -30,7 +30,7 @@ dev = [
 # Set the maximum line length to 120
 line-length = 120
 exclude = [
-    "src/deepaudiox/modules/backbones/beats/beats_modules"
+    
 ]
 
 [tool.ruff.lint]

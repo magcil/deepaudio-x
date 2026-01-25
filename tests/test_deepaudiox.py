@@ -90,7 +90,11 @@ def test_dataset_loading_from_dict(file_to_class_mapping, sample_rate):
 
 def test_dataset_splitting():
     class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
-    dataset = audio_classification_dataset_from_dir(root_dir=str(TRAIN_DIR), sample_rate=16000, class_mapping=class_mapping)
+    dataset = audio_classification_dataset_from_dir(
+        root_dir=str(TRAIN_DIR), 
+        sample_rate=16000, 
+        class_mapping=class_mapping
+    )
 
     train_dataset, validation_dataset = random_split_audio_dataset(dataset=dataset, train_ratio=0.8)
 
@@ -117,6 +121,16 @@ def test_beats_backbone(input_tensor):
     assert output.shape == (1, 48, 768)
 
 
+@pytest.mark.parametrize("input_tensor", [torch.randn(1, 32000)])
+def test_passt_backbone(input_tensor):
+    passt = BACKBONES["passt"]()
+
+    output = passt.forward_pipeline(input_tensor)
+    print(output.shape)
+
+    assert output.shape == (1, 108, 768)
+
+
 @pytest.mark.parametrize("input_tensor", [torch.randn(1, 768)])
 @pytest.mark.parametrize("hidden_layers", [None, [128], [512, 128]])
 def test_mlp_head(input_tensor, hidden_layers):
@@ -128,7 +142,7 @@ def test_mlp_head(input_tensor, hidden_layers):
 
 @pytest.mark.parametrize("input_tensor", [torch.randn(1, 16000)])
 @pytest.mark.parametrize("num_classes", [2, 8])
-@pytest.mark.parametrize("backbone", ["beats"])
+@pytest.mark.parametrize("backbone", ["beats", "passt"])
 @pytest.mark.parametrize("pooling", ["simpool", "gap", "ep"])
 @pytest.mark.parametrize("freeze_backbone", [True, False])
 @pytest.mark.parametrize("pretrained", [True, False])
