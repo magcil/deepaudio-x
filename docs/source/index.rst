@@ -7,3 +7,4 @@ DeepAudio-X is a self-supervised audio toolkit for audio classification and beyo
    :maxdepth: 2
    :caption: Contents:
 
+   installation
