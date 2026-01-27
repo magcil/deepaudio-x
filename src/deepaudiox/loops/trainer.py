@@ -12,7 +12,7 @@ from deepaudiox.callbacks.checkpointer import Checkpointer
 from deepaudiox.callbacks.console_logger import ConsoleLogger
 from deepaudiox.callbacks.early_stopper import EarlyStopper
 from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
-from deepaudiox.modules.base_audio_classifier import BaseAudioClassifier
+from deepaudiox.modules.baseclasses import BaseAudioClassifier
 from deepaudiox.utils.training_utils import get_device, get_logger, pad_collate_fn, random_split_audio_dataset
 
 

@@ -27,7 +27,7 @@
 import torch
 import torch.nn as nn
 
-from deepaudiox.modules.pooling.base_pooling import BasePooling
+from deepaudiox.modules.baseclasses import BasePooling
 
 
 class SimPool(BasePooling):

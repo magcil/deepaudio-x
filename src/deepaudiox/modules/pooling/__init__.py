@@ -6,7 +6,7 @@ The 'pooling' package contains pooling modules for pooling the embeddings of the
 
 from collections.abc import Callable
 
-from deepaudiox.modules.pooling.base_pooling import BasePooling
+from deepaudiox.modules.baseclasses import BasePooling
 from deepaudiox.modules.pooling.ep import EfficientProbing
 from deepaudiox.modules.pooling.gap import GAP
 from deepaudiox.modules.pooling.simpool import SimPool

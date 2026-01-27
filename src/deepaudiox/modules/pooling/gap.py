@@ -3,7 +3,7 @@
 # Implementation of the GlobalAveragePooling module
 import torch
 
-from deepaudiox.modules.pooling.base_pooling import BasePooling
+from deepaudiox.modules.baseclasses import BasePooling
 
 
 class GAP(BasePooling):
