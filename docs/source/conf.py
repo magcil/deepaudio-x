@@ -1,0 +1,62 @@
+# Configuration file for the Sphinx documentation builder.
+
+from __future__ import annotations
+
+from datetime import datetime
+import os
+import sys
+
+from importlib import metadata
+
+# -- Path setup --------------------------------------------------------------
+
+ROOT = os.path.abspath(os.path.join(__file__, "../../.."))
+SRC = os.path.join(ROOT, "src")
+sys.path.insert(0, SRC)
+
+# -- Project information -----------------------------------------------------
+
+project = "deepaudio-x"
+
+try:
+    release = metadata.version("deepaudio-x")
+except metadata.PackageNotFoundError:
+    # Fallback when package metadata is not available (e.g., local builds)
+    release = "0.0.0"
+
+version = release
+
+author = "Christos Nikou, Stefanos Vlachos, Ellie Vakalaki"
+copyright = f"{datetime.now().year}, {author}"
+
+# -- General configuration ---------------------------------------------------
+
+extensions = [
+    "sphinx.ext.duration",
+    "sphinx.ext.doctest",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.intersphinx",
+    "myst_parser",
+    "sphinx_copybutton",
+]
+
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
+autosummary_generate = True
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": False,
+    "show-inheritance": True,
+}
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "sphinx": ("https://www.sphinx-doc.org/en/master/", None),
+}
+intersphinx_disabled_domains = ["std"]
+
+# -- Options for HTML output -------------------------------------------------
+
+html_theme = "sphinx_rtd_theme"
+html_static_path = ["_static"]
