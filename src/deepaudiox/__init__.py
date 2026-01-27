@@ -7,7 +7,7 @@ This package provides modules for:
 - Training, evaluation, and inference utilities
 """
 
-__version__ = "0.1.5"
+__version__ = "0.2.0"
 
 # Top-level API exports
 from deepaudiox.datasets.audio_classification_dataset import (  # noqa: F401
