@@ -48,7 +48,10 @@ autodoc_default_options = {
     "members": True,
     "undoc-members": False,
     "show-inheritance": True,
+    "special-members": "__init__",
 }
+
+autoclass_content = "both"
 
 intersphinx_disabled_domains = ["std"]
 
