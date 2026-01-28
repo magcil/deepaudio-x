@@ -9,10 +9,7 @@ This section documents the public Python API. Internal backbones such as
    :nosignatures:
 
    deepaudiox
-   deepaudiox.callbacks
    deepaudiox.datasets
-   deepaudiox.dtos
-   deepaudiox.inference
    deepaudiox.loops
    deepaudiox.modules
    deepaudiox.modules.classifier
