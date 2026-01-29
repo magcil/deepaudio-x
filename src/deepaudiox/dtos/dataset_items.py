@@ -26,3 +26,12 @@ class AudioClassificationItem:
             "segment_idx": self.segment_idx,
             "feature": self.feature,
         }
+
+
+@dataclass
+class AudioPrediction:
+    final_label: str
+    final_posterior: float
+
+    segment_labels: list[str] | None = None
+    segment_posteriors: list[float] | None = None
