@@ -5,16 +5,23 @@ BaseClasses for abstracting nn modules (e.g., backbones, pooling layers, classif
 """
 
 from abc import ABC, abstractmethod
+<<<<<<< HEAD
 from pathlib import Path
 
 import librosa
+=======
+
+>>>>>>> origin/main
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+<<<<<<< HEAD
 from deepaudiox.dtos.dataset_items import AudioPrediction
 
+=======
+>>>>>>> origin/main
 
 class BaseAudioClassifier(nn.Module, ABC):
     """Base class for creating custom audio classifiers.
@@ -65,6 +72,7 @@ class BaseAudioClassifier(nn.Module, ABC):
             "posteriors": max_posteriors.values.numpy(force=True),
             "logits": logits.numpy(force=True),
         }
+<<<<<<< HEAD
     
     def inference_on_waveform(
             self,
@@ -195,6 +203,8 @@ class BaseAudioClassifier(nn.Module, ABC):
         )
 
         return prediction
+=======
+>>>>>>> origin/main
 
 
 class BasePooling(nn.Module, ABC):
