@@ -5,23 +5,16 @@ BaseClasses for abstracting nn modules (e.g., backbones, pooling layers, classif
 """
 
 from abc import ABC, abstractmethod
-<<<<<<< HEAD
 from pathlib import Path
 
 import librosa
-=======
-
->>>>>>> origin/main
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-<<<<<<< HEAD
 from deepaudiox.dtos.dataset_items import AudioPrediction
 
-=======
->>>>>>> origin/main
 
 class BaseAudioClassifier(nn.Module, ABC):
     """Base class for creating custom audio classifiers.
@@ -72,139 +65,104 @@ class BaseAudioClassifier(nn.Module, ABC):
             "posteriors": max_posteriors.values.numpy(force=True),
             "logits": logits.numpy(force=True),
         }
-<<<<<<< HEAD
-    
+
     def inference_on_waveform(
-            self,
-            x: torch.Tensor,
-            sample_rate: int,
-            class_mapping: dict[str, int],
-            segment_duration: int | None
-        ) -> AudioPrediction:
+        self,
+        x: torch.Tensor | np.ndarray,
+        sample_rate: int,
+        class_mapping: dict[str, int],
+        segment_duration: float | None = None,
+    ) -> AudioPrediction:
         """Get prediction on a waveform.
-        
+
         Args:
-        x (torch.Tensor): Input waveform to be used for inference.
-        sample_rate (int): Sampling rate of audio sample.
-        class_mapping (dict[str, int]): Class-to-index mapping that is used by the model.
-        segment_duration (int | None): None for inference on whole waveform, or int segment duration in sec for inference on segments.
-        
+            x (torch.Tensor | np.ndarray): Input waveform to be used for inference.
+            sample_rate (int): Sampling rate of audio sample.
+            class_mapping (dict[str, int]): Class-to-index mapping that is used by the model.
+            segment_duration (float | None): Optional segment duration in seconds for segment-level inference.
+
         Returns:
-        AudioPrediction: An object containing the final label and posterior, and optionally segment-level results.
+            AudioPrediction: An object containing the final label and posterior, and optionally segment-level results.
         """
         index_to_class = {idx: cl for cl, idx in class_mapping.items()}
 
-        if not isinstance(x, torch.Tensor):
-            x = torch.tensor(x, dtype=torch.float32)
-
-        if x.dtype != torch.float32:
-            x = x.float()
+        if isinstance(x, np.ndarray):
+            x = torch.from_numpy(x)
 
         device = next(self.parameters()).device
+        x = x.to(device)
 
-        if segment_duration:
-            total_duration = len(x) / sample_rate
+        total_duration = x.numel() / sample_rate
 
-            if total_duration < segment_duration:
-                x = x.to(device)
-                inference = self.model.predict(x)
-                prediction = AudioPrediction(
-                final_label = index_to_class[inference["y_preds"][0]],
-                final_posterior = inference["posteriors"][0])
+        if segment_duration and total_duration > segment_duration:  # Process in segments
+            p, r = divmod(total_duration, segment_duration)
 
-                return prediction
-
+            # Process the main part of the waveform that fits into full segments
+            main_part = x[: int(p * segment_duration * sample_rate)]
+            if r > 0:  # If there is a remainder, pad it to create an additional segment
+                remainder_part = F.pad(
+                    x[int(p * segment_duration * sample_rate) :],
+                    (0, int(segment_duration * sample_rate) - int(r * sample_rate)),
+                )
+                batch_segments = torch.cat([main_part, remainder_part], dim=0)
             else:
-                segments = []
-                num_segments = total_duration // self.segment_duration
-                segment_length = self.segment_duration * self.sample_rate
+                batch_segments = main_part
 
-                for i in range(num_segments):
-                    segment = x[i * segment_length : i * segment_length + segment_length]
-                    segments.append(segment)
+            # Create batches of segments and run inference
+            batch_segments = batch_segments.view(-1, int(segment_duration * sample_rate))
+            inference = self.predict(batch_segments)
 
-                batch = torch.stack([torch.tensor(seg) for seg in segments])
-                batch = batch.to(device)
-                inference = self.model.predict(batch)
+            # Accumulate segment-level labels
+            segment_labels = []
+            for pred in inference["y_preds"]:
+                segment_labels.append(index_to_class[pred])
 
-                segment_labels = []
-                for pred in inference["y_preds"]:
-                    segment_labels.append(index_to_class[pred])
+            # Majority vote to get final prediction
+            unique_preds = np.unique(inference["y_preds"])
+            # Aggregated results sorted by predicted class and mean posterior for that class, in descending order
+            aggregated_results = sorted(
+                [(pred, inference["posteriors"][inference["y_preds"] == pred].mean()) for pred in unique_preds],
+                key=lambda x: (x[0], x[1]),
+                reverse=True,
+            )
+            # First item is the winner with highest mean posterior / handles ties by mean posterior
+            final_winner_index, final_posterior = aggregated_results[0]
 
-                # Majority vote to get final prediction
-                preds, counts = np.unique((inference["y_preds"]), return_counts=True)
-                top_preds = preds[counts == counts.max()]
-                final_pred = None
+            return AudioPrediction(
+                final_label=index_to_class[final_winner_index],
+                final_posterior=final_posterior,
+                segment_labels=segment_labels,
+                segment_posteriors=inference["posteriors"].tolist(),
+            )
 
-                if len(top_preds) == 1:
-                    # No tie: use only majority vote
-                    final_pred = top_preds[0]
-                    class_posteriors = []
-                    for pred, posterior in zip(inference["y_preds"], inference["posteriors"]):
-                        if pred == final_pred:
-                            class_posteriors.append(posterior)
-                    mean_posterior = np.mean(class_posteriors)
-                else:
-                    # Tie: use majority vote and choose the y_pred with the highest mean posterior
-                    max_mean_posterior = 0
-                    for y_pred in top_preds:
-                        class_posteriors = []
-                        for pred, posterior in zip(inference["y_preds"], inference["posteriors"]):
-                            if pred == y_pred:
-                                class_posteriors.append(posterior)
-                        mean_posterior = np.mean(class_posteriors)
-                        if mean_posterior > max_mean_posterior:
-                                max_mean_posterior = mean_posterior
-                                final_pred = y_pred
+        else:  # Process the whole waveform at once if segment_duration is not specified or it total_duration < seg_dur
+            inference = self.predict(x)
 
-                prediction = AudioPrediction(
-                final_label = index_to_class[final_pred],
-                final_posterior = mean_posterior,
+            return AudioPrediction(
+                final_label=index_to_class[inference["y_preds"][0]], final_posterior=inference["posteriors"][0]
+            )
 
-                segment_labels = segment_labels,
-                segment_posteriors = list(inference["posteriors"]))
-
-                return prediction
-        
-        else:
-            x = x.to(device)
-            inference = self.model.predict(x)
-            prediction = AudioPrediction(
-            final_label = index_to_class[inference["y_preds"][0]],
-            final_posterior = inference["posteriors"][0])
-
-            return prediction
-    
     def inference_on_file(
-            self,
-            path: str | Path,
-            sample_rate: int,
-            class_mapping: dict[str, int],
-            segment_duration: int | None
-        ) -> AudioPrediction:
+        self, path: str | Path, sample_rate: int, class_mapping: dict[str, int], segment_duration: float | None = None
+    ) -> AudioPrediction:
         """Get prediction for an audio sample from a file path.
-        
+
         Args:
-        path (str): Path to the audio file (MP3 or WAV) to be used for inference.
-        sample_rate (int): Sampling rate of audio sample.
-        class_mapping (dict[str, int]): Class-to-index mapping as it is used by the model.
-        segment_duration (int | None): None for inference on whole waveform, or int segment duration in sec for inference on segments.
+            path (str): Path to the audio file (MP3 or WAV) to be used for inference.
+            sample_rate (int): Sampling rate of audio sample.
+            class_mapping (dict[str, int]): Class-to-index mapping as it is used by the model.
+            segment_duration (float | None): Optional segment duration in seconds for segment-level inference.
 
         Returns:
-        AudioPrediction: An object containing the final label and posterior, and optionally segment-level results.
+            AudioPrediction: An object containing the final label and posterior, and optionally segment-level results.
         """
-        y, _ = librosa.load(path, sr=sample_rate)
+
+        x, _ = librosa.load(path, sr=sample_rate)
         prediction = self.inference_on_waveform(
-            self,
-            x = y,
-            sample_rate = sample_rate,
-            class_mapping = class_mapping,
-            segment_duration = segment_duration
+            x, sample_rate=sample_rate, class_mapping=class_mapping, segment_duration=segment_duration
         )
 
         return prediction
-=======
->>>>>>> origin/main
 
 
 class BasePooling(nn.Module, ABC):
