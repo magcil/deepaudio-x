@@ -72,7 +72,7 @@ class BaseAudioClassifier(nn.Module, ABC):
         sample_rate: int,
         class_mapping: dict[str, int],
         segment_duration: float | None = None,
-    ) -> AudioPrediction:
+    ) -> dict:
         """Get prediction on a waveform.
 
         Args:
@@ -82,7 +82,7 @@ class BaseAudioClassifier(nn.Module, ABC):
             segment_duration (float | None): Optional segment duration in seconds for segment-level inference.
 
         Returns:
-            AudioPrediction: An object containing the final label and posterior, and optionally segment-level results.
+            dict: A dictionary containing the final label and posterior, and optionally segment-level results.
         """
         index_to_class = {idx: cl for cl, idx in class_mapping.items()}
 
@@ -133,18 +133,18 @@ class BaseAudioClassifier(nn.Module, ABC):
                 final_posterior=final_posterior,
                 segment_labels=segment_labels,
                 segment_posteriors=inference["posteriors"].tolist(),
-            )
+            ).to_dict()
 
         else:  # Process the whole waveform at once if segment_duration is not specified or it total_duration < seg_dur
             inference = self.predict(x)
 
             return AudioPrediction(
                 final_label=index_to_class[inference["y_preds"][0]], final_posterior=inference["posteriors"][0]
-            )
+            ).to_dict()
 
     def inference_on_file(
         self, path: str | Path, sample_rate: int, class_mapping: dict[str, int], segment_duration: float | None = None
-    ) -> AudioPrediction:
+    ) -> dict:
         """Get prediction for an audio sample from a file path.
 
         Args:
@@ -154,7 +154,7 @@ class BaseAudioClassifier(nn.Module, ABC):
             segment_duration (float | None): Optional segment duration in seconds for segment-level inference.
 
         Returns:
-            AudioPrediction: An object containing the final label and posterior, and optionally segment-level results.
+            dict: A dictionary containing the final label and posterior, and optionally segment-level results.
         """
 
         x, _ = librosa.load(path, sr=sample_rate)
