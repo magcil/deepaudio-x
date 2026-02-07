@@ -1,5 +1,10 @@
 # DeepAudioX
 
+<p align="left">
+  <img src="docs/source/_static/DeepAudioX_logo.png" width="200" alt="DeepAudio-X logo">
+</p>
+
+
 DeepAudioX is a PyTorch-based library that provides **simple, flexible pipelines for audio classification** using **pretrained audio foundation models** as feature extractors.
 
 It is designed to let users train, evaluate, and run inference on **custom audio datasets** with only a few lines of code, while still allowing advanced customization when needed.

@@ -32,13 +32,20 @@ copyright = f"{datetime.now().year}, {author}"
 # -- General configuration ---------------------------------------------------
 
 extensions = [
+    "myst_parser",
+    "sphinx.ext.napoleon",
     "sphinx.ext.duration",
-    "sphinx.ext.doctest",
+    "sphinx.ext.autosectionlabel",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
-    "myst_parser",
-    "sphinx_copybutton",
+    "sphinx.ext.viewcode",
+    "sphinx_autodoc_typehints",
+    "sphinx_design",
+    "sphinx.ext.mathjax", 
+    "sphinx.ext.coverage",
+    "nbsphinx",
+    "nbsphinx_link"
 ]
 
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -57,5 +64,6 @@ intersphinx_disabled_domains = ["std"]
 
 # -- Options for HTML output -------------------------------------------------
 
+html_logo = "_static/DeepAudioX_logo.png"
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
