@@ -9,36 +9,6 @@ DeepAudioX is a PyTorch-based library that provides **simple, flexible pipelines
 
 It is designed to let users train, evaluate, and run inference on **custom audio datasets** with only a few lines of code, while still allowing advanced customization when needed.
 
----
-
-## Table of Contents
-
-- [Key Features](#key-features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-  - [Creating an Audio Classification Dataset](#creating-an-audio-classification-dataset)
-- [Create an Audio Classifier with Pretrained Backbone](#create-an-audio-classifier-with-pretrained-backbone)
-  - [Basic Setup](#basic-setup)
-  - [Available Backbones](#available-backbones)
-  - [Key Parameters](#key-parameters)
-  - [Optional: Custom Pooling Strategies](#optional-custom-pooling-strategies)
-  - [Backbone-Only Usage](#backbone-only-usage)
-  - [Input and Output Expectations](#input-and-output-expectations)
-- [Training](#training)
-  - [Trainer Parameters](#trainer-parameters)
-  - [Features](#features)
-- [Evaluate](#evaluate)
-  - [Evaluator Parameters](#evaluator-parameters)
-  - [Evaluation Results](#evaluation-results)
-- [End-to-End Example](#end-to-end-example)
-- [Customization](#customization)
-- [Project Status](#project-status)
-- [Attribution](#attribution)
-- [Citation](#citation)
-- [Contributing](#contributing)
-
----
-
 ## Key Features
 
 - 🔊 **Pretrained audio backbones** for feature extraction  
