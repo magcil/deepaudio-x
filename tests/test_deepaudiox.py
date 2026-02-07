@@ -268,3 +268,41 @@ def test_evaluation_loop():
     assert len(y_true) == 25
     assert len(y_pred) == 25
     assert len(posteriors) == 25
+
+
+@pytest.mark.parametrize(
+    "path_to_test_file",
+    ["tests/testing_dataset/train/sinewave/sinewave_0.wav", "tests/testing_dataset/train/sawwave/sawwave_0.wav"],
+)
+def test_inference(path_to_test_file: str):
+    path_to_checkpoint = Path(__file__).resolve().parents[1] / "testing_checkpoint.pt"
+    path_wav = Path(__file__).resolve().parents[1] / path_to_test_file
+
+    model = dax.AudioClassifierConstructor(
+        num_classes=5,
+        backbone="beats",
+        pooling="gap",
+        freeze_backbone=True,
+        sample_rate=16000,
+        classifier_hidden_layers=None,
+        activation="relu",
+        apply_batch_norm=False,
+        pretrained=True,
+    )
+    model.load_state_dict(torch.load(path_to_checkpoint, map_location="cpu"))
+
+    class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
+
+    # Inference on the whole audio file
+    inference = model.inference_on_file(path=path_wav, class_mapping=class_mapping, sample_rate=16_000)
+
+    true_label = path_wav.parents[0].name
+
+    assert inference["final_label"] in {"gaussiannoise", "sawwave", "sinewave", "squarewave", "trianglewave"}
+
+    # Inference with segmentation
+    inference_segmented = model.inference_on_file(
+        path=path_wav, class_mapping=class_mapping, sample_rate=16_000, segment_duration=1.0
+    )
+    
+    assert len(inference_segmented["segment_labels"]) == 5

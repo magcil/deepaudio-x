@@ -5,11 +5,15 @@ BaseClasses for abstracting nn modules (e.g., backbones, pooling layers, classif
 """
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 
+import librosa
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from deepaudiox.dtos.dataset_items import AudioPrediction
 
 
 class BaseAudioClassifier(nn.Module, ABC):
@@ -61,6 +65,104 @@ class BaseAudioClassifier(nn.Module, ABC):
             "posteriors": max_posteriors.values.numpy(force=True),
             "logits": logits.numpy(force=True),
         }
+
+    def inference_on_waveform(
+        self,
+        x: torch.Tensor | np.ndarray,
+        sample_rate: int,
+        class_mapping: dict[str, int],
+        segment_duration: float | None = None,
+    ) -> dict:
+        """Get prediction on a waveform.
+
+        Args:
+            x (torch.Tensor | np.ndarray): Input waveform to be used for inference.
+            sample_rate (int): Sampling rate of audio sample.
+            class_mapping (dict[str, int]): Class-to-index mapping that is used by the model.
+            segment_duration (float | None): Optional segment duration in seconds for segment-level inference.
+
+        Returns:
+            dict: A dictionary containing the final label and posterior, and optionally segment-level results.
+        """
+        index_to_class = {idx: cl for cl, idx in class_mapping.items()}
+
+        if isinstance(x, np.ndarray):
+            x = torch.from_numpy(x)
+
+        device = next(self.parameters()).device
+        x = x.to(device)
+
+        total_duration = x.numel() / sample_rate
+
+        if segment_duration and total_duration > segment_duration:  # Process in segments
+            p, r = divmod(total_duration, segment_duration)
+
+            # Process the main part of the waveform that fits into full segments
+            main_part = x[: int(p * segment_duration * sample_rate)]
+            if r > 0:  # If there is a remainder, pad it to create an additional segment
+                remainder_part = F.pad(
+                    x[int(p * segment_duration * sample_rate) :],
+                    (0, int(segment_duration * sample_rate) - int(r * sample_rate)),
+                )
+                batch_segments = torch.cat([main_part, remainder_part], dim=0)
+            else:
+                batch_segments = main_part
+
+            # Create batches of segments and run inference
+            batch_segments = batch_segments.view(-1, int(segment_duration * sample_rate))
+            inference = self.predict(batch_segments)
+
+            # Accumulate segment-level labels
+            segment_labels = []
+            for pred in inference["y_preds"]:
+                segment_labels.append(index_to_class[pred])
+
+            # Majority vote to get final prediction
+            unique_preds = np.unique(inference["y_preds"])
+            # Aggregated results sorted by predicted class and mean posterior for that class, in descending order
+            aggregated_results = sorted(
+                [(pred, inference["posteriors"][inference["y_preds"] == pred].mean()) for pred in unique_preds],
+                key=lambda x: (x[0], x[1]),
+                reverse=True,
+            )
+            # First item is the winner with highest mean posterior / handles ties by mean posterior
+            final_winner_index, final_posterior = aggregated_results[0]
+
+            return AudioPrediction(
+                final_label=index_to_class[final_winner_index],
+                final_posterior=final_posterior,
+                segment_labels=segment_labels,
+                segment_posteriors=inference["posteriors"].tolist(),
+            ).to_dict()
+
+        else:  # Process the whole waveform at once if segment_duration is not specified or it total_duration < seg_dur
+            inference = self.predict(x)
+
+            return AudioPrediction(
+                final_label=index_to_class[inference["y_preds"][0]], final_posterior=inference["posteriors"][0]
+            ).to_dict()
+
+    def inference_on_file(
+        self, path: str | Path, sample_rate: int, class_mapping: dict[str, int], segment_duration: float | None = None
+    ) -> dict:
+        """Get prediction for an audio sample from a file path.
+
+        Args:
+            path (str): Path to the audio file (MP3 or WAV) to be used for inference.
+            sample_rate (int): Sampling rate of audio sample.
+            class_mapping (dict[str, int]): Class-to-index mapping as it is used by the model.
+            segment_duration (float | None): Optional segment duration in seconds for segment-level inference.
+
+        Returns:
+            dict: A dictionary containing the final label and posterior, and optionally segment-level results.
+        """
+
+        x, _ = librosa.load(path, sr=sample_rate)
+        prediction = self.inference_on_waveform(
+            x, sample_rate=sample_rate, class_mapping=class_mapping, segment_duration=segment_duration
+        )
+
+        return prediction
 
 
 class BasePooling(nn.Module, ABC):
