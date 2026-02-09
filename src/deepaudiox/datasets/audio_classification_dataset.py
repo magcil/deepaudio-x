@@ -41,6 +41,21 @@ class AudioClassificationDataset(Dataset):
             sample_rate (int): Target sampling rate for audio loading.
             class_mapping (dict): Mapping from string labels to integer IDs.
             segment_duration (float | None): Duration of audio segments in seconds. If None, load full audio.
+                When set, the last partial segment is dropped.
+
+        Example:
+            >>> from deepaudiox import AudioClassificationDataset
+            >>> file_to_class_mapping = {
+            ...     "path/to/audio1.wav": "speech",
+            ...     "path/to/audio2.wav": "music",
+            ... }
+            >>> class_mapping = {"speech": 0, "music": 1}
+            >>> dataset = AudioClassificationDataset(
+            ...     file_to_class_mapping=file_to_class_mapping,
+            ...     sample_rate=16_000,
+            ...     class_mapping=class_mapping,
+            ...     segment_duration=2.0,
+            ... )
         """
         self.sample_rate = sample_rate
         self.class_mapping = class_mapping
@@ -119,12 +134,24 @@ def audio_classification_dataset_from_dir(
 
     Args:
         root_dir (str | Path): Root directory containing class sub-folders.
+            Only ``.wav`` and ``.mp3`` files are used.
         sample_rate (int): Target sampling rate for audio loading.
         class_mapping (dict): Mapping from string labels to integer IDs.
         segment_duration (float | None): Duration of audio segments in seconds. If None, load full audio.
+            When set, the last partial segment is dropped.
 
     Returns:
         AudioClassificationDataset: The constructed dataset.
+
+    Example:
+        >>> from deepaudiox import audio_classification_dataset_from_dir, get_class_mapping_from_dir
+        >>> class_mapping = get_class_mapping_from_dir(root_dir="path/to/data")
+        >>> dataset = audio_classification_dataset_from_dir(
+        ...     root_dir="path/to/data",
+        ...     sample_rate=16_000,
+        ...     class_mapping=class_mapping,
+        ...     segment_duration=2.0,
+        ... )
     """
     root_path = Path(root_dir)
     file_to_class_mapping = {}
@@ -156,9 +183,24 @@ def audio_classification_dataset_from_dictionary(
         sample_rate (int): Target sampling rate for audio loading.
         class_mapping (dict): Mapping from string labels to integer IDs.
         segment_duration (float | None): Duration of audio segments in seconds. If None, load full audio.
+            When set, the last partial segment is dropped.
 
     Returns:
         AudioClassificationDataset: The constructed dataset.
+
+    Example:
+        >>> from deepaudiox import audio_classification_dataset_from_dictionary
+        >>> file_to_class_mapping = {
+        ...     "path/to/audio1.wav": "speech",
+        ...     "path/to/audio2.wav": "music",
+        ... }
+        >>> class_mapping = {"speech": 0, "music": 1}
+        >>> dataset = audio_classification_dataset_from_dictionary(
+        ...     file_to_class_mapping=file_to_class_mapping,
+        ...     sample_rate=16_000,
+        ...     class_mapping=class_mapping,
+        ...     segment_duration=None,
+        ... )
     """
     return AudioClassificationDataset(
         file_to_class_mapping=file_to_class_mapping,

@@ -88,10 +88,44 @@ audio classifier:
 Supported backbones & pooling
 -----------------------------
 
-As of v.0.2.0, DeepAudio-X supports the following backbones and pooling methods:
+DeepAudio-X supports the following backbones and pooling methods:
 
-- Backbones: **BEATs**, **PaSST**
-- Pooling: **GAP**, **SimPool**, **EP**
+Backbones
+~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 35 50
+
+   * - Name
+     - Description
+     - Notes
+   * - beats
+     - BEATs backbone
+     - Transformer pretrained on AudioSet
+   * - passt
+     - PaSST backbone
+     - Transformer pretrained on AudioSet
+
+Pooling
+~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 35 50
+
+   * - Name
+     - Description
+     - Notes
+   * - gap
+     - Global Average Pooling
+     - Fast baseline
+   * - simpool
+     - Simple Pooling
+     - Strong attentive pooling
+   * - ep
+     - Efficient Probing
+     - Efficient attention pooling
 
 References
 ----------

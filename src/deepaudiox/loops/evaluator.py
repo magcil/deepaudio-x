@@ -61,6 +61,21 @@ class Evaluator:
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
             device_index (int | None): The GPU device index to use. If None, uses the default GPU if available.
+
+        Example:
+            >>> import torch
+            >>> from deepaudiox import AudioClassifier, Evaluator
+            >>> from deepaudiox import audio_classification_dataset_from_dir, get_class_mapping_from_dir
+            >>> class_mapping = get_class_mapping_from_dir(root_dir="path/to/data")
+            >>> test_dataset = audio_classification_dataset_from_dir(
+            ...     root_dir="path/to/data",
+            ...     sample_rate=16_000,
+            ...     class_mapping=class_mapping,
+            ... )
+            >>> model = AudioClassifier(num_classes=len(class_mapping), backbone="beats", sample_rate=16_000)
+            >>> model.load_state_dict(torch.load("checkpoint.pt"))
+            >>> evaluator = Evaluator(test_dset=test_dataset, model=model, class_mapping=class_mapping)
+            >>> evaluator.evaluate()
         """
         self.state = State()
         self.device = get_device(device_index=device_index)

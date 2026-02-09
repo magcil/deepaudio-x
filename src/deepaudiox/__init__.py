@@ -1,17 +1,8 @@
 """
-DeepAudio-X API
-===========
-
-A self-supervised audio toolkit for audio classification .
-
-This package provides modules for:
-
-- datasets and audio preprocessing
-- backbone and pooling architectures
-- training, evaluation, and inference workflows
+This page provides the core API reference for DeepAudioX.
 """
 
-__version__ = "0.3.6"
+__version__ = "0.3.7"
 
 # Top-level API exports
 from deepaudiox.datasets.audio_classification_dataset import (  # noqa: F401
@@ -27,6 +18,10 @@ from deepaudiox.modules.constructors import (  # noqa: F401
     BackboneConstructor,
 )
 from deepaudiox.modules.pooling import POOLING  # noqa: F401
+from deepaudiox.utils.training_utils import (  # noqa: F401
+    get_class_mapping_from_dir,
+    get_class_mapping_from_list,
+)
 
 # User-friendly aliases
 AudioClassifier = AudioClassifierConstructor
@@ -44,4 +39,6 @@ __all__ = [
     "POOLING",
     "audio_classification_dataset_from_dictionary",
     "audio_classification_dataset_from_dir",
+    "get_class_mapping_from_dir",
+    "get_class_mapping_from_list",
 ]

@@ -48,10 +48,17 @@ class BaseAudioClassifier(nn.Module, ABC):
         """Compute predicted class and posterior probabilities.
 
         Args:
-            x (torch.Tensor): Input Waveforms of shape B x N*SR, B Batch size, N length, SR sample rate
+            x (torch.Tensor): Input waveforms of shape (B, T), where T is the number of audio samples.
 
         Returns:
             dict[str, np.ndarray]: y_preds, posteriors, logits.
+
+        Example:
+            >>> import torch
+            >>> from deepaudiox import AudioClassifier
+            >>> model = AudioClassifier(num_classes=10, backbone="beats", sample_rate=16_000, pretrained=True)
+            >>> waveforms = torch.randn(2, 5 * 16_000)
+            >>> outputs = model.predict(waveforms)
         """
         if x.dim() == 1:
             x = x.unsqueeze(0)
@@ -79,15 +86,34 @@ class BaseAudioClassifier(nn.Module, ABC):
         """Get prediction on a waveform.
 
         Args:
-            x (torch.Tensor | np.ndarray): Input waveform to be used for inference.
+            x (torch.Tensor | np.ndarray): Input waveform to be used for inference. Accepts shape (T,) or (1, T).
             sample_rate (int): Sampling rate of audio sample.
             class_mapping (dict[str, int]): Class-to-index mapping that is used by the model.
             segment_duration (float | None): Optional segment duration in seconds for segment-level inference.
-            batch_size (int | None): Optional batch size for segment-level inference. If None, all segments are
-                processed at once.
+                If provided, the last remainder is right-padded to a full segment.
+            batch_size (int): Optional batch size for segment-level inference. Default is 4.
 
         Returns:
-            dict: A dictionary containing the final label and posterior, and optionally segment-level results.
+            dict: A dictionary with keys:
+                - ``final_label`` (str): Predicted class label.
+                - ``final_posterior`` (float): Posterior probability for the predicted class.
+                - ``segment_labels`` (list[str] | None): Per-segment labels when segmenting is used.
+                - ``segment_posteriors`` (list[float] | None): Per-segment posteriors aligned with
+                  ``segment_labels`` when segmenting is used.
+
+        Example:
+            >>> import torch
+            >>> from deepaudiox import AudioClassifier
+            >>> class_mapping = {"speech": 0, "music": 1}
+            >>> model = AudioClassifier(num_classes=len(class_mapping), backbone="beats", sample_rate=16_000)
+            >>> waveform = torch.randn(5 * 16_000)
+            >>> prediction = model.inference_on_waveform(
+            ...     waveform,
+            ...     sample_rate=16_000,
+            ...     class_mapping=class_mapping,
+            ...     segment_duration=1.0,
+            ...     batch_size=4,
+            ... )
         """
         index_to_class = {idx: cl for cl, idx in class_mapping.items()}
 
@@ -176,15 +202,32 @@ class BaseAudioClassifier(nn.Module, ABC):
         """Get prediction for an audio sample from a file path.
 
         Args:
-            path (str): Path to the audio file (MP3 or WAV) to be used for inference.
+            path (str): Path to an audio file supported by librosa (e.g., WAV or MP3).
             sample_rate (int): Sampling rate of audio sample.
             class_mapping (dict[str, int]): Class-to-index mapping as it is used by the model.
             segment_duration (float | None): Optional segment duration in seconds for segment-level inference.
-            batch_size (int | None): Optional batch size for segment-level inference. If None, all segments are
-                processed at once.
+                If provided, the last remainder is right-padded to a full segment.
+            batch_size (int): Optional batch size for segment-level inference. Default is 4.
 
         Returns:
-            dict: A dictionary containing the final label and posterior, and optionally segment-level results.
+            dict: A dictionary with keys:
+                - ``final_label`` (str): Predicted class label.
+                - ``final_posterior`` (float): Posterior probability for the predicted class.
+                - ``segment_labels`` (list[str] | None): Per-segment labels when segmenting is used.
+                - ``segment_posteriors`` (list[float] | None): Per-segment posteriors aligned with
+                  ``segment_labels`` when segmenting is used.
+
+        Example:
+            >>> from deepaudiox import AudioClassifier
+            >>> class_mapping = {"speech": 0, "music": 1}
+            >>> model = AudioClassifier(num_classes=len(class_mapping), backbone="beats", sample_rate=16_000)
+            >>> prediction = model.inference_on_file(
+            ...     "path/to/audio.wav",
+            ...     sample_rate=16_000,
+            ...     class_mapping=class_mapping,
+            ...     segment_duration=2.0,
+            ...     batch_size=4,
+            ... )
         """
 
         x, _ = librosa.load(path, sr=sample_rate)
@@ -213,7 +256,7 @@ class BasePooling(nn.Module, ABC):
     """
 
     def __init__(self, in_dim: int | None = None) -> None:
-        """Initialize the BaseProjection.
+        """Initialize the BasePooling.
 
         Args:
             in_dim (int): Input dimension. This is D for both CNNs and Transformers.
@@ -256,14 +299,14 @@ class BaseBackbone(nn.Module, ABC):
 
     @abstractmethod
     def forward(self, x: torch.Tensor, padding_mask: torch.Tensor | None = None) -> torch.Tensor:
-        """Computes of the embeddings of the input features.
+        """Compute embeddings from input features.
 
         Args:
-            x: (torch.Tensor) Input audio-specific features of shape (B, 1, F, T) or (B, 1, T, F)
-            padding_mask: (torch.Tensor) Optional padding mask.
+            x (torch.Tensor): Input audio-specific features of shape (B, 1, F, T) or (B, 1, T, F).
+            padding_mask (torch.Tensor | None): Optional padding mask.
 
         Returns:
-            torch.Tensor: Embeddings of shape (B, N, D) or (B, D, H, W) where D is the embedding dimension.
+            torch.Tensor: Embeddings of shape (B, N, D) or (B, D, H, W), where D is the embedding dimension.
         """
         pass
 
@@ -290,7 +333,7 @@ class BaseBackbone(nn.Module, ABC):
             x (torch.Tensor): Input waveforms of shape (B, T), where T is the length of waveforms.
 
         Returns:
-            torch.Tensor: Final model output of shape (B, out_dim, H, W) for CNNs or (B, T, out_dim) for Transformers.
+            torch.Tensor: Final model output of shape (B, D, H, W) for CNNs or (B, N, D) for Transformers.
         """
         x = self.extract_features(x)
         return self.forward(x)

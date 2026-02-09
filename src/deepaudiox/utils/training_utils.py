@@ -20,7 +20,7 @@ def get_logger() -> logging.Logger:
     return logger
 
 
-def get_class_mapping_from_list(labels: list[str], sort_alphabetically: bool = True):
+def get_class_mapping_from_list(labels: list[str], sort_alphabetically: bool = True) -> dict[str, int]:
     """Get a class mapping dictionary given a list of class names.
 
     Args:
@@ -28,7 +28,14 @@ def get_class_mapping_from_list(labels: list[str], sort_alphabetically: bool = T
         sort_alphabetically (boolean): Determines if alphabetical sorting should be applied to class names.
 
     Returns:
-        Dict: The class mapping dictionary
+        dict[str, int]: The class mapping dictionary
+
+    Example:
+        >>> from deepaudiox import get_class_mapping_from_list
+        >>> labels = ["speech", "music", "noise"]
+        >>> class_mapping = get_class_mapping_from_list(labels, sort_alphabetically=True)
+        >>> # Example output:
+        >>> # {'music': 0, 'noise': 1, 'speech': 2}
     """
     if sort_alphabetically:
         class_mapping = {name: idx for idx, name in enumerate(sorted(labels))}
@@ -41,11 +48,27 @@ def get_class_mapping_from_list(labels: list[str], sort_alphabetically: bool = T
 def get_class_mapping_from_dir(root_dir: str) -> dict[str, int]:
     """Load the class mapping given a folder of class sub-folders.
 
+    Expected directory structure::
+
+        root_dir/
+        ├── class_a/
+        │   ├── audio1.wav
+        │   └── audio2.wav
+        └── class_b/
+            ├── audio3.wav
+            └── audio4.wav
+
     Args:
         root_dir (str): The path to root folder
 
     Returns:
-        dict[str, int]: The class mapping dictionary
+        dict[str, int]: The class mapping dictionary, ordered alphabetically by folder name.
+
+    Example:
+        >>> from deepaudiox import get_class_mapping_from_dir
+        >>> class_mapping = get_class_mapping_from_dir(root_dir="path/to/data")
+        >>> # Example output:
+        >>> # {'class_a': 0, 'class_b': 1}
     """
 
     root_path = Path(root_dir)

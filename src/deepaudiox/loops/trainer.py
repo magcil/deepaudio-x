@@ -79,18 +79,32 @@ class Trainer:
         Args:
             train_dset (AudioClassificationDataset): The training dataset.
             model (BaseAudioClassifier): The model to be trained.
-            validation_dset (AudioClassificationDataset): The validation dataset.
+            validation_dset (AudioClassificationDataset | None): The validation dataset. If None, a split is created
+                from train_dset using train_ratio.
             optimizer (torch.optim.Optimizer): The optimizer used for training. Adam if None.
-            learning_rate (float): Learning rate. Defaults to 1e-3.
-            lr_scheduler (LRScheduler | None): The scheduler used for training. ReduceOnPlateu if None.
+            learning_rate (float): Learning rate used when optimizer is None. Defaults to 1e-3.
+            lr_scheduler (LRScheduler | None): The scheduler used for training. ReduceLROnPlateau if None.
             loss_function (nn.Module | None): The loss function used for training. Uses CrossEntropy if None.
-            train_ratio (float, optional): The ratio of the train split. Defaults to 0.8.
+            train_ratio (float, optional): The ratio of the train split when validation_dset is None. Defaults to 0.8.
             epochs (int, optional): The maximum number of training epochs. Defaults to 100.
             patience (int, optional): The maximum number of epochs with no decrease in loss. Defaults to 15.
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
             path_to_checkpoint (str, optional): The path to the saved model checpoint. Defaults to "checkpoint.pt".
             device_index (int | None): The GPU device index to use. If None, uses the default GPU if available.
+
+        Example:
+            >>> from deepaudiox import AudioClassifier, Trainer
+            >>> from deepaudiox import audio_classification_dataset_from_dir, get_class_mapping_from_dir
+            >>> class_mapping = get_class_mapping_from_dir(root_dir="path/to/data")
+            >>> train_dataset = audio_classification_dataset_from_dir(
+            ...     root_dir="path/to/data",
+            ...     sample_rate=16_000,
+            ...     class_mapping=class_mapping,
+            ... )
+            >>> model = AudioClassifier(num_classes=len(class_mapping), backbone="beats", sample_rate=16_000)
+            >>> trainer = Trainer(train_dset=train_dataset, model=model, epochs=10)
+            >>> trainer.train()
         """
         # Configure training state
         self.state = State()

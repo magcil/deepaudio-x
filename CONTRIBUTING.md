@@ -1,0 +1,22 @@
+# Contributing
+
+We welcome contributions of all kinds. If you want to improve DeepAudioX, there are many ways to help.
+
+## How You Can Contribute
+
+- **Add a new backbone**: Implement a new backbone by following the abstract interfaces in
+  `deepaudiox.modules.baseclasses.BaseBackbone` and register it in
+  `deepaudiox.modules.backbones`.
+- **Add a new pooling strategy**: Implement a pooling module by following
+  `deepaudiox.modules.baseclasses.BasePooling` and register it in
+  `deepaudiox.modules.pooling`.
+- **Improve the library**: Optimize performance, fix bugs, enhance documentation, or add tests.
+
+## General Guidelines
+
+1. Open an issue to discuss major changes before submitting a pull request.
+2. Keep changes focused and well-tested.
+3. Update docs and examples when behavior changes.
+4. Follow existing code style and patterns.
+
+If you are unsure where to start, feel free to open a discussion or issue with your idea.

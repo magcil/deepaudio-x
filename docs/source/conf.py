@@ -67,3 +67,8 @@ intersphinx_disabled_domains = ["std"]
 html_logo = "_static/DeepAudioX_logo.png"
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
+html_theme_options = {
+    "collapse_navigation": True,
+    "navigation_depth": 2,
+}
+html_css_files = ["custom.css"]

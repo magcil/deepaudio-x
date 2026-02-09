@@ -1,0 +1,28 @@
+/* Match logo background color in RTD theme */
+.wy-side-nav-search,
+.wy-nav-top {
+    background: #b5b5b5;
+}
+
+.wy-side-nav-search > a img.logo,
+.wy-nav-top a img.logo {
+    background: #b5b5b5;
+}
+
+
+.wy-nav-top a,
+.wy-nav-top a:visited,
+.wy-nav-top a:hover {
+    color: #222 !important;
+}
+
+.wy-nav-top i,
+.wy-nav-top svg,
+.wy-nav-top .icon-home,
+.wy-nav-top .fa,
+.wy-nav-top .fa-home,
+.wy-nav-top .fas,
+.wy-nav-top .fa-solid {
+    color: #222 !important;
+    fill: #222 !important;
+}

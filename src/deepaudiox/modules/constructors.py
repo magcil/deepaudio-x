@@ -100,11 +100,11 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
             freeze_backbone (bool): Whether to freeze the backbone weights during training.
             pooling (Literal["gap", "simpool", "ep"] | BasePooling | None): Optional pooling layer for aggregation.
             sample_rate (int): Sample frequency for audio input.
-            norm_p (float or None): Optional Lp norm applied after pooling.
+            norm_p (float or None): Optional Lp norm applied after pooling. If pooling is None, GAP is used.
 
         Example:
-            >>> from deepaudiox.modules.constructors import BackboneConstructor
-            >>> backbone = BackboneConstructor(
+            >>> from deepaudiox import Backbone
+            >>> backbone = Backbone(
             ...     backbone="beats",
             ...     pretrained=True,
             ...     freeze_backbone=True,
@@ -149,6 +149,14 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
 
         Returns:
             torch.Tensor: Backbone feature map of shape (B, N, D) or (B, D, H, W).
+
+        Example:
+            >>> import torch
+            >>> from deepaudiox import Backbone
+            >>> backbone = Backbone(backbone="beats", pretrained=True, sample_rate=16_000)
+            >>> waveforms = torch.randn(2, 5 * 16_000)
+            >>> features = backbone.forward(waveforms)
+            >>> # features shape: (B, N, D) for Transformer or (B, D, H, W) for CNN backbones
         """
         return self.backbone.forward_pipeline(x)
 
@@ -161,6 +169,14 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
 
         Returns:
             torch.Tensor: Pooled tensor of shape (B, D).
+
+        Example:
+            >>> import torch
+            >>> from deepaudiox import Backbone
+            >>> backbone = Backbone(backbone="beats", pretrained=True, pooling="gap", sample_rate=16_000)
+            >>> waveforms = torch.randn(2, 5 * 16_000)
+            >>> embeddings = backbone.forward_with_pooling(waveforms)
+            >>> # embeddings shape: (B, D)
         """
         x = self.forward(x)
         if self.norm_p:
@@ -193,18 +209,20 @@ class AudioClassifierConstructor(BaseAudioClassifier, BackbonePoolingResolverMix
 
         Args:
             num_classes (int): Number of output classes.
-            backbone (Literal["beats"] | BaseBackbone): Backbone model to use for feature extraction.
-            pooling (Literal["gap", "simpool"] | BasePooling | None): Optional pooling layer to aggregate features.
+            backbone (Literal["beats", "passt"] | BaseBackbone): Backbone model to use for feature extraction.
+            pooling (Literal["gap", "simpool", "ep"] | BasePooling | None): Optional pooling layer to aggregate
+                features.
             freeze_backbone (bool): Whether to freeze the backbone weights during training.
             sample_rate (int): Sample frequency for audio input.
             classifier_hidden_layers (list[int] or None): Hidden layer sizes for the classifier head.
             activation (Literal["relu", "gelu", "tanh", "leakyrelu"]): Activation function for the classifier head.
             apply_batch_norm (bool): Whether to apply batch normalization in the classifier head.
             pretrained (bool): Whether to load pretrained weights for the backbone.
+                If pooling is None, GAP is used by default.
 
         Example:
-            >>> from deepaudiox.modules.audio_classifier_constructor import AudioClassifierConstructor
-            >>> model = AudioClassifierConstructor(
+            >>> from deepaudiox import AudioClassifier
+            >>> model = AudioClassifier(
             ...     num_classes=10,
             ...     backbone="beats",
             ...     pooling=None,
@@ -242,6 +260,14 @@ class AudioClassifierConstructor(BaseAudioClassifier, BackbonePoolingResolverMix
 
         Returns:
             torch.Tensor: Logits of shape (B, num_classes)
+
+        Example:
+            >>> import torch
+            >>> from deepaudiox import AudioClassifier
+            >>> model = AudioClassifier(num_classes=10, backbone="beats", sample_rate=16_000, pretrained=True)
+            >>> waveforms = torch.randn(2, 5 * 16_000)
+            >>> logits = model.forward(waveforms)
+            >>> # logits shape: (B, num_classes)
         """
         x = self.forward_with_pooling(x)
         x = self.classifier(x)
@@ -255,6 +281,14 @@ class AudioClassifierConstructor(BaseAudioClassifier, BackbonePoolingResolverMix
 
         Returns:
             torch.Tensor: Returns the feature map of the backbone model (B, T, D) or (B, D, H, W).
+
+        Example:
+            >>> import torch
+            >>> from deepaudiox import AudioClassifier
+            >>> model = AudioClassifier(num_classes=10, backbone="beats", sample_rate=16_000, pretrained=True)
+            >>> waveforms = torch.randn(2, 5 * 16_000)
+            >>> features = model.forward_backbone(waveforms)
+            >>> # features shape: (B, N, D) for Transformer or (B, D, H, W) for CNN backbones
         """
 
         return self.backbone_constructor(x)
@@ -267,5 +301,13 @@ class AudioClassifierConstructor(BaseAudioClassifier, BackbonePoolingResolverMix
 
         Returns:
             torch.Tensor: Pooled tensor of shape (B, D).
+
+        Example:
+            >>> import torch
+            >>> from deepaudiox import AudioClassifier
+            >>> model = AudioClassifier(num_classes=10, backbone="beats", sample_rate=16_000, pretrained=True)
+            >>> waveforms = torch.randn(2, 5 * 16_000)
+            >>> embeddings = model.forward_with_pooling(waveforms)
+            >>> # embeddings shape: (B, D)
         """
         return self.backbone_constructor.forward_with_pooling(x)
