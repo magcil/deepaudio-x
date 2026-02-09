@@ -1,6 +1,6 @@
 [project]
 name = "deepaudio-x"
-version = "0.3.1"
+version = "0.3.2"
 description = "DeepAudio-X: Self-supervised audio toolkit for audio classification and beyond."
 authors = [
   { name = "Christos Nikou", email = "chrisnick92@gmail.com" }, 
@@ -10,6 +10,12 @@ authors = [
 license = {text = "Apache-2.0"}
 readme = "README.md"
 requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
 dependencies = [
     "librosa>=0.11.0",
     "numpy>=2.3.3",
