@@ -296,13 +296,18 @@ def test_inference(path_to_test_file: str):
     # Inference on the whole audio file
     inference = model.inference_on_file(path=path_wav, class_mapping=class_mapping, sample_rate=16_000)
 
-    true_label = path_wav.parents[0].name
-
     assert inference["final_label"] in {"gaussiannoise", "sawwave", "sinewave", "squarewave", "trianglewave"}
 
     # Inference with segmentation
     inference_segmented = model.inference_on_file(
         path=path_wav, class_mapping=class_mapping, sample_rate=16_000, segment_duration=1.0
     )
-    
+
     assert len(inference_segmented["segment_labels"]) == 5
+
+    # Inference with segmentation
+    inference_segmented = model.inference_on_file(
+        path=path_wav, class_mapping=class_mapping, sample_rate=16_000, segment_duration=2.0
+    )
+
+    assert len(inference_segmented["segment_labels"]) == 3

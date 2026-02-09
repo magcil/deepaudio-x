@@ -56,7 +56,9 @@ class BaseAudioClassifier(nn.Module, ABC):
         if x.dim() == 1:
             x = x.unsqueeze(0)
 
-        logits = self.forward(x)
+        self.eval()
+        with torch.no_grad():
+            logits = self.forward(x)
         posteriors = F.softmax(logits, dim=1)
         max_posteriors = posteriors.max(dim=1)
 
@@ -72,6 +74,7 @@ class BaseAudioClassifier(nn.Module, ABC):
         sample_rate: int,
         class_mapping: dict[str, int],
         segment_duration: float | None = None,
+        batch_size: int = 4,
     ) -> dict:
         """Get prediction on a waveform.
 
@@ -80,6 +83,8 @@ class BaseAudioClassifier(nn.Module, ABC):
             sample_rate (int): Sampling rate of audio sample.
             class_mapping (dict[str, int]): Class-to-index mapping that is used by the model.
             segment_duration (float | None): Optional segment duration in seconds for segment-level inference.
+            batch_size (int | None): Optional batch size for segment-level inference. If None, all segments are
+                processed at once.
 
         Returns:
             dict: A dictionary containing the final label and posterior, and optionally segment-level results.
@@ -95,22 +100,37 @@ class BaseAudioClassifier(nn.Module, ABC):
         total_duration = x.numel() / sample_rate
 
         if segment_duration and total_duration > segment_duration:  # Process in segments
-            p, r = divmod(total_duration, segment_duration)
+            segment_len = int(round(segment_duration * sample_rate))
+
+            p, r = divmod(x.shape[0], segment_len)
 
             # Process the main part of the waveform that fits into full segments
-            main_part = x[: int(p * segment_duration * sample_rate)]
+            main_part = x[: int(p * segment_len)]
             if r > 0:  # If there is a remainder, pad it to create an additional segment
                 remainder_part = F.pad(
-                    x[int(p * segment_duration * sample_rate) :],
-                    (0, int(segment_duration * sample_rate) - int(r * sample_rate)),
+                    x[int(p * segment_len) :],
+                    (0, segment_len - r),
                 )
                 batch_segments = torch.cat([main_part, remainder_part], dim=0)
             else:
                 batch_segments = main_part
 
             # Create batches of segments and run inference
-            batch_segments = batch_segments.view(-1, int(segment_duration * sample_rate))
-            inference = self.predict(batch_segments)
+            batch_segments = batch_segments.view(-1, segment_len)
+            y_preds_batches, posteriors_batches, logits_batches = [], [], []
+
+            for start in range(0, batch_segments.size(0), batch_size):
+                batch = batch_segments[start : start + batch_size]
+                batch_inference = self.predict(batch)
+                y_preds_batches.append(batch_inference["y_preds"])
+                posteriors_batches.append(batch_inference["posteriors"])
+                logits_batches.append(batch_inference["logits"])
+
+            inference = {
+                "y_preds": np.concatenate(y_preds_batches),
+                "posteriors": np.concatenate(posteriors_batches),
+                "logits": np.concatenate(logits_batches),
+            }
 
             # Accumulate segment-level labels
             segment_labels = []
@@ -143,7 +163,12 @@ class BaseAudioClassifier(nn.Module, ABC):
             ).to_dict()
 
     def inference_on_file(
-        self, path: str | Path, sample_rate: int, class_mapping: dict[str, int], segment_duration: float | None = None
+        self,
+        path: str | Path,
+        sample_rate: int,
+        class_mapping: dict[str, int],
+        segment_duration: float | None = None,
+        batch_size: int = 4,
     ) -> dict:
         """Get prediction for an audio sample from a file path.
 
@@ -152,6 +177,8 @@ class BaseAudioClassifier(nn.Module, ABC):
             sample_rate (int): Sampling rate of audio sample.
             class_mapping (dict[str, int]): Class-to-index mapping as it is used by the model.
             segment_duration (float | None): Optional segment duration in seconds for segment-level inference.
+            batch_size (int | None): Optional batch size for segment-level inference. If None, all segments are
+                processed at once.
 
         Returns:
             dict: A dictionary containing the final label and posterior, and optionally segment-level results.
@@ -159,7 +186,11 @@ class BaseAudioClassifier(nn.Module, ABC):
 
         x, _ = librosa.load(path, sr=sample_rate)
         prediction = self.inference_on_waveform(
-            x, sample_rate=sample_rate, class_mapping=class_mapping, segment_duration=segment_duration
+            x,
+            sample_rate=sample_rate,
+            class_mapping=class_mapping,
+            segment_duration=segment_duration,
+            batch_size=batch_size,
         )
 
         return prediction
