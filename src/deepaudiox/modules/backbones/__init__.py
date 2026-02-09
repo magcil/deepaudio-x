@@ -3,6 +3,7 @@
 from collections.abc import Callable
 
 from deepaudiox.modules.backbones.beats.beats_modules.BEATs import BEATs
+from deepaudiox.modules.backbones.mobilenet.model import MobileNet, MobileNetConfig
 from deepaudiox.modules.backbones.passt.passt import PaSST
 from deepaudiox.modules.baseclasses import BaseBackbone as Backbone
 
@@ -32,3 +33,32 @@ def beats_base() -> BEATs:
 def passt_base() -> PaSST:
     """PaSST backbone"""
     return PaSST()
+
+
+@register_backbone("mobilenet_05_as")
+def monilenet_05_base() -> MobileNet:
+    """MobileNet backbone"""
+    return MobileNet(
+        cfg = MobileNetConfig(
+            {"width_mult": 0.5}
+        )
+    )
+
+
+@register_backbone("mobilenet_10_as")
+def monilenet_10_base() -> MobileNet:
+    """MobileNet backbone"""
+    return MobileNet(
+        cfg = MobileNetConfig(
+            {"width_mult": 1}
+        )
+    )
+
+@register_backbone("mobilenet_40_as")
+def monilenet_40_base() -> MobileNet:
+    """MobileNet backbone"""
+    return MobileNet(
+        cfg = MobileNetConfig(
+            {"width_mult": 4}
+        )
+    )

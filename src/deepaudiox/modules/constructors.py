@@ -27,7 +27,7 @@ class BackbonePoolingResolverMixin:
 
     def _resolve_backbone(
         self,
-        backbone: Literal["beats", "passt"] | BaseBackbone,
+        backbone: Literal["beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as"] | BaseBackbone,
         pretrained: bool,
         sample_rate: int,
     ) -> BaseBackbone:
@@ -180,7 +180,7 @@ class AudioClassifierConstructor(BaseAudioClassifier, BackbonePoolingResolverMix
     def __init__(
         self,
         num_classes: int,
-        backbone: Literal["beats", "passt"] | BaseBackbone,
+        backbone: Literal["beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as"] | BaseBackbone,
         pooling: Literal["gap", "simpool", "ep"] | BasePooling | None = None,
         freeze_backbone: bool = False,
         sample_rate: int = 16000,

@@ -74,7 +74,6 @@ class PaSSTConfig:
         self.s_patchout_f = 0
         self.embed_dim = 768
         self.distilled = True
-        self.pretrained = True
         self.img_size = (128, 998)
         self.patch_size = 16
         self.fstride = 10
