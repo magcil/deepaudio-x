@@ -1,7 +1,7 @@
 # DeepAudioX
 
-[![PyPI version](https://img.shields.io/pypi/v/deepaudio-x.svg)](https://pypi.org/project/deepaudio-x/)
-[![Python versions](https://img.shields.io/pypi/pyversions/deepaudio-x.svg)](https://pypi.org/project/deepaudio-x/)
+[![PyPI version](https://img.shields.io/pypi/v/deepaudio-x.svg?cacheSeconds=300)](https://pypi.org/project/deepaudio-x/)
+[![Python versions](https://img.shields.io/pypi/pyversions/deepaudio-x.svg?cacheSeconds=300)](https://pypi.org/project/deepaudio-x/)
 [![License](https://img.shields.io/github/license/magcil/deepaudio-x.svg)](https://github.com/magcil/deepaudio-x/blob/main/LICENSE)
 [![Run Tests](https://github.com/magcil/deepaudio-x/actions/workflows/tests.yml/badge.svg)](https://github.com/magcil/deepaudio-x/actions/workflows/tests.yml)
 
@@ -35,11 +35,9 @@ DeepAudioX supports Python 3.11, 3.12, and 3.13. You can create a virtual enviro
 
 **Option A: uv (recommended)**
 
-Install `uv` following the official guide (see:
-`https://docs.astral.sh/uv/getting-started/installation/`), then create a virtual environment:
+Install `uv` following the official guide (see: [Astral uv installation docs](https://docs.astral.sh/uv/getting-started/installation/)), then create a virtual environment:
 
 ```bash
-pip install uv
 uv venv --python 3.12 .venv
 source .venv/bin/activate
 pip install deepaudio-x
