@@ -141,16 +141,23 @@ class BaseAudioClassifier(nn.Module, ABC):
             unique_preds = np.unique(inference["y_preds"])
             # Aggregated results sorted by predicted class and mean posterior for that class, in descending order
             aggregated_results = sorted(
-                [(pred, inference["posteriors"][inference["y_preds"] == pred].mean()) for pred in unique_preds],
-                key=lambda x: (x[0], x[1]),
+                [
+                    (
+                        pred,
+                        inference["y_preds"][inference["y_preds"] == pred].sum(),
+                        inference["posteriors"][inference["y_preds"] == pred].mean(),
+                    )
+                    for pred in unique_preds
+                ],
+                key=lambda x: (x[1], x[2]),
                 reverse=True,
             )
             # First item is the winner with highest mean posterior / handles ties by mean posterior
-            final_winner_index, final_posterior = aggregated_results[0]
+            final_winner_index, counts, final_posterior = aggregated_results[0]
 
             return AudioPrediction(
                 final_label=index_to_class[final_winner_index],
-                final_posterior=final_posterior,
+                final_posterior=final_posterior.item(),
                 segment_labels=segment_labels,
                 segment_posteriors=inference["posteriors"].tolist(),
             ).to_dict()
