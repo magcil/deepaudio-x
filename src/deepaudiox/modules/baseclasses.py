@@ -133,27 +133,23 @@ class BaseAudioClassifier(nn.Module, ABC):
             }
 
             # Accumulate segment-level labels
-            segment_labels = []
-            for pred in inference["y_preds"]:
-                segment_labels.append(index_to_class[pred])
+            segment_labels = [index_to_class[pred] for pred in inference["y_preds"]]
 
-            # Majority vote to get final prediction
-            unique_preds = np.unique(inference["y_preds"])
-            # Aggregated results sorted by predicted class and mean posterior for that class, in descending order
-            aggregated_results = sorted(
-                [
-                    (
-                        pred,
-                        inference["y_preds"][inference["y_preds"] == pred].sum(),
-                        inference["posteriors"][inference["y_preds"] == pred].mean(),
-                    )
-                    for pred in unique_preds
-                ],
-                key=lambda x: (x[1], x[2]),
-                reverse=True,
-            )
-            # First item is the winner with highest mean posterior / handles ties by mean posterior
-            final_winner_index, counts, final_posterior = aggregated_results[0]
+            # Majority vote to get final prediction (tie-break by mean posterior)
+            y_preds = inference["y_preds"]
+            posteriors = inference["posteriors"]
+
+            num_classes = len(class_mapping)
+            counts = np.bincount(y_preds, minlength=num_classes)
+            sum_posteriors = np.bincount(y_preds, weights=posteriors, minlength=num_classes)
+
+            valid = counts > 0
+            mean_posteriors = np.zeros_like(sum_posteriors, dtype=float)
+            mean_posteriors[valid] = sum_posteriors[valid] / counts[valid]
+
+            candidates = np.where(valid)[0]
+            final_winner_index = max(candidates, key=lambda cls: (counts[cls], mean_posteriors[cls]))
+            final_posterior = mean_posteriors[final_winner_index]
 
             return AudioPrediction(
                 final_label=index_to_class[final_winner_index],
