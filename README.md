@@ -1,6 +1,6 @@
 # DeepAudioX
 
-[![PyPI version](https://img.shields.io/pypi/v/deepaudio-x.svg?cacheSeconds=5)](https://pypi.org/project/deepaudio-x/)
+[![PyPI version](https://img.shields.io/pypi/v/deepaudio-x.svg?cacheSeconds=1)](https://pypi.org/project/deepaudio-x/)
 [![Python versions](https://img.shields.io/pypi/pyversions/deepaudio-x.svg?cacheSeconds=300)](https://pypi.org/project/deepaudio-x/)
 [![License](https://img.shields.io/github/license/magcil/deepaudio-x.svg)](https://github.com/magcil/deepaudio-x/blob/main/LICENSE)
 [![Run Tests](https://github.com/magcil/deepaudio-x/actions/workflows/tests.yml/badge.svg)](https://github.com/magcil/deepaudio-x/actions/workflows/tests.yml)
