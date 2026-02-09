@@ -380,38 +380,74 @@ print(classification_report(evaluator.state.y_true, evaluator.state.y_pred))
 
 ---
 
-## End-to-End Example
+## Running Inference
+
+The `BaseAudioClassifier` exposes two convenience methods for inference on raw waveforms or audio files.
+
+Both methods return a dictionary with:
+- `final_label`: Predicted class label (string).
+- `final_posterior`: Posterior probability for the predicted class.
+- `segment_labels`: List of per-segment labels (only when `segment_duration` is used and the audio is longer than that duration).
+- `segment_posteriors`: List of per-segment posteriors aligned with `segment_labels` (only when `segment_duration` is used and the audio is longer than that duration).
+
+The `segment_duration` argument (in seconds) enables segment-level inference. If provided and the audio is longer than the segment length, the waveform is split into equal segments, each segment is classified, and the final label is chosen by majority vote (ties are resolved by higher mean posterior for the class).
+
+### `inference_on_waveform`
+
+Use this when you already have a waveform tensor or NumPy array.
 
 ```python
-from deepaudiox import AudioClassifier, Trainer, Evaluator, audio_classification_dataset_from_dir
-from deepaudiox.utils.training_utils import get_class_mapping_from_dir
-
-class_mapping = get_class_mapping_from_dir("path/to/data/train")
-train_dataset = audio_classification_dataset_from_dir(
-    root_dir="path/to/data/train", sample_rate=16_000, class_mapping=class_mapping
-)
-val_dataset = audio_classification_dataset_from_dir(
-    root_dir="path/to/data/val", sample_rate=16_000, class_mapping=class_mapping
-)
-test_dataset = audio_classification_dataset_from_dir(
-    root_dir="path/to/data/test", sample_rate=16_000, class_mapping=class_mapping
-)
+import torch
+from deepaudiox import AudioClassifier
 
 classifier = AudioClassifier(
-    num_classes=len(class_mapping),
     backbone="beats",
-    pooling="gap",
-    pretrained=True,
-    freeze_backbone=True,
+    num_classes=2,
     sample_rate=16_000,
+    pretrained=True,
 )
 
-trainer = Trainer(train_dset=train_dataset, model=classifier, validation_dset=val_dataset, epochs=10)
-trainer.train()
+class_mapping = {"dog": 0, "cat": 1}
+waveform = torch.randn(5 * 16_000)  # 5 seconds of mono audio
 
-evaluator = Evaluator(test_dset=test_dataset, model=classifier, class_mapping=class_mapping)
-evaluator.evaluate()
+prediction = classifier.inference_on_waveform(
+    waveform,
+    sample_rate=16_000,
+    class_mapping=class_mapping,
+    segment_duration=1.0,  # Optional: segment-level inference with majority vote
+)
+
+print(prediction)
 ```
+
+### `inference_on_file`
+
+Use this when you want the model to load audio directly from disk.
+
+```python
+from deepaudiox import AudioClassifier
+
+classifier = AudioClassifier(
+    backbone="beats",
+    num_classes=2,
+    sample_rate=16_000,
+    pretrained=True,
+)
+
+class_mapping = {"dog": 0, "cat": 1}
+
+prediction = classifier.inference_on_file(
+    "data/example.wav",
+    sample_rate=16_000,
+    class_mapping=class_mapping,
+    segment_duration=2.0,  # Optional
+)
+
+print(prediction)
+```
+
+---
+
 
 ## Customization
 
@@ -464,3 +500,5 @@ If you use this library in academic work, please cite:
 Contributions are welcome!
 
 Please open an issue to discuss major changes before submitting a pull request.
+
+---
