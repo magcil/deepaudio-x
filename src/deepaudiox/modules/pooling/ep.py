@@ -74,14 +74,14 @@ class EfficientProbing(BasePooling):
         self.cls_token = nn.Parameter(torch.randn(1, num_queries, dim) * 0.02)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if len(x.shape) == 4:  # CNN feature map (B, D, H, W)
-            B, D, H, W = x.shape
-            x = x.permute(0, 2, 3, 1).reshape(B, H * W, D)
-            B, N, C = x.shape
-        elif len(x.shape) == 3:  # Transformer feature map (B, N, C)
-            B, N, C = x.shape
-        else:
-            raise ValueError("Input tensor must be of shape (B, D, H, W) or (B, N, C)")        
+        if x.dim() < 3 or x.dim() > 4:
+            raise ValueError("Input tensor must be of shape (B, D, H, W) or (B, N, C)")
+
+        if x.dim() == 4:  # CNN feature map (B, N, H, W)
+            B, C, H, W = x.shape
+            x = x.permute(0, 2, 3, 1).reshape(B, H * W, C)
+
+        B, N, C = x.shape
         
         C_prime = C // self.d_out
 
