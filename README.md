@@ -6,7 +6,7 @@
 [![Run Tests](https://github.com/magcil/deepaudio-x/actions/workflows/tests.yml/badge.svg)](https://github.com/magcil/deepaudio-x/actions/workflows/tests.yml)
 
 <p align="left">
-  <img src="docs/source/_static/DeepAudioX_logo_716x294.png" width="716" alt="DeepAudio-X logo">
+  <img src="docs/source/_static/DeepAudioX_logo_716x294.png" style="width: 50%" alt="DeepAudio-X logo">
 </p>
 
 
