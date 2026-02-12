@@ -95,8 +95,8 @@ def collapse_dim(
     dim: int,
     mode: str = "pool",
     pool_fn: Callable[[Tensor, int], Tensor] = torch.mean,
-    combine_dim: int = None,
-):
+    combine_dim: int | None = None,
+) -> Tensor:
     """
     Collapses a specific dimension of a multi-dimensional tensor by pooling or reshaping.
 
@@ -115,10 +115,13 @@ def collapse_dim(
     if mode == "pool":
         return pool_fn(x, dim)
     elif mode == "combine":
+        if combine_dim is None:
+            raise ValueError("combine_dim must be provided when mode='combine'")
         s = list(x.size())
         s[combine_dim] *= dim
         s[dim] //= dim
         return x.view(s)
+    raise ValueError(f"Unsupported collapse mode: {mode}")
 
 
 class CollapseDim(nn.Module):
@@ -137,7 +140,7 @@ class CollapseDim(nn.Module):
         dim: int,
         mode: str = "pool",
         pool_fn: Callable[[Tensor, int], Tensor] = torch.mean,
-        combine_dim: int = None,
+        combine_dim: int | None = None,
     ):
         super().__init__()
         self.dim = dim
@@ -145,6 +148,6 @@ class CollapseDim(nn.Module):
         self.pool_fn = pool_fn
         self.combine_dim = combine_dim
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor) -> Tensor:
         """Applies collapse_dim to the input tensor."""
         return collapse_dim(x, dim=self.dim, mode=self.mode, pool_fn=self.pool_fn, combine_dim=self.combine_dim)

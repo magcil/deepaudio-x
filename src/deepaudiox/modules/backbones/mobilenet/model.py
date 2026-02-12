@@ -3,7 +3,7 @@ from functools import partial
 
 import torch
 from torch import Tensor, nn
-from torchvision.ops.misc import ConvNormActivation
+from torchvision.ops.misc import Conv2dNormActivation
 
 from deepaudiox.modules.backbones.mobilenet.block_types import InvertedResidual, InvertedResidualConfig
 from deepaudiox.modules.backbones.mobilenet.preprocess import AugmentMelSTFT
@@ -38,7 +38,7 @@ class MobileNetConfig:
         self.width_mult: float = 1.0
         self.reduced_tail: bool = False
         self.dilated: bool = False
-        self.strides: tuple[int] = (2, 2, 2, 2)
+        self.strides: tuple[int, int, int, int] = (2, 2, 2, 2)
         self.multihead_attention_heads: int = 4
         self.f_dim: int = 128
         self.t_dim: int = 1000
@@ -59,7 +59,7 @@ class MobileNetConfig:
         width_mult: float = 1,
         reduced_tail: bool = False,
         dilated: bool = False,
-        strides: tuple[int] = (2, 2, 2, 2),
+        strides: tuple[int, int, int, int] = (2, 2, 2, 2),
     ):
         """
         Defines the structural layout of the MobileNetV3 backbone.
@@ -153,8 +153,6 @@ class MobileNet(BaseBackbone):
         if cfg is None:
             cfg = MobileNetConfig()
 
-        super().__init__(sample_rate=sample_rate, out_dim=None)
-
         # Retieve values from config object
         in_channels = cfg.in_channels
         in_conv_stride = cfg.in_conv_stride
@@ -174,6 +172,13 @@ class MobileNet(BaseBackbone):
             and all(isinstance(s, InvertedResidualConfig) for s in inverted_residual_setting)
         ):
             raise TypeError("The inverted_residual_setting should be List[InvertedResidualConfig]")
+        if se_cnf is None:
+            raise ValueError("cfg.se_conf should not be None")
+        if not isinstance(se_cnf, dict):
+            raise TypeError("cfg.se_conf should be a dict")
+
+        resolved_out_dim = out_dim if out_dim is not None else 6 * inverted_residual_setting[-1].out_channels
+        super().__init__(sample_rate=sample_rate, out_dim=resolved_out_dim)
 
         depthwise_norm_layer = norm_layer
 
@@ -182,7 +187,7 @@ class MobileNet(BaseBackbone):
 
         layers = []
         layers.append(
-            ConvNormActivation(
+            Conv2dNormActivation(
                 in_channels,
                 firstconv_output_channels,
                 kernel_size=in_conv_kernel,
@@ -210,9 +215,9 @@ class MobileNet(BaseBackbone):
 
         # Build last several layers
         lastconv_input_channels = inverted_residual_setting[-1].out_channels
-        lastconv_output_channels = 6 * lastconv_input_channels
+        lastconv_output_channels = resolved_out_dim
         layers.append(
-            ConvNormActivation(
+            Conv2dNormActivation(
                 lastconv_input_channels,
                 lastconv_output_channels,
                 kernel_size=1,
@@ -254,7 +259,7 @@ class MobileNet(BaseBackbone):
         """
         return self.feature_extractor(waveforms)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor, padding_mask: Tensor | None = None) -> Tensor:
         """
         Forward pass of the MobileNet backbone.
 

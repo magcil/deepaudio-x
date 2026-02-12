@@ -53,7 +53,7 @@ class MultiHeadAttentionPooling(nn.Module):
         self.subspace_proj = nn.Linear(self.in_dim, self.out_dim * 2 * self.num_heads)
         self.head_weight = nn.Parameter(torch.tensor([1.0 / self.num_heads] * self.num_heads).view(1, -1, 1))
 
-    def activate(self, x: torch.Tensor, activation: str):
+    def activate(self, x: torch.Tensor, activation: str) -> Tensor:
         """
         Applies the specified activation function to a tensor.
 
@@ -75,6 +75,7 @@ class MultiHeadAttentionPooling(nn.Module):
             return F.softmax(x, dim=1)
         elif activation == "ident":
             return x
+        raise ValueError(f"Unsupported activation: {activation}")
 
     def forward(self, x: torch.Tensor) -> Tensor:
         """

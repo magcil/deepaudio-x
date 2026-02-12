@@ -3,7 +3,7 @@ from collections.abc import Callable
 import torch
 import torch.nn as nn
 from torch import Tensor
-from torchvision.ops.misc import ConvNormActivation
+from torchvision.ops.misc import Conv2dNormActivation
 
 from deepaudiox.modules.backbones.mobilenet.utils import cnn_out_size, make_divisible
 
@@ -161,8 +161,8 @@ class InvertedResidualConfig:
         self.use_hs = activation == "HS"
         self.stride = stride
         self.dilation = dilation
-        self.f_dim = None
-        self.t_dim = None
+        self.f_dim: int | None = None
+        self.t_dim: int | None = None
 
     @staticmethod
     def adjust_channels(channels: int, width_mult: float):
@@ -232,7 +232,7 @@ class InvertedResidual(nn.Module):
         # expand
         if cnf.expanded_channels != cnf.input_channels:
             layers.append(
-                ConvNormActivation(
+                Conv2dNormActivation(
                     cnf.input_channels,
                     cnf.expanded_channels,
                     kernel_size=1,
@@ -244,7 +244,7 @@ class InvertedResidual(nn.Module):
         # depthwise
         stride = 1 if cnf.dilation > 1 else cnf.stride
         layers.append(
-            ConvNormActivation(
+            Conv2dNormActivation(
                 cnf.expanded_channels,
                 cnf.expanded_channels,
                 kernel_size=cnf.kernel,
@@ -256,11 +256,13 @@ class InvertedResidual(nn.Module):
             )
         )
         if cnf.use_se and se_cnf["se_dims"] is not None:
+            if cnf.f_dim is None or cnf.t_dim is None:
+                raise ValueError("cnf.f_dim and cnf.t_dim must be set before constructing SE blocks")
             layers.append(ConcurrentSEBlock(cnf.expanded_channels, cnf.f_dim, cnf.t_dim, se_cnf))
 
         # project
         layers.append(
-            ConvNormActivation(
+            Conv2dNormActivation(
                 cnf.expanded_channels, cnf.out_channels, kernel_size=1, norm_layer=norm_layer, activation_layer=None
             )
         )

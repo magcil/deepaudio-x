@@ -1,3 +1,5 @@
+from typing import cast
+
 import torch
 import torch.nn as nn
 import torchaudio
@@ -69,7 +71,11 @@ class AugmentMelSTFT(nn.Module):
         self.fmin_aug_range = fmin_aug_range
         self.fmax_aug_range = fmax_aug_range
 
-        self.register_buffer("preemphasis_coefficient", torch.as_tensor([[[-0.97, 1]]]), persistent=False)
+        self.register_buffer(
+            "preemphasis_coefficient",
+            torch.tensor([[[-0.97, 1.0]]], dtype=torch.float32),
+            persistent=False,
+        )
 
         if freqm == 0:
             self.freqm = torch.nn.Identity()
@@ -92,7 +98,17 @@ class AugmentMelSTFT(nn.Module):
             torch.Tensor: Augmented and normalized Mel-spectrogram.
                 Shape: (batch, n_mels, time_steps).
         """
-        x = nn.functional.conv1d(x.unsqueeze(1), self.preemphasis_coefficient).squeeze(1)
+        preemphasis = cast(torch.Tensor, self.preemphasis_coefficient)
+        window = cast(torch.Tensor, self.window)
+        x = nn.functional.conv1d(
+            input=x.unsqueeze(1),
+            weight=preemphasis,
+            bias=None,
+            stride=1,
+            padding=0,
+            dilation=1,
+            groups=1,
+        ).squeeze(1)
         x = torch.stft(
             x,
             self.n_fft,
@@ -100,10 +116,10 @@ class AugmentMelSTFT(nn.Module):
             win_length=self.win_length,
             center=True,
             normalized=False,
-            window=self.window,
-            return_complex=False,
+            window=window,
+            return_complex=True,
         )
-        x = (x**2).sum(dim=-1)
+        x = x.abs().pow(2)
 
         fmin = self.fmin + torch.randint(self.fmin_aug_range, (1,)).item()
         fmax = self.fmax + self.fmax_aug_range // 2 - torch.randint(self.fmax_aug_range, (1,)).item()
@@ -121,7 +137,7 @@ class AugmentMelSTFT(nn.Module):
             torch.nn.functional.pad(mel_basis, (0, 1), mode="constant", value=0), device=x.device
         )
 
-        with torch.amp.autocast("cuda", enabled=False):
+        with torch.autocast(device_type="cuda", enabled=False):
             melspec = torch.matmul(mel_basis, x)
 
         melspec = (melspec + 0.00001).log()
