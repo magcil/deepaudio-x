@@ -38,27 +38,16 @@ def passt_base() -> PaSST:
 @register_backbone("mobilenet_05_as")
 def monilenet_05_base() -> MobileNet:
     """MobileNet backbone"""
-    return MobileNet(
-        cfg = MobileNetConfig(
-            {"width_mult": 0.5}
-        )
-    )
+    return MobileNet(cfg=MobileNetConfig({"width_mult": 0.5}))
 
 
 @register_backbone("mobilenet_10_as")
 def monilenet_10_base() -> MobileNet:
     """MobileNet backbone"""
-    return MobileNet(
-        cfg = MobileNetConfig(
-            {"width_mult": 1}
-        )
-    )
+    return MobileNet(cfg=MobileNetConfig({"width_mult": 1}))
+
 
 @register_backbone("mobilenet_40_as")
 def monilenet_40_base() -> MobileNet:
     """MobileNet backbone"""
-    return MobileNet(
-        cfg = MobileNetConfig(
-            {"width_mult": 4}
-        )
-    )
+    return MobileNet(cfg=MobileNetConfig({"width_mult": 4}))

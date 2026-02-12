@@ -15,8 +15,8 @@ class MobileNetConfig:
     """
     Configuration class for MobileNetV3-based architectures.
 
-    This class manages hyperparameters, architectural settings, and the generation 
-    of inverted residual block configurations. It supports dynamic updates via 
+    This class manages hyperparameters, architectural settings, and the generation
+    of inverted residual block configurations. It supports dynamic updates via
     a configuration dictionary.
     """
 
@@ -25,8 +25,8 @@ class MobileNetConfig:
         Initializes the MobileNetConfig with default or custom parameters.
 
         Args:
-            cfg (dict, optional): A dictionary containing configuration keys to 
-                override defaults. If provided, the model settings are 
+            cfg (dict, optional): A dictionary containing configuration keys to
+                override defaults. If provided, the model settings are
                 re-calculated after the update.
         """
         self.block: Callable[..., nn.Module] | None = None
@@ -42,26 +42,16 @@ class MobileNetConfig:
         self.multihead_attention_heads: int = 4
         self.f_dim: int = 128
         self.t_dim: int = 1000
-        self.se_conf: dict = dict(
-            se_dims = [1], 
-            se_agg = 'max', 
-            se_r = 4
-        )
+        self.se_conf: dict = dict(se_dims=[1], se_agg="max", se_r=4)
 
         self.inverted_residual_setting, self.last_channel = self._configure_mobilenet(
-            width_mult = self.width_mult,
-            reduced_tail = self.reduced_tail,
-            dilated = self.dilated,
-            strides = self.strides
+            width_mult=self.width_mult, reduced_tail=self.reduced_tail, dilated=self.dilated, strides=self.strides
         )
-        
+
         if cfg is not None:
             self.update(cfg)
             self.inverted_residual_setting, self.last_channel = self._configure_mobilenet(
-                width_mult = self.width_mult,
-                reduced_tail = self.reduced_tail,
-                dilated = self.dilated,
-                strides = self.strides
+                width_mult=self.width_mult, reduced_tail=self.reduced_tail, dilated=self.dilated, strides=self.strides
             )
 
     def _configure_mobilenet(
@@ -69,24 +59,24 @@ class MobileNetConfig:
         width_mult: float = 1,
         reduced_tail: bool = False,
         dilated: bool = False,
-        strides: tuple[int] = (2, 2, 2, 2)
+        strides: tuple[int] = (2, 2, 2, 2),
     ):
         """
         Defines the structural layout of the MobileNetV3 backbone.
 
-        Calculates the input/output channels, kernel sizes, and strides for 
-        each Inverted Residual block based on the width multiplier and 
+        Calculates the input/output channels, kernel sizes, and strides for
+        each Inverted Residual block based on the width multiplier and
         architectural flags.
 
-        
+
 
         Args:
             width_mult (float): Scaling factor for the number of channels in each layer.
-            reduced_tail (bool): If True, reduces the number of channels in the 
+            reduced_tail (bool): If True, reduces the number of channels in the
                 final layers to decrease model size.
-            dilated (bool): If True, applies a dilation of 2 to the final blocks 
+            dilated (bool): If True, applies a dilation of 2 to the final blocks
                 to maintain spatial resolution.
-            strides (Tuple[int, ...]): A sequence of strides for the 4 main 
+            strides (Tuple[int, ...]): A sequence of strides for the 4 main
                 downsampling stages of the network.
 
         Returns:
@@ -94,7 +84,7 @@ class MobileNetConfig:
                 - A list of InvertedResidualConfig objects defining each block.
                 - The number of channels in the final convolution layer.
         """
-        
+
         reduce_divider = 2 if reduced_tail else 1
         dilation = 2 if dilated else 1
 
@@ -103,12 +93,12 @@ class MobileNetConfig:
 
         inverted_residual_setting = [
             bneck_conf(16, 3, 16, 16, False, "RE", 1, 1),
-            bneck_conf(16, 3, 64, 24, False, "RE", strides[0], 1),  
+            bneck_conf(16, 3, 64, 24, False, "RE", strides[0], 1),
             bneck_conf(24, 3, 72, 24, False, "RE", 1, 1),
-            bneck_conf(24, 5, 72, 40, True, "RE", strides[1], 1),  
+            bneck_conf(24, 5, 72, 40, True, "RE", strides[1], 1),
             bneck_conf(40, 5, 120, 40, True, "RE", 1, 1),
             bneck_conf(40, 5, 120, 40, True, "RE", 1, 1),
-            bneck_conf(40, 3, 240, 80, False, "HS", strides[2], 1),  
+            bneck_conf(40, 3, 240, 80, False, "HS", strides[2], 1),
             bneck_conf(80, 3, 200, 80, False, "HS", 1, 1),
             bneck_conf(80, 3, 184, 80, False, "HS", 1, 1),
             bneck_conf(80, 3, 184, 80, False, "HS", 1, 1),
@@ -137,44 +127,39 @@ class MobileNet(BaseBackbone):
     MobileNet V3 implementation tailored for audio classification and feature extraction.
 
     This class constructs a deep convolutional neural network using Inverted Residual blocks.
-    It is optimized for processing 2D spectrogram inputs, typically generated from raw 
+    It is optimized for processing 2D spectrogram inputs, typically generated from raw
     audio waveforms via an internal feature extractor.
     """
+
     def __init__(
-        self, 
-        out_dim: int | None = None,
-        cfg: MobileNetConfig | None = None, 
-        sample_rate: int = 32_000
+        self, out_dim: int | None = None, cfg: MobileNetConfig | None = None, sample_rate: int = 32_000
     ) -> None:
         """
         Initializes the MobileNet V3 backbone.
 
         Args:
-            out_dim (int | None, optional): Specific output dimension for the final layer. 
+            out_dim (int | None, optional): Specific output dimension for the final layer.
                 If None, defaults to the last convolution output channels.
-            cfg (MobileNetConfig | None, optional): Configuration object containing 
+            cfg (MobileNetConfig | None, optional): Configuration object containing
                 model hyperparameters. Defaults to a standard MobileNetConfig.
-            sample_rate (int, optional): The audio sample rate for the input waveforms. 
+            sample_rate (int, optional): The audio sample rate for the input waveforms.
                 Defaults to 32,000.
 
         Raises:
             ValueError: If `inverted_residual_setting` in the config is empty.
-            TypeError: If `inverted_residual_setting` is not a list of 
+            TypeError: If `inverted_residual_setting` is not a list of
                 InvertedResidualConfig objects.
         """
-        if cfg is None: 
+        if cfg is None:
             cfg = MobileNetConfig()
 
-        super().__init__(
-            sample_rate = sample_rate,
-            out_dim = None
-        )
+        super().__init__(sample_rate=sample_rate, out_dim=None)
 
         # Retieve values from config object
         in_channels = cfg.in_channels
         in_conv_stride = cfg.in_conv_stride
         in_conv_kernel = cfg.in_conv_kernel
-        block = getattr(cfg, "block", None) or InvertedResidual 
+        block = getattr(cfg, "block", None) or InvertedResidual
         # norm_layer = getattr(cfg, "norm_layer", partial(nn.BatchNorm2d, eps=0.001, momentum=0.01))
         norm_layer = partial(nn.BatchNorm2d, eps=0.001, momentum=0.01)
         se_cnf = getattr(cfg, "se_conf", None)
@@ -200,15 +185,15 @@ class MobileNet(BaseBackbone):
             ConvNormActivation(
                 in_channels,
                 firstconv_output_channels,
-                kernel_size = in_conv_kernel,
-                stride = in_conv_stride,
-                norm_layer = norm_layer,
-                activation_layer = nn.Hardswish,
-                bias=False
+                kernel_size=in_conv_kernel,
+                stride=in_conv_stride,
+                norm_layer=norm_layer,
+                activation_layer=nn.Hardswish,
+                bias=False,
             )
         )
 
-        # Build inverted residual blocks        
+        # Build inverted residual blocks
         f_dim = cnn_out_size(f_dim, 1, 1, 3, 2)
         t_dim = cnn_out_size(t_dim, 1, 1, 3, 2)
 
@@ -218,10 +203,8 @@ class MobileNet(BaseBackbone):
         for cnf in inverted_residual_setting:
             f_dim = cnf.out_size(f_dim)
             t_dim = cnf.out_size(t_dim)
-            cnf.f_dim, cnf.t_dim = f_dim, t_dim 
-            layers.append(
-                block(cnf, se_cnf, norm_layer, depthwise_norm_layer)
-            )
+            cnf.f_dim, cnf.t_dim = f_dim, t_dim
+            layers.append(block(cnf, se_cnf, norm_layer, depthwise_norm_layer))
             kernel_sizes.append(cnf.kernel)
             strides.append(cnf.stride)
 
@@ -232,10 +215,10 @@ class MobileNet(BaseBackbone):
             ConvNormActivation(
                 lastconv_input_channels,
                 lastconv_output_channels,
-                kernel_size = 1,
-                norm_layer = norm_layer,
-                activation_layer = nn.Hardswish,
-                bias=False
+                kernel_size=1,
+                norm_layer=norm_layer,
+                activation_layer=nn.Hardswish,
+                bias=False,
             )
         )
 
@@ -245,7 +228,7 @@ class MobileNet(BaseBackbone):
         self.features = nn.Sequential(*layers)
         self.feature_extractor = AugmentMelSTFT()
 
-        # Init weights  
+        # Init weights
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode="fan_out")
@@ -271,16 +254,15 @@ class MobileNet(BaseBackbone):
         """
         return self.feature_extractor(waveforms)
 
-
     def forward(self, x: Tensor) -> Tensor:
         """
         Forward pass of the MobileNet backbone.
 
-        Processes the input spectrogram through the convolutional features 
+        Processes the input spectrogram through the convolutional features
         and inverted residual blocks.
 
         Args:
-            x (Tensor): Input tensor. Expected shape (batch, freq, time) 
+            x (Tensor): Input tensor. Expected shape (batch, freq, time)
                 or (batch, 1, freq, time).
 
         Returns:

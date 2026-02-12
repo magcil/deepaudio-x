@@ -13,8 +13,9 @@ BACKBONE_URLS = {
     "passt": BACKBONE_REPO_URL + "passt-s-kd-ap.486.pt",
     "mobilenet_05_as": BACKBONE_REPO_URL + "mn05_as_mAP_443.pt",
     "mobilenet_10_as": BACKBONE_REPO_URL + "mn10_as_mAP_471.pt",
-    "mobilenet_40_as": BACKBONE_REPO_URL + "mn40_as_mAP_484.pt"
+    "mobilenet_40_as": BACKBONE_REPO_URL + "mn40_as_mAP_484.pt",
 }
+
 
 class Downloader:
     """Downloads a checkpoint (.pt or .pth file) with pretrained weights for the backbone.

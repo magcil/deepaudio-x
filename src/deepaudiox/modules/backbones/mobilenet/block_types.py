@@ -10,20 +10,15 @@ from deepaudiox.modules.backbones.mobilenet.utils import cnn_out_size, make_divi
 
 class ConcurrentSEBlock(torch.nn.Module):
     """
-    Applies multiple Squeeze-and-Excitation (SE) operations concurrently across 
+    Applies multiple Squeeze-and-Excitation (SE) operations concurrently across
     different dimensions and aggregates the results.
 
-    This block allows the model to attend to channel, frequency, or time dimensions 
-    independently before merging the attention masks using a specified aggregation 
+    This block allows the model to attend to channel, frequency, or time dimensions
+    independently before merging the attention masks using a specified aggregation
     operation (max, avg, add, or min).
     """
-    def __init__(
-        self,
-        c_dim: int,
-        f_dim: int,
-        t_dim: int,
-        se_cnf: dict
-    ) -> None:
+
+    def __init__(self, c_dim: int, f_dim: int, t_dim: int, se_cnf: dict) -> None:
         """
         Initializes the ConcurrentSEBlock.
 
@@ -39,17 +34,17 @@ class ConcurrentSEBlock(torch.nn.Module):
         super().__init__()
         dims = [c_dim, f_dim, t_dim]
         self.conc_se_layers = nn.ModuleList()
-        for d in se_cnf['se_dims']:
-            input_dim = dims[d-1]
-            squeeze_dim = make_divisible(input_dim // se_cnf['se_r'], 8)
+        for d in se_cnf["se_dims"]:
+            input_dim = dims[d - 1]
+            squeeze_dim = make_divisible(input_dim // se_cnf["se_r"], 8)
             self.conc_se_layers.append(SqueezeExcitation(input_dim, squeeze_dim, d))
-        if se_cnf['se_agg'] == "max":
+        if se_cnf["se_agg"] == "max":
             self.agg_op = lambda x: torch.max(x, dim=0)[0]
-        elif se_cnf['se_agg'] == "avg":
+        elif se_cnf["se_agg"] == "avg":
             self.agg_op = lambda x: torch.mean(x, dim=0)
-        elif se_cnf['se_agg'] == "add":
+        elif se_cnf["se_agg"] == "add":
             self.agg_op = lambda x: torch.sum(x, dim=0)
-        elif se_cnf['se_agg'] == "min":
+        elif se_cnf["se_agg"] == "min":
             self.agg_op = lambda x: torch.min(x, dim=0)[0]
         else:
             raise NotImplementedError(f"SE aggregation operation '{self.agg_op}' not implemented")
@@ -90,7 +85,7 @@ class SqueezeExcitation(torch.nn.Module):
         Args:
             input_dim (int): Number of features in the target dimension.
             squeeze_dim (int): Size of the bottleneck (input_dim // reduction_ratio).
-            se_dim (int): The dimension to preserve (1, 2, or 3). 
+            se_dim (int): The dimension to preserve (1, 2, or 3).
             activation (Callable): Non-linear activation for the bottleneck.
             scale_activation (Callable): Activation for the final attention mask.
         """
@@ -138,10 +133,11 @@ class SqueezeExcitation(torch.nn.Module):
 class InvertedResidualConfig:
     """
     Configuration helper for MobileNetV3 Inverted Residual blocks.
-    
-    Stores architectural parameters for a single block including expansion, 
+
+    Stores architectural parameters for a single block including expansion,
     kernel size, stride, and Squeeze-and-Excitation settings.
     """
+
     def __init__(
         self,
         input_channels: int,
@@ -199,7 +195,7 @@ class InvertedResidualConfig:
 class InvertedResidual(nn.Module):
     """
     MobileNetV3 Inverted Residual Block.
-    
+
     Consists of:
     1. 1x1 Expansion convolution (if necessary).
     2. Depthwise convolution.
@@ -207,12 +203,13 @@ class InvertedResidual(nn.Module):
     4. 1x1 Projection convolution.
     5. Residual connection (if stride=1 and input_dims == output_dims).
     """
+
     def __init__(
         self,
         cnf: InvertedResidualConfig,
         se_cnf: dict,
         norm_layer: Callable[..., nn.Module],
-        depthwise_norm_layer: Callable[..., nn.Module]
+        depthwise_norm_layer: Callable[..., nn.Module],
     ):
         """
         Initializes the Inverted Residual block.
@@ -258,7 +255,7 @@ class InvertedResidual(nn.Module):
                 activation_layer=activation_layer,
             )
         )
-        if cnf.use_se and se_cnf['se_dims'] is not None:
+        if cnf.use_se and se_cnf["se_dims"] is not None:
             layers.append(ConcurrentSEBlock(cnf.expanded_channels, cnf.f_dim, cnf.t_dim, se_cnf))
 
         # project

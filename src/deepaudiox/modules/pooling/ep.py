@@ -82,7 +82,7 @@ class EfficientProbing(BasePooling):
             x = x.permute(0, 2, 3, 1).reshape(B, H * W, C)
 
         B, N, C = x.shape
-        
+
         C_prime = C // self.d_out
 
         cls_token = self.cls_token.expand(B, -1, -1)
@@ -93,11 +93,11 @@ class EfficientProbing(BasePooling):
 
         # k: (B, N, num_heads, head_dim) -> (B, num_heads, N, head_dim)
         k = x.reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
-        
+
         # self.v(x): (B, N, C // d_out) -> (B, N, num_queries, dv) -> (B, num_queries, N, dv)
         v = self.v(x).reshape(B, N, self.num_queries, C // (self.d_out * self.num_queries)).permute(0, 2, 1, 3)
 
-        attn = (q @ k.transpose(-2, -1))
+        attn = q @ k.transpose(-2, -1)
         attn = attn.softmax(dim=-1)
 
         # x_cls shape: (B, num_heads, num_queries, v_dim_per_head)

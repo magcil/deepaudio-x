@@ -14,33 +14,29 @@ def NAME_TO_WIDTH(name: str):
         name (str): The model identifier string (e.g., 'mn04', 'dymn10').
 
     Returns:
-        float: The width multiplier used to scale the number of channels. 
+        float: The width multiplier used to scale the number of channels.
                Defaults to 1.0 if the name is not found.
     """
     mn_map = {
-        'mn01': 0.1,
-        'mn02': 0.2,
-        'mn04': 0.4,
-        'mn05': 0.5,
-        'mn06': 0.6,
-        'mn08': 0.8,
-        'mn10': 1.0,
-        'mn12': 1.2,
-        'mn14': 1.4,
-        'mn16': 1.6,
-        'mn20': 2.0,
-        'mn30': 3.0,
-        'mn40': 4.0,
+        "mn01": 0.1,
+        "mn02": 0.2,
+        "mn04": 0.4,
+        "mn05": 0.5,
+        "mn06": 0.6,
+        "mn08": 0.8,
+        "mn10": 1.0,
+        "mn12": 1.2,
+        "mn14": 1.4,
+        "mn16": 1.6,
+        "mn20": 2.0,
+        "mn30": 3.0,
+        "mn40": 4.0,
     }
 
-    dymn_map = {
-        'dymn04': 0.4,
-        'dymn10': 1.0,
-        'dymn20': 2.0
-    }
+    dymn_map = {"dymn04": 0.4, "dymn10": 1.0, "dymn20": 2.0}
 
     try:
-        w = dymn_map[name[:6]] if name.startswith('dymn') else mn_map[name[:4]]
+        w = dymn_map[name[:6]] if name.startswith("dymn") else mn_map[name[:4]]
     except Exception:
         w = 1.0
 
@@ -52,13 +48,13 @@ def make_divisible(v: float, divisor: int, min_value: int | None = None) -> int:
     Ensures that all layers have a channel number that is divisible by the divisor.
 
     This function is taken from the original TensorFlow MobileNet implementation.
-    It rounds the channel count to the nearest multiple of the divisor while 
+    It rounds the channel count to the nearest multiple of the divisor while
     ensuring the result does not drop below 90% of the original value.
 
     Args:
         v (float): The original/calculated channel count.
         divisor (int): The value the output must be divisible by (e.g., 8).
-        min_value (Optional[int]): Minimum possible value for the output. 
+        min_value (Optional[int]): Minimum possible value for the output.
             Defaults to the divisor value if None.
 
     Returns:
@@ -95,11 +91,11 @@ def cnn_out_size(in_size: int, padding: int, dilation: int, kernel: int, stride:
 
 
 def collapse_dim(
-    x: Tensor, 
-    dim: int, 
-    mode: str = "pool", 
+    x: Tensor,
+    dim: int,
+    mode: str = "pool",
     pool_fn: Callable[[Tensor, int], Tensor] = torch.mean,
-    combine_dim: int = None
+    combine_dim: int = None,
 ):
     """
     Collapses a specific dimension of a multi-dimensional tensor by pooling or reshaping.
@@ -135,12 +131,13 @@ class CollapseDim(nn.Module):
         pool_fn (Callable): The function to apply if pooling.
         combine_dim (int): The dimension to merge into if combining.
     """
+
     def __init__(
-        self, 
-        dim: int, 
-        mode: str = "pool", 
-        pool_fn:  Callable[[Tensor, int], Tensor] = torch.mean,
-        combine_dim: int = None
+        self,
+        dim: int,
+        mode: str = "pool",
+        pool_fn: Callable[[Tensor, int], Tensor] = torch.mean,
+        combine_dim: int = None,
     ):
         super().__init__()
         self.dim = dim
