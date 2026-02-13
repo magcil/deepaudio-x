@@ -73,9 +73,6 @@ def cnn_out_size(in_size: int, padding: int, dilation: int, kernel: int, stride:
     """
     Calculates the output spatial dimension (width or height) of a CNN layer.
 
-    The calculation follows the standard formula:
-    $$O = \lfloor \frac{I + 2P - D(K-1) - 1}{S} + 1 \rfloor$$
-
     Args:
         in_size (int): Input spatial dimension.
         padding (int): Padding size applied to the input.
