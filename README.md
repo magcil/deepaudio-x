@@ -203,6 +203,10 @@ classifier = AudioClassifier(
 
 - **BEATs** (`"beats"`): BEATs: Audio Pre-Training with Acoustic Tokenizers (https://arxiv.org/abs/2212.09058)
 - **PaSST** (`"passt"`): Efficient Training of Audio Transformers with Patchout (https://arxiv.org/abs/2110.05069)
+- **MobileNet (0.5x, AudioSet)** (`"mobilenet_05_as"`): MobileNetV3 audio backbone pretrained on AudioSet
+- **MobileNet (1.0x, AudioSet)** (`"mobilenet_10_as"`): MobileNetV3 audio backbone pretrained on AudioSet
+- **MobileNet (4.0x, AudioSet)** (`"mobilenet_40_as"`): MobileNetV3 audio backbone pretrained on AudioSet
+  Width multipliers (`0.5x`, `1.0x`, `4.0x`) scale convolution channel sizes. Reference: https://arxiv.org/abs/2211.04772
 
 ### Key Parameters
 

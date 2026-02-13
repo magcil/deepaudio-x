@@ -6,6 +6,7 @@ from platformdirs import user_cache_dir
 from tqdm import tqdm
 
 BackboneName = Literal["beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as"]
+"""Supported pretrained backbone names."""
 
 # Repository URL where the pretrained backbone models are hosted
 BACKBONE_REPO_URL = "https://github.com/magcil/pretrained-ssl-audio-backbones/raw/refs/heads/main/models/"
@@ -43,7 +44,8 @@ class Downloader:
         """Downloads the pretrained backbone weights if not already cached.
 
         Args:
-            backbone (BackboneName): Name of the backbone model to download weights for.
+            backbone (BackboneName): Backbone name to download weights for.
+                One of: "beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as".
 
         Returns:
             Path to the downloaded model file.

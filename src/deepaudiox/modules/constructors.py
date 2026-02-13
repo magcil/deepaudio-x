@@ -35,6 +35,7 @@ class BackbonePoolingResolverMixin:
 
         Args:
             backbone (BackboneName | BaseBackbone): Backbone name or instance.
+                Valid names are: "beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as".
             pretrained (bool): Whether to load pretrained weights.
             sample_rate (int): Sample rate for the backbone.
 
@@ -96,6 +97,7 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
 
         Args:
             backbone (BackboneName | BaseBackbone): Backbone name or instance.
+                Valid names are: "beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as".
             pretrained (bool): Whether to load pretrained weights for the backbone.
             freeze_backbone (bool): Whether to freeze the backbone weights during training.
             pooling (Literal["gap", "simpool", "ep"] | BasePooling | None): Optional pooling layer for aggregation.
@@ -210,6 +212,7 @@ class AudioClassifierConstructor(BaseAudioClassifier, BackbonePoolingResolverMix
         Args:
             num_classes (int): Number of output classes.
             backbone (BackboneName | BaseBackbone): Backbone model to use for feature extraction.
+                Valid names are: "beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as".
             pooling (Literal["gap", "simpool", "ep"] | BasePooling | None): Optional pooling layer to aggregate
                 features.
             freeze_backbone (bool): Whether to freeze the backbone weights during training.
