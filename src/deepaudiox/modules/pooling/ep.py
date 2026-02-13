@@ -74,34 +74,34 @@ class EfficientProbing(BasePooling):
         self.cls_token = nn.Parameter(torch.randn(1, num_queries, dim) * 0.02)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if len(x.shape) == 4:  # CNN feature map (B, D, H, W)
-            B, N, H, W = x.shape
-            C = H * W
-            x = x.permute(0, 2, 3, 1).reshape(B, N, C)  # (B, N, C) where C=H*W
-        elif len(x.shape) == 3:  # Transformer feature map (B, N, C)
-            B, N, C = x.shape
-        else:
+        if x.dim() < 3 or x.dim() > 4:
             raise ValueError("Input tensor must be of shape (B, D, H, W) or (B, N, C)")
+
+        if x.dim() == 4:  # CNN feature map (B, N, H, W)
+            B, C, H, W = x.shape
+            x = x.permute(0, 2, 3, 1).reshape(B, H * W, C)
+
+        B, N, C = x.shape
 
         C_prime = C // self.d_out
 
-        cls_token = self.cls_token.expand(B, -1, -1)  # newly created class token
+        cls_token = self.cls_token.expand(B, -1, -1)
 
         # q: (B, num_queries, num_heads, head_dim) -> (B, num_heads, num_queries, head_dim)
         q = cls_token.reshape(B, self.num_queries, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+        q = q * self.scale
 
         # k: (B, N, num_heads, head_dim) -> (B, num_heads, N, head_dim)
         k = x.reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
 
-        q = q * self.scale
-
         # self.v(x): (B, N, C // d_out) -> (B, N, num_queries, dv) -> (B, num_queries, N, dv)
         v = self.v(x).reshape(B, N, self.num_queries, C // (self.d_out * self.num_queries)).permute(0, 2, 1, 3)
 
-        attn = q @ k.transpose(-2, -1)  # (B, num_heads, num_queries, N)
+        attn = q @ k.transpose(-2, -1)
         attn = attn.softmax(dim=-1)
 
-        x_cls = torch.matmul(attn.squeeze(1).unsqueeze(2), v)  # (B, num_heads, 1, num_queries, dv))
+        # x_cls shape: (B, num_heads, num_queries, v_dim_per_head)
+        x_cls = torch.matmul(attn.squeeze(1).unsqueeze(2), v)
         x_cls = x_cls.view(B, C_prime)
 
         return x_cls

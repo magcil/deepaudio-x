@@ -2,7 +2,7 @@
 This page provides the core API reference for DeepAudioX.
 """
 
-__version__ = "0.3.7"
+__version__ = "0.4.0"
 
 # Top-level API exports
 from deepaudiox.datasets.audio_classification_dataset import (  # noqa: F401

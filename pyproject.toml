@@ -1,6 +1,6 @@
 [project]
 name = "deepaudio-x"
-version = "0.3.7"
+version = "0.4.0"
 description = "DeepAudio-X: Self-supervised audio toolkit for audio classification and beyond."
 authors = [
   { name = "Christos Nikou", email = "chrisnick92@gmail.com" }, 
@@ -23,6 +23,7 @@ dependencies = [
     "soundfile>=0.13.1",
     "torch>=2.8.0",
     "torchaudio>=2.8.0",
+    "torchvision>=0.23.0",
     "tqdm>=4.67.1",
 ]
 
