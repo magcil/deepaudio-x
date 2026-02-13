@@ -132,7 +132,7 @@ def test_mlp_head(input_tensor, hidden_layers):
 
 
 @pytest.mark.parametrize("x", [torch.randn(1, 5 * 16_000)])
-@pytest.mark.parametrize("backbone", ["beats", "passt"])
+@pytest.mark.parametrize("backbone", ["beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as"])
 @pytest.mark.parametrize("pooling", ["simpool", "gap", "ep"])
 @pytest.mark.parametrize("freeze_backbone", [True, False])
 @pytest.mark.parametrize("pretrained", [True, False])
@@ -144,10 +144,12 @@ def test_backbone_constructor(backbone, pretrained, freeze_backbone, pooling, x)
     # Test feature forward
     with torch.no_grad():
         z = backbone_constructor(x)
-        if backbone == "beats":
-            assert z.shape == (1, 248, 768)
-        elif backbone == "passt":
-            assert z.shape == (1, 288, 768)
+        if z.dim() == 3:
+            assert z.shape[-1] == backbone_constructor.out_dim
+        elif z.dim() == 4:
+            assert z.shape[1] == backbone_constructor.out_dim
+        else:
+            raise AssertionError(f"Unexpected backbone output rank: {z.dim()}")
         w = backbone_constructor.forward_with_pooling(x)
         assert w.shape == (1, backbone_constructor.out_dim)
 
@@ -157,7 +159,7 @@ def test_backbone_constructor(backbone, pretrained, freeze_backbone, pooling, x)
 
 @pytest.mark.parametrize("input_tensor", [torch.randn(1, 16000)])
 @pytest.mark.parametrize("num_classes", [2, 8])
-@pytest.mark.parametrize("backbone", ["beats", "passt"])
+@pytest.mark.parametrize("backbone", ["beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as"])
 @pytest.mark.parametrize("pooling", ["simpool", "gap", "ep"])
 @pytest.mark.parametrize("freeze_backbone", [True, False])
 @pytest.mark.parametrize("pretrained", [True, False])
@@ -311,4 +313,3 @@ def test_inference(path_to_test_file: str):
     inference_segmented = model.inference_on_file(
         path=path_wav, class_mapping=class_mapping, sample_rate=16_000, segment_duration=2.0
     )
-
