@@ -42,7 +42,7 @@ Install `uv` following the official guide (see: [Astral uv installation docs](ht
 ```bash
 uv venv --python 3.12 .venv
 source .venv/bin/activate
-pip install deepaudio-x
+uv pip install deepaudio-x
 ```
 
 **Option B: Miniconda**
@@ -58,7 +58,7 @@ pip install deepaudio-x
 Clone the repo and use `uv sync` to install dependencies from `pyproject.toml`:
 
 ```bash
-git@github.com:magcil/deepaudio-x.git
+git clone git@github.com:magcil/deepaudio-x.git
 cd deepaudio-x
 uv sync
 ```
