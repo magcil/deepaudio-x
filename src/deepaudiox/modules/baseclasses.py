@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from deepaudiox.dtos.dataset_items import AudioPrediction
+from deepaudiox.schemas.predictions import AudioPrediction
 from deepaudiox.utils.decorators import eval_mode
 
 

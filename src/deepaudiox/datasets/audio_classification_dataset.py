@@ -5,7 +5,7 @@ import librosa
 import soundfile as sf
 from torch.utils.data import Dataset
 
-from deepaudiox.dtos.dataset_items import AudioClassificationItem
+from deepaudiox.schemas.items import AudioClassificationItem
 
 
 class AudioClassificationDataset(Dataset):
@@ -103,21 +103,20 @@ class AudioClassificationDataset(Dataset):
 
     def _apply_segmentation(self, segment_duration: float | None):
         """Segmentize all audio files into fixed-duration segments.
-        Drops the last partial segment.
+        Drops the last partial segment. Files shorter than segment_duration are excluded.
         """
-
-        for item in list(self.items):
+        valid_items = []
+        for item in self.items:
             with sf.SoundFile(item.path) as f:
                 total_duration = len(f) / f.samplerate  # seconds
 
             if total_duration < segment_duration:
-                continue  # or raise, depending on your policy
+                continue
 
             num_segments = int(total_duration // segment_duration)
 
-            # seg_idx=0 already exists
-            for seg_idx in range(1, num_segments):
-                self.items.append(
+            for seg_idx in range(num_segments):
+                valid_items.append(
                     AudioClassificationItem(
                         path=item.path,
                         y_true=item.y_true,
@@ -125,6 +124,8 @@ class AudioClassificationDataset(Dataset):
                         class_name=item.class_name,
                     )
                 )
+
+        self.items = valid_items
 
 
 def audio_classification_dataset_from_dir(
@@ -157,7 +158,7 @@ def audio_classification_dataset_from_dir(
     file_to_class_mapping = {}
 
     subdirs = [d for d in root_path.iterdir() if d.is_dir()]
-    for _idx, subdir in enumerate(sorted(subdirs)):
+    for subdir in sorted(subdirs):
         audio_files = list(subdir.glob("**/*.wav")) + list(subdir.glob("**/*.mp3"))
         for audio_file in audio_files:
             file_to_class_mapping[audio_file] = subdir.name

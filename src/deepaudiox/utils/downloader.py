@@ -1,12 +1,10 @@
 from pathlib import Path
-from typing import Literal
 
 import requests
 from platformdirs import user_cache_dir
 from tqdm import tqdm
 
-BackboneName = Literal["beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as"]
-"""Supported pretrained backbone names."""
+from deepaudiox.schemas.types import BackboneName
 
 # Repository URL where the pretrained backbone models are hosted
 BACKBONE_REPO_URL = "https://github.com/magcil/pretrained-ssl-audio-backbones/raw/refs/heads/main/models/"

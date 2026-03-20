@@ -1,5 +1,6 @@
 # deepaudiox/modules/backbones/__init__.py
 
+import warnings
 from collections.abc import Callable
 
 from deepaudiox.modules.backbones.beats.beats_modules.BEATs import BEATs
@@ -26,7 +27,9 @@ def register_backbone(name: str):
 @register_backbone("beats")
 def beats_base() -> BEATs:
     """BEATs backbone without DivEncLayer."""
-    return BEATs()
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=FutureWarning, module="torch.nn.utils.weight_norm")
+        return BEATs()
 
 
 @register_backbone("passt")
