@@ -137,76 +137,116 @@ class Trainer:
             EarlyStopper(patience=patience, logger=self.logger),
         ]
 
-    def train(self) -> None:
-        """Perform the training process"""
+    def train_step(self) -> float:
+        """Run one pass over the training set.
 
-        # Execute callbacks in the beginning of training
+        Sets the model to train mode, iterates over ``train_dloader``,
+        performs forward + backward + optimizer step per batch.
+
+        Returns:
+            float: Average training loss over the epoch.
+        """
+        train_loss = 0.0
+        self.model.train()
+        with tqdm(self.train_dloader, unit="batch", leave=False, desc="Training phase") as tbar:
+            for batch in tbar:
+                self.optimizer.zero_grad()
+                x = batch["feature"].to(self.device)
+                y_true = batch["y_true"].to(self.device)
+                y_pred = self.model(x)
+                batch_loss = self.loss_function(y_pred, y_true)
+                batch_loss.backward()
+                self.optimizer.step()
+                train_loss += batch_loss.item()
+        return train_loss / max(1, len(self.train_dloader))
+
+    def val_step(self) -> float:
+        """Run one pass over the validation set.
+
+        Sets the model to eval mode, iterates over ``validation_dloader``
+        under ``torch.no_grad()``.
+
+        Returns:
+            float: Average validation loss over the epoch.
+        """
+        val_loss = 0.0
+        self.model.eval()
+        with torch.no_grad(), tqdm(self.validation_dloader, unit="batch", leave=False, desc="Validation phase") as vbar:
+            for batch in vbar:
+                x = batch["feature"].to(self.device)
+                y_true = batch["y_true"].to(self.device)
+                y_pred = self.model(x)
+                batch_loss = self.loss_function(y_pred, y_true)
+                val_loss += batch_loss.item()
+        return val_loss / len(self.validation_dloader)
+
+    def epoch_step(self) -> tuple[float, float]:
+        """Run one complete training epoch.
+
+        Executes ``on_epoch_start`` callbacks, calls ``train_step()`` and
+        ``val_step()``, updates the LR scheduler and ``self.state``, then
+        executes ``on_epoch_end`` callbacks (which may trigger early stopping
+        or checkpointing).
+
+        Note:
+            ``self.state.current_epoch`` must be set by the caller before
+            invoking this method — ``train()`` does this automatically.
+            When calling ``epoch_step()`` directly, set it yourself:
+            ``trainer.state.current_epoch = epoch``.
+
+        Returns:
+            tuple[float, float]: ``(train_loss, val_loss)`` for the epoch.
+
+        Example:
+            >>> from deepaudiox import AudioClassifier, Trainer
+            >>> from deepaudiox import audio_classification_dataset_from_dir, get_class_mapping_from_dir
+            >>> class_mapping = get_class_mapping_from_dir(root_dir="path/to/data")
+            >>> train_dataset = audio_classification_dataset_from_dir(
+            ...     root_dir="path/to/data",
+            ...     sample_rate=16_000,
+            ...     class_mapping=class_mapping,
+            ... )
+            >>> model = AudioClassifier(num_classes=len(class_mapping), backbone="beats", sample_rate=16_000)
+            >>> trainer = Trainer(train_dset=train_dataset, model=model, epochs=10)
+            >>> for epoch in range(1, trainer.epochs + 1):
+            ...     trainer.state.current_epoch = epoch
+            ...     train_loss, val_loss = trainer.epoch_step()
+            ...     print(f"Epoch {epoch} — train: {train_loss:.4f}, val: {val_loss:.4f}")
+            ...     if trainer.state.early_stop:
+            ...         break
+        """
+        for cb in self.callbacks:
+            cb.on_epoch_start(self)
+
+        train_loss = self.train_step()
+        val_loss = self.val_step()
+
+        if isinstance(self.scheduler, ReduceLROnPlateau):
+            self.scheduler.step(val_loss)
+        else:
+            self.scheduler.step()
+
+        self.state.train_loss.append(train_loss)
+        self.state.validation_loss.append(val_loss)
+
+        for cb in self.callbacks:
+            cb.on_epoch_end(self)
+
+        return train_loss, val_loss
+
+    def train(self) -> None:
+        """Perform the full training process."""
         for cb in self.callbacks:
             cb.on_train_start(self)
 
-        # Initiate training
         for epoch in range(1, self.epochs + 1):
             if self.state.early_stop:
                 break
-
             self.state.current_epoch = epoch
-            train_loss, val_loss = 0.0, 0.0
+            self.epoch_step()
 
-            # Execute callbacks in the beginning of the epoch
-            for cb in self.callbacks:
-                cb.on_epoch_start(self)
-
-            # Perform trainng
-            self.model.train()
-            with tqdm(self.train_dloader, unit="batch", leave=False, desc="Training phase") as tbar:
-                # Optimize the model by batch
-                for batch in tbar:
-                    self.optimizer.zero_grad()
-                    x = batch["feature"].to(self.device)
-                    y_true = batch["y_true"].to(self.device)
-                    y_pred = self.model(x)
-                    batch_loss = self.loss_function(y_pred, y_true)
-                    batch_loss.backward()
-                    self.optimizer.step()
-
-                    train_loss += batch_loss.item()
-
-                train_loss /= max(1, len(self.train_dloader))
-
-            # Perform validation
-            self.model.eval()
-            with torch.no_grad():
-                with tqdm(self.validation_dloader, unit="batch", leave=False, desc="Validation phase") as vbar:
-                    # Compute validation loss by batch
-                    for batch in vbar:
-                        x = batch["feature"].to(self.device)
-                        y_true = batch["y_true"].to(self.device)
-                        y_pred = self.model(x)
-                        batch_loss = self.loss_function(y_pred, y_true)
-                        val_loss += batch_loss.item()
-
-                val_loss /= len(self.validation_dloader)
-
-            # Update scheduling
-            if self.scheduler:
-                if isinstance(self.scheduler, ReduceLROnPlateau):
-                    self.scheduler.step(val_loss)
-                else:
-                    self.scheduler.step()
-
-            # Update training state
-            self.state.train_loss.append(train_loss)
-            self.state.validation_loss.append(val_loss)
-
-            # Execute callbacks at the end of the epoch
-            for cb in self.callbacks:
-                cb.on_epoch_end(self)
-
-        # Execute callbacks at the end of training
         for cb in self.callbacks:
             cb.on_train_end(self)
-
-        return
 
     def _setup_dataloaders(
         self,

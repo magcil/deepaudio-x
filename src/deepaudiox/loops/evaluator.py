@@ -102,6 +102,7 @@ class Evaluator:
         # Configure callbacks
         self.callbacks = [ConsoleLogger(logger=self.logger), Reporter(logger=self.logger)]
 
+    @torch.inference_mode()
     def evaluate(self) -> None:
         """Run the full evaluation loop over the test set.
 
@@ -116,11 +117,12 @@ class Evaluator:
 
         Note:
             The model is expected to already be in eval mode (set in ``__init__``).
+            Runs under ``torch.inference_mode()`` — gradients are fully disabled.
             Callbacks (``ConsoleLogger``, ``Reporter``) are executed once after the loop.
         """
         # Lists to accumulate evaluation results, i.e., true_labels, prediction_labels, and posteriors
         y_true_batches, y_pred_batches, posterior_batches = [], [], []
-        with torch.no_grad(), tqdm(self.test_dloader, unit="batch", leave=False, desc="Evaluation phase") as tbar:
+        with tqdm(self.test_dloader, unit="batch", leave=False, desc="Evaluation phase") as tbar:
             for batch in tbar:
                 # Move inputs
                 x = batch["feature"].to(self.device)
