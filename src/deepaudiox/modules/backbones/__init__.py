@@ -1,5 +1,6 @@
 # deepaudiox/modules/backbones/__init__.py
 
+import warnings
 from collections.abc import Callable
 
 from deepaudiox.modules.backbones.beats.beats_modules.BEATs import BEATs
@@ -26,7 +27,9 @@ def register_backbone(name: str):
 @register_backbone("beats")
 def beats_base() -> BEATs:
     """BEATs backbone without DivEncLayer."""
-    return BEATs()
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=FutureWarning, module="torch.nn.utils.weight_norm")
+        return BEATs()
 
 
 @register_backbone("passt")
@@ -36,18 +39,18 @@ def passt_base() -> PaSST:
 
 
 @register_backbone("mobilenet_05_as")
-def monilenet_05_base() -> MobileNet:
+def mobilenet_05_base() -> MobileNet:
     """MobileNet backbone"""
     return MobileNet(cfg=MobileNetConfig({"width_mult": 0.5}))
 
 
 @register_backbone("mobilenet_10_as")
-def monilenet_10_base() -> MobileNet:
+def mobilenet_10_base() -> MobileNet:
     """MobileNet backbone"""
     return MobileNet(cfg=MobileNetConfig({"width_mult": 1}))
 
 
 @register_backbone("mobilenet_40_as")
-def monilenet_40_base() -> MobileNet:
+def mobilenet_40_base() -> MobileNet:
     """MobileNet backbone"""
     return MobileNet(cfg=MobileNetConfig({"width_mult": 4}))

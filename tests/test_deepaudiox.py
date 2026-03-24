@@ -5,6 +5,7 @@ import pytest
 import torch
 
 import deepaudiox as dax
+from deepaudiox.modules.backbones import BACKBONES
 from deepaudiox.modules.classifier.classifier import MLPHead
 from deepaudiox.utils.training_utils import (
     get_class_mapping_from_dir,
@@ -106,7 +107,7 @@ def test_dataset_segmentation(segment_duration):
 
 @pytest.mark.parametrize("input_tensor", [torch.randn(1, 16000)])
 def test_beats_backbone(input_tensor):
-    backbone = dax.BACKBONES["beats"]()
+    backbone = BACKBONES["beats"]()
 
     output = backbone.forward_pipeline(input_tensor)
     assert output.shape == (1, 48, 768)
@@ -114,7 +115,7 @@ def test_beats_backbone(input_tensor):
 
 @pytest.mark.parametrize("input_tensor", [torch.randn(1, 32000)])
 def test_passt_backbone(input_tensor):
-    passt = dax.BACKBONES["passt"]()
+    passt = BACKBONES["passt"]()
 
     output = passt.forward_pipeline(input_tensor)
     print(output.shape)
@@ -137,7 +138,7 @@ def test_mlp_head(input_tensor, hidden_layers):
 @pytest.mark.parametrize("freeze_backbone", [True, False])
 @pytest.mark.parametrize("pretrained", [True, False])
 def test_backbone_constructor(backbone, pretrained, freeze_backbone, pooling, x):
-    backbone_constructor = dax.BackboneConstructor(
+    backbone_constructor = dax.Backbone(
         backbone=backbone, pretrained=pretrained, freeze_backbone=freeze_backbone, pooling=pooling, sample_rate=16_000
     )
 
@@ -164,7 +165,7 @@ def test_backbone_constructor(backbone, pretrained, freeze_backbone, pooling, x)
 @pytest.mark.parametrize("freeze_backbone", [True, False])
 @pytest.mark.parametrize("pretrained", [True, False])
 def test_model_construction(input_tensor, num_classes, backbone, pooling, freeze_backbone, pretrained):
-    model = dax.AudioClassifierConstructor(
+    model = dax.AudioClassifier(
         num_classes=num_classes,
         backbone=backbone,
         pooling=pooling,
@@ -198,7 +199,7 @@ def test_training_loop():
         root_dir=str(VALIDATION_DIR), sample_rate=16000, class_mapping=class_mapping
     )
 
-    model = dax.AudioClassifierConstructor(
+    model = dax.AudioClassifier(
         num_classes=5,
         backbone="beats",
         pooling="gap",
@@ -241,7 +242,7 @@ def test_evaluation_loop():
         root_dir=str(TEST_DIR), sample_rate=16000, class_mapping=class_mapping
     )
 
-    model = dax.AudioClassifierConstructor(
+    model = dax.AudioClassifier(
         num_classes=5,
         backbone="beats",
         pooling="gap",
@@ -280,7 +281,7 @@ def test_inference(path_to_test_file: str):
     path_to_checkpoint = Path(__file__).resolve().parents[1] / "testing_checkpoint.pt"
     path_wav = Path(__file__).resolve().parents[1] / path_to_test_file
 
-    model = dax.AudioClassifierConstructor(
+    model = dax.AudioClassifier(
         num_classes=5,
         backbone="beats",
         pooling="gap",
@@ -297,7 +298,7 @@ def test_inference(path_to_test_file: str):
 
     # Inference on the whole audio file
     inference = model.inference_on_file(path=path_wav, class_mapping=class_mapping, sample_rate=16_000)
-    
+
     final_label = path_wav.parent.name
 
     assert inference["final_label"] == final_label

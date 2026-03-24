@@ -8,7 +8,8 @@ from deepaudiox.modules.backbones import BACKBONES
 from deepaudiox.modules.baseclasses import BaseAudioClassifier, BaseBackbone, BasePooling
 from deepaudiox.modules.classifier.classifier import MLPHead
 from deepaudiox.modules.pooling import GAP, POOLING
-from deepaudiox.utils.downloader import BackboneName, Downloader
+from deepaudiox.schemas.types import BackboneName
+from deepaudiox.utils.downloader import Downloader
 from deepaudiox.utils.file_utils import load_checkpoint
 
 

@@ -13,7 +13,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from deepaudiox.dtos.dataset_items import AudioPrediction
+from deepaudiox.schemas.predictions import AudioPrediction
+from deepaudiox.utils.decorators import eval_mode
 
 
 class BaseAudioClassifier(nn.Module, ABC):
@@ -47,6 +48,12 @@ class BaseAudioClassifier(nn.Module, ABC):
     def predict(self, x: torch.Tensor) -> dict[str, np.ndarray]:
         """Compute predicted class and posterior probabilities.
 
+        This is a low-level method that does not manage model mode or gradient
+        context. The caller is responsible for calling ``model.eval()`` and
+        wrapping with ``torch.no_grad()`` or ``torch.inference_mode()`` as needed.
+        For end-to-end inference with automatic mode management, use
+        ``inference_on_waveform`` or ``inference_on_file`` instead.
+
         Args:
             x (torch.Tensor): Input waveforms of shape (B, T), where T is the number of audio samples.
 
@@ -57,15 +64,15 @@ class BaseAudioClassifier(nn.Module, ABC):
             >>> import torch
             >>> from deepaudiox import AudioClassifier
             >>> model = AudioClassifier(num_classes=10, backbone="beats", sample_rate=16_000, pretrained=True)
+            >>> model.eval()
             >>> waveforms = torch.randn(2, 5 * 16_000)
-            >>> outputs = model.predict(waveforms)
+            >>> with torch.no_grad():
+            ...     outputs = model.predict(waveforms)
         """
         if x.dim() == 1:
             x = x.unsqueeze(0)
 
-        self.eval()
-        with torch.no_grad():
-            logits = self.forward(x)
+        logits = self.forward(x)
         posteriors = F.softmax(logits, dim=1)
         max_posteriors = posteriors.max(dim=1)
 
@@ -75,6 +82,8 @@ class BaseAudioClassifier(nn.Module, ABC):
             "logits": logits.numpy(force=True),
         }
 
+    @torch.inference_mode()
+    @eval_mode
     def inference_on_waveform(
         self,
         x: torch.Tensor | np.ndarray,
@@ -86,7 +95,7 @@ class BaseAudioClassifier(nn.Module, ABC):
         """Get prediction on a waveform.
 
         Args:
-            x (torch.Tensor | np.ndarray): Input waveform to be used for inference. Accepts shape (T,) or (1, T).
+            x (torch.Tensor | np.ndarray): Input waveform to be used for inference. Accepts shape (T,).
             sample_rate (int): Sampling rate of audio sample.
             class_mapping (dict[str, int]): Class-to-index mapping that is used by the model.
             segment_duration (float | None): Optional segment duration in seconds for segment-level inference.
@@ -117,8 +126,15 @@ class BaseAudioClassifier(nn.Module, ABC):
         """
         index_to_class = {idx: cl for cl, idx in class_mapping.items()}
 
+        # Convert to tensor if input is a np.ndarray
         if isinstance(x, np.ndarray):
             x = torch.from_numpy(x)
+
+        if x.ndim != 1:
+            raise ValueError(
+                f"Expected a 1-D waveform tensor of shape (T,), got shape {tuple(x.shape)}. "
+                "If you have a batched input, loop over samples and call this method individually."
+            )
 
         device = next(self.parameters()).device
         x = x.to(device)
@@ -143,19 +159,17 @@ class BaseAudioClassifier(nn.Module, ABC):
 
             # Create batches of segments and run inference
             batch_segments = batch_segments.view(-1, segment_len)
-            y_preds_batches, posteriors_batches, logits_batches = [], [], []
+            y_preds_batches, posteriors_batches = [], []
 
             for start in range(0, batch_segments.size(0), batch_size):
                 batch = batch_segments[start : start + batch_size]
                 batch_inference = self.predict(batch)
                 y_preds_batches.append(batch_inference["y_preds"])
                 posteriors_batches.append(batch_inference["posteriors"])
-                logits_batches.append(batch_inference["logits"])
 
             inference = {
                 "y_preds": np.concatenate(y_preds_batches),
                 "posteriors": np.concatenate(posteriors_batches),
-                "logits": np.concatenate(logits_batches),
             }
 
             # Accumulate segment-level labels

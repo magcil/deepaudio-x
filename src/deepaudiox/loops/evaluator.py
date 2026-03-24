@@ -102,9 +102,27 @@ class Evaluator:
         # Configure callbacks
         self.callbacks = [ConsoleLogger(logger=self.logger), Reporter(logger=self.logger)]
 
-    def evaluate(self):
-        """Perform the testing process."""
-        with torch.no_grad(), tqdm(self.test_dloader, unit="batch", leave=False, desc="Evaluation phase") as tbar:
+    @torch.inference_mode()
+    def evaluate(self) -> None:
+        """Run the full evaluation loop over the test set.
+
+        Iterates over all batches in ``test_dloader``, accumulates true labels,
+        predicted labels, and posterior probabilities into ``self.state``, then
+        triggers the registered callbacks via ``on_testing_end``.
+
+        After this method returns, ``self.state`` holds:
+            - ``y_true`` (np.ndarray): Ground-truth class indices, shape (N,).
+            - ``y_pred`` (np.ndarray): Predicted class indices, shape (N,).
+            - ``posteriors`` (np.ndarray): Max posterior probability per sample, shape (N,).
+
+        Note:
+            The model is expected to already be in eval mode (set in ``__init__``).
+            Runs under ``torch.inference_mode()`` — gradients are fully disabled.
+            Callbacks (``ConsoleLogger``, ``Reporter``) are executed once after the loop.
+        """
+        # Lists to accumulate evaluation results, i.e., true_labels, prediction_labels, and posteriors
+        y_true_batches, y_pred_batches, posterior_batches = [], [], []
+        with tqdm(self.test_dloader, unit="batch", leave=False, desc="Evaluation phase") as tbar:
             for batch in tbar:
                 # Move inputs
                 x = batch["feature"].to(self.device)
@@ -115,10 +133,15 @@ class Evaluator:
                 y_pred = np.array(inference["y_preds"], dtype=int)
                 post = np.array(inference["posteriors"], dtype=float)
 
-                # Update testing state (NumPy arrays)
-                self.state.y_true = np.concatenate([self.state.y_true, y_true])
-                self.state.y_pred = np.concatenate([self.state.y_pred, y_pred])
-                self.state.posteriors = np.concatenate([self.state.posteriors, post])
+                # Update lists with new batch results
+                y_true_batches.append(y_true)
+                y_pred_batches.append(y_pred)
+                posterior_batches.append(post)
+
+        # Concatenate all results outside the loop
+        self.state.y_true = np.concatenate(y_true_batches)
+        self.state.y_pred = np.concatenate(y_pred_batches)
+        self.state.posteriors = np.concatenate(posterior_batches)
 
         # Execute callbacks at the end of testing
         for cb in self.callbacks:
