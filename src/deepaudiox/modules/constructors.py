@@ -8,7 +8,7 @@ from deepaudiox.modules.backbones import BACKBONES
 from deepaudiox.modules.baseclasses import BaseAudioClassifier, BaseBackbone, BasePooling
 from deepaudiox.modules.classifier.classifier import MLPHead
 from deepaudiox.modules.pooling import GAP, POOLING
-from deepaudiox.schemas.types import BackboneName
+from deepaudiox.schemas.types import BackboneName, PoolingName
 from deepaudiox.utils.downloader import Downloader
 from deepaudiox.utils.file_utils import load_checkpoint
 
@@ -58,13 +58,13 @@ class BackbonePoolingResolverMixin:
 
     def _resolve_pooling(
         self,
-        pooling: Literal["gap", "simpool", "ep"] | BasePooling,
+        pooling: PoolingName | BasePooling,
         out_dim: int,
     ) -> BasePooling:
         """Resolve pooling layer from literal, BasePooling instance, or None.
 
         Args:
-            pooling (Literal["gap", "simpool", "ep"] | BasePooling | None): Pooling layer name, instance, or None.
+            pooling (PoolingName | BasePooling | None): Pooling layer name, instance, or None.
             out_dim (int): Backbone output dimension used to configure pooling modules.
 
         Returns:
@@ -90,7 +90,7 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
         backbone: BackboneName | BaseBackbone,
         pretrained: bool = False,
         freeze_backbone: bool = False,
-        pooling: Literal["gap", "simpool", "ep"] | BasePooling | None = None,
+        pooling: PoolingName | BasePooling | None = None,
         sample_rate: int = 16_000,
         norm_p: float | None = None,
     ):
@@ -101,7 +101,7 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
                 Valid names are: "beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as".
             pretrained (bool): Whether to load pretrained weights for the backbone.
             freeze_backbone (bool): Whether to freeze the backbone weights during training.
-            pooling (Literal["gap", "simpool", "ep"] | BasePooling | None): Optional pooling layer for aggregation.
+            pooling (PoolingName | BasePooling | None): Optional pooling layer for aggregation.
             sample_rate (int): Sample frequency for audio input.
             norm_p (float or None): Optional Lp norm applied after pooling. If pooling is None, GAP is used.
 
@@ -200,7 +200,7 @@ class AudioClassifierConstructor(BaseAudioClassifier, BackbonePoolingResolverMix
         self,
         num_classes: int,
         backbone: BackboneName | BaseBackbone,
-        pooling: Literal["gap", "simpool", "ep"] | BasePooling | None = None,
+        pooling: PoolingName | BasePooling | None = None,
         freeze_backbone: bool = False,
         sample_rate: int = 16000,
         classifier_hidden_layers: list[int] | None = None,
@@ -214,7 +214,7 @@ class AudioClassifierConstructor(BaseAudioClassifier, BackbonePoolingResolverMix
             num_classes (int): Number of output classes.
             backbone (BackboneName | BaseBackbone): Backbone model to use for feature extraction.
                 Valid names are: "beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as".
-            pooling (Literal["gap", "simpool", "ep"] | BasePooling | None): Optional pooling layer to aggregate
+            pooling (PoolingName | BasePooling | None): Optional pooling layer to aggregate
                 features.
             freeze_backbone (bool): Whether to freeze the backbone weights during training.
             sample_rate (int): Sample frequency for audio input.

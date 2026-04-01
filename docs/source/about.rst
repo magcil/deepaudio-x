@@ -44,7 +44,7 @@ audio classifier:
 
    from deepaudiox import AudioClassifier, Evaluator, Trainer
    from deepaudiox import audio_classification_dataset_from_dir
-   from deepaudiox.utils.training_utils import get_class_mapping_from_dir
+   from deepaudiox import get_class_mapping_from_dir
 
    # 1) Build a dataset from a folder structure of class subdirectories
    class_mapping = get_class_mapping_from_dir(root_dir="path/to/data")
@@ -85,52 +85,3 @@ audio classifier:
 
    evaluator.evaluate()
 
-Supported backbones & pooling
------------------------------
-
-DeepAudio-X supports the following backbones and pooling methods:
-
-Backbones
-~~~~~~~~~
-
-.. list-table::
-   :header-rows: 1
-   :widths: 15 35 50
-
-   * - Name
-     - Description
-     - Notes
-   * - beats
-     - BEATs backbone
-     - Transformer pretrained on AudioSet
-   * - passt
-     - PaSST backbone
-     - Transformer pretrained on AudioSet
-
-Pooling
-~~~~~~~
-
-.. list-table::
-   :header-rows: 1
-   :widths: 15 35 50
-
-   * - Name
-     - Description
-     - Notes
-   * - gap
-     - Global Average Pooling
-     - Fast baseline
-   * - simpool
-     - Simple Pooling
-     - Strong attentive pooling
-   * - ep
-     - Efficient Probing
-     - Efficient attention pooling
-
-References
-----------
-
-- BEATs: `Audio Pre-Training with Acoustic Tokenizers <https://arxiv.org/abs/2212.09058>`_
-- PaSST: `Efficient Training of Audio Transformers with Patchout <https://arxiv.org/abs/2110.05069>`_
-- SimPool: `Keep It SimPool: Who Said Supervised Transformers Suffer from Attention Deficit? <https://arxiv.org/abs/2309.06891>`_
-- EP: `Attention, Please! Revisiting Attentive Probing Through the Lens of Efficiency <https://arxiv.org/abs/2506.10178>`_

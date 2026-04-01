@@ -17,10 +17,17 @@ from deepaudiox.modules.constructors import (  # noqa: F401
 from deepaudiox.modules.constructors import (
     BackboneConstructor as Backbone,
 )
+from deepaudiox.schemas.types import BackboneName, PoolingName  # noqa: F401
 from deepaudiox.utils.training_utils import (  # noqa: F401
     get_class_mapping_from_dir,
     get_class_mapping_from_list,
 )
+
+AVAILABLE_BACKBONES: tuple[str, ...] = ("beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as")
+"""Supported pretrained backbone names available at runtime."""
+
+AVAILABLE_POOLING: tuple[str, ...] = ("gap", "simpool", "ep")
+"""Supported pooling layer names available at runtime."""
 
 __all__ = [
     "AudioClassifier",
@@ -30,6 +37,10 @@ __all__ = [
     "audio_classification_dataset_from_dir",
     "Evaluator",
     "Trainer",
+    "BackboneName",
+    "PoolingName",
+    "AVAILABLE_BACKBONES",
+    "AVAILABLE_POOLING",
     "get_class_mapping_from_dir",
     "get_class_mapping_from_list",
 ]
