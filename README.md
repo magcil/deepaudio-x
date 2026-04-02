@@ -5,6 +5,7 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/deepaudio-x.svg?cacheSeconds=300)](https://pypi.org/project/deepaudio-x/)
 [![License](https://img.shields.io/github/license/magcil/deepaudio-x.svg)](https://github.com/magcil/deepaudio-x/blob/main/LICENSE)
 [![Run Tests](https://github.com/magcil/deepaudio-x/actions/workflows/tests.yml/badge.svg)](https://github.com/magcil/deepaudio-x/actions/workflows/tests.yml)
+[![Publish to PyPI](https://github.com/magcil/deepaudio-x/actions/workflows/publish.yml/badge.svg)](https://github.com/magcil/deepaudio-x/actions/workflows/publish.yml)
 
 
 <p align="left">
@@ -93,7 +94,7 @@ You can load the dataset as follows:
 
 ```python
 from deepaudiox import audio_classification_dataset_from_dir
-from deepaudiox.utils.training_utils import get_class_mapping_from_dir
+from deepaudiox import get_class_mapping_from_dir
 
 # Define a class mapping
 class_mapping = get_class_mapping_from_dir(root_dir="path/to/data")
@@ -334,6 +335,13 @@ trainer = Trainer(
 trainer.train()
 ```
 
+> **Note:** The checkpoint saved at `path_to_checkpoint` contains both the model weights and the architecture config (backbone, pooling, num_classes, etc.). You can restore the full model in one line:
+> ```python
+> from deepaudiox import AudioClassifier
+> model = AudioClassifier.from_checkpoint("checkpoint.pt")
+> print(model.config)  # {"backbone": "beats", "pooling": "gap", ...}
+> ```
+
 ### Trainer Parameters
 
 - `train_dset`: Training dataset (AudioClassificationDataset)
@@ -359,9 +367,10 @@ trainer.train()
 Evaluate your trained classifier on a test dataset using the `Evaluator` class:
 
 ```python
-import torch
+from deepaudiox import AudioClassifier, Evaluator
 
-from deepaudiox import Evaluator
+# Load model with architecture and weights restored from checkpoint
+classifier = AudioClassifier.from_checkpoint("checkpoint.pt")
 
 # Initialize evaluator
 evaluator = Evaluator(
@@ -372,8 +381,6 @@ evaluator = Evaluator(
     num_workers=4
 )
 
-# Load model
-classifier.load_state_dict(torch.load("checkpoint.pt"))
 
 # Run evaluation
 evaluator.evaluate()
@@ -494,13 +501,6 @@ The library is designed to scale from quick experiments to research and producti
 
 ---
 
-## Project Status
-
-🚧 This project is under active development.
-
-APIs may evolve, but backward compatibility will be considered once a stable release is reached.
-
----
 
 ## Attribution
 
@@ -529,8 +529,6 @@ If you use this library in academic work, please cite:
 
 ## Contributing
 
-Contributions are welcome!
-
-Please open an issue to discuss major changes before submitting a pull request.
+Contributions are welcome! Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to set up the development environment, run tests, and submit changes.
 
 ---

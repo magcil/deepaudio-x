@@ -17,6 +17,10 @@ DeepAudio-X
    :target: https://github.com/magcil/deepaudio-x/actions/workflows/tests.yml
    :alt: Tests
 
+.. image:: https://github.com/magcil/deepaudio-x/actions/workflows/publish.yml/badge.svg
+   :target: https://github.com/magcil/deepaudio-x/actions/workflows/publish.yml
+   :alt: Publish
+
 DeepAudio-X is a self-supervised audio toolkit for audio classification and related
 tasks.
 

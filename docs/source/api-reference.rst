@@ -24,29 +24,46 @@ Methods for building datasets and class mappings from directories or label lists
 Models & Backbones
 ------------------
 
-Constructors and registries for initializing classifiers, backbones, and pooling.
+Constructors for initializing classifiers and backbones.
 
-.. autoclass:: AudioClassifierConstructor
+.. autoclass:: deepaudiox.modules.constructors.AudioClassifierConstructor
    :members:
-   :exclude-members: __init__
+   :special-members: __init__
    :undoc-members:
 
-.. autoclass:: BackboneConstructor
+   .. note:: Available as ``deepaudiox.AudioClassifier``.
+
+.. autoclass:: deepaudiox.modules.constructors.BackboneConstructor
    :members:
-   :exclude-members: __init__
+   :special-members: __init__
    :undoc-members:
 
-.. data:: BACKBONES
-   :annotation: = dict
+   .. note:: Available as ``deepaudiox.Backbone``.
 
-.. data:: POOLING
-   :annotation: = dict
+Supported Backbones & Pooling
+-----------------------------
 
-.. autoclass:: AudioClassifier
-   :noindex:
+Type aliases and runtime constants for valid backbone and pooling names.
 
-.. autoclass:: Backbone
-   :noindex:
+.. data:: AVAILABLE_BACKBONES
+   :annotation: = ("beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as")
+
+   Supported pretrained backbone names available at runtime.
+
+.. data:: AVAILABLE_POOLING
+   :annotation: = ("gap", "simpool", "ep")
+
+   Supported pooling layer names available at runtime.
+
+.. data:: BackboneName
+
+   Type alias: ``Literal["beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "mobilenet_40_as"]``.
+   Use for type-annotated code.
+
+.. data:: PoolingName
+
+   Type alias: ``Literal["gap", "simpool", "ep"]``.
+   Use for type-annotated code.
 
 Training & Evaluation
 ---------------------
@@ -55,12 +72,12 @@ Interfaces for training models and evaluating performance on held-out data.
 
 .. autoclass:: Trainer
    :members:
-   :exclude-members: __init__
+   :special-members: __init__
    :undoc-members:
 
 .. autoclass:: Evaluator
    :members:
-   :exclude-members: __init__
+   :special-members: __init__
    :undoc-members:
 
 Base Classes & Inference
@@ -78,9 +95,7 @@ Full Paths
 The API re-exports the following symbols. If you prefer importing from the original modules, use these paths:
 
 - ``AudioClassifier`` -> ``deepaudiox.modules.constructors.AudioClassifierConstructor``
-- ``AudioClassifierConstructor`` -> ``deepaudiox.modules.constructors.AudioClassifierConstructor``
 - ``Backbone`` -> ``deepaudiox.modules.constructors.BackboneConstructor``
-- ``BackboneConstructor`` -> ``deepaudiox.modules.constructors.BackboneConstructor``
 - ``AudioClassificationDataset`` -> ``deepaudiox.datasets.audio_classification_dataset.AudioClassificationDataset``
 - ``audio_classification_dataset_from_dir`` -> ``deepaudiox.datasets.audio_classification_dataset.audio_classification_dataset_from_dir``
 - ``audio_classification_dataset_from_dictionary`` -> ``deepaudiox.datasets.audio_classification_dataset.audio_classification_dataset_from_dictionary``
@@ -88,5 +103,7 @@ The API re-exports the following symbols. If you prefer importing from the origi
 - ``get_class_mapping_from_list`` -> ``deepaudiox.utils.training_utils.get_class_mapping_from_list``
 - ``Trainer`` -> ``deepaudiox.loops.trainer.Trainer``
 - ``Evaluator`` -> ``deepaudiox.loops.evaluator.Evaluator``
-- ``BACKBONES`` -> ``deepaudiox.modules.backbones.BACKBONES``
-- ``POOLING`` -> ``deepaudiox.modules.pooling.POOLING``
+- ``BackboneName`` -> ``deepaudiox.schemas.types.BackboneName``
+- ``PoolingName`` -> ``deepaudiox.schemas.types.PoolingName``
+- ``AVAILABLE_BACKBONES`` -> ``deepaudiox.__init__.AVAILABLE_BACKBONES``
+- ``AVAILABLE_POOLING`` -> ``deepaudiox.__init__.AVAILABLE_POOLING``

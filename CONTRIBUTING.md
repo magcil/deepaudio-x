@@ -12,6 +12,24 @@ We welcome contributions of all kinds. If you want to improve DeepAudioX, there 
   `deepaudiox.modules.pooling`.
 - **Improve the library**: Optimize performance, fix bugs, enhance documentation, or add tests.
 
+## Development Setup
+
+Clone the repository and install all dependencies (including dev tools) using `uv`:
+
+```bash
+git clone https://github.com/magcil/deepaudio-x.git
+cd deepaudio-x
+uv sync
+```
+
+This installs the package in editable mode along with `pytest` and `ruff`.
+
+## Running Tests
+
+```bash
+uv run pytest -v
+```
+
 ## General Guidelines
 
 1. Open an issue to discuss major changes before submitting a pull request.

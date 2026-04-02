@@ -14,6 +14,26 @@ How You Can Contribute
   ``deepaudiox.modules.pooling``.
 - **Improve the library**: Optimize performance, fix bugs, enhance documentation, or add tests.
 
+Development Setup
+-----------------
+
+Clone the repository and install all dependencies (including dev tools) using `uv`:
+
+.. code-block:: bash
+
+   git clone https://github.com/magcil/deepaudio-x.git
+   cd deepaudio-x
+   uv sync
+
+This installs the package in editable mode along with ``pytest`` and ``ruff``.
+
+Running Tests
+-------------
+
+.. code-block:: bash
+
+   uv run pytest -v
+
 General Guidelines
 ------------------
 
