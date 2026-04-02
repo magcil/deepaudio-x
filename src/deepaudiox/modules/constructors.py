@@ -82,7 +82,9 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
         backbone (BaseBackbone): Backbone model for feature extraction.
         pooling (BasePooling): Pooling layer applied to the backbone feature map.
         norm_p (float or None): Optional Lp normalization applied after pooling.
-        out_dim (int): Dimension of the backbone model feature map
+        out_dim (int): Dimension of the backbone model feature map.
+        config (dict): Constructor arguments used to build this model. Used by
+            ``from_checkpoint`` to reconstruct the model from a saved checkpoint.
     """
 
     def __init__(
@@ -117,6 +119,16 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
             ... )
         """
         super().__init__()
+
+        self.config = {
+            "backbone": backbone if isinstance(backbone, str) else None,
+            "pooling": pooling if isinstance(pooling, str) else None,
+            "pretrained": pretrained,
+            "freeze_backbone": freeze_backbone,
+            "sample_rate": sample_rate,
+            "norm_p": norm_p,
+        }
+
         self.backbone = self._resolve_backbone(
             backbone=backbone, pretrained=pretrained, sample_rate=sample_rate
         )  # Resolve backbone
@@ -131,6 +143,31 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
         if freeze_backbone:
             for p in self.backbone.parameters():
                 p.requires_grad = False
+
+    @classmethod
+    def from_checkpoint(cls, path: str) -> "BackboneConstructor":
+        """Load a BackboneConstructor from a checkpoint saved by the Checkpointer.
+
+        Args:
+            path (str): Path to the checkpoint file.
+
+        Returns:
+            BackboneConstructor: Model with weights and config restored.
+
+        Example:
+            >>> from deepaudiox import Backbone
+            >>> backbone = Backbone.from_checkpoint("checkpoint.pt")
+            >>> print(backbone.config)
+        """
+        ckpt = torch.load(path, weights_only=False)
+        if ckpt["config"].get("backbone") is None:
+            raise ValueError(
+                "Cannot reconstruct model from checkpoint: a custom BaseBackbone instance was used. "
+                "Instantiate the model manually and call model.load_state_dict(torch.load(path)['state_dict'])."
+            )
+        model = cls(**ckpt["config"])
+        model.load_state_dict(ckpt["state_dict"])
+        return model
 
     def extract_features(self, waveforms: torch.Tensor) -> torch.Tensor:
         """Extract backbone-specific features from raw waveforms.
@@ -192,8 +229,10 @@ class AudioClassifierConstructor(BaseAudioClassifier, BackbonePoolingResolverMix
     """Classifier model using a backbone for feature extraction.
 
     Attributes:
-        backbone (BaseBackboneConstructor): Backbone model with optional pooling method.
+        backbone_constructor (BackboneConstructor): Backbone model with optional pooling method.
         classifier (MLPHead): Classifier head for final predictions.
+        config (dict): Constructor arguments used to build this model. Used by
+            ``from_checkpoint`` to reconstruct the model from a saved checkpoint.
     """
 
     def __init__(
@@ -240,6 +279,18 @@ class AudioClassifierConstructor(BaseAudioClassifier, BackbonePoolingResolverMix
         """
         super().__init__()
 
+        self.config = {
+            "backbone": backbone if isinstance(backbone, str) else None,
+            "pooling": pooling if isinstance(pooling, str) else None,
+            "num_classes": num_classes,
+            "pretrained": pretrained,
+            "freeze_backbone": freeze_backbone,
+            "sample_rate": sample_rate,
+            "classifier_hidden_layers": classifier_hidden_layers,
+            "activation": activation,
+            "apply_batch_norm": apply_batch_norm,
+        }
+
         self.backbone_constructor = BackboneConstructor(
             backbone=backbone,
             pretrained=pretrained,
@@ -255,6 +306,31 @@ class AudioClassifierConstructor(BaseAudioClassifier, BackbonePoolingResolverMix
             activation=activation,
             apply_batch_norm=apply_batch_norm,
         )
+
+    @classmethod
+    def from_checkpoint(cls, path: str) -> "AudioClassifierConstructor":
+        """Load an AudioClassifierConstructor from a checkpoint saved by the Checkpointer.
+
+        Args:
+            path (str): Path to the checkpoint file.
+
+        Returns:
+            AudioClassifierConstructor: Model with weights and config restored.
+
+        Example:
+            >>> from deepaudiox import AudioClassifier
+            >>> model = AudioClassifier.from_checkpoint("checkpoint.pt")
+            >>> print(model.config)
+        """
+        ckpt = torch.load(path, weights_only=False)
+        if ckpt["config"].get("backbone") is None:
+            raise ValueError(
+                "Cannot reconstruct model from checkpoint: a custom BaseBackbone instance was used. "
+                "Instantiate the model manually and call model.load_state_dict(torch.load(path)['state_dict'])."
+            )
+        model = cls(**ckpt["config"])
+        model.load_state_dict(ckpt["state_dict"])
+        return model
 
     def forward(self, x) -> torch.Tensor:
         """Forward pass through the classifier.

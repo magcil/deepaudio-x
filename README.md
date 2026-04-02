@@ -335,6 +335,13 @@ trainer = Trainer(
 trainer.train()
 ```
 
+> **Note:** The checkpoint saved at `path_to_checkpoint` contains both the model weights and the architecture config (backbone, pooling, num_classes, etc.). You can restore the full model in one line:
+> ```python
+> from deepaudiox import AudioClassifier
+> model = AudioClassifier.from_checkpoint("checkpoint.pt")
+> print(model.config)  # {"backbone": "beats", "pooling": "gap", ...}
+> ```
+
 ### Trainer Parameters
 
 - `train_dset`: Training dataset (AudioClassificationDataset)
@@ -360,12 +367,10 @@ trainer.train()
 Evaluate your trained classifier on a test dataset using the `Evaluator` class:
 
 ```python
-import torch
+from deepaudiox import AudioClassifier, Evaluator
 
-from deepaudiox import Evaluator
-
-# Load model
-classifier.load_state_dict(torch.load("checkpoint.pt"))
+# Load model with architecture and weights restored from checkpoint
+classifier = AudioClassifier.from_checkpoint("checkpoint.pt")
 
 # Initialize evaluator
 evaluator = Evaluator(

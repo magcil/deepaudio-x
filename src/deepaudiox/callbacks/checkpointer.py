@@ -54,7 +54,13 @@ class Checkpointer(BaseCallback):
 
             try:
                 self.path_to_checkpoint.parent.mkdir(parents=True, exist_ok=True)
-                torch.save(trainer.model.state_dict(), self.path_to_checkpoint)
+                torch.save(
+                    {
+                        "state_dict": trainer.model.state_dict(),
+                        "config": getattr(trainer.model, "config", {}),
+                    },
+                    self.path_to_checkpoint,
+                )
                 self.logger.info(f"[CHECKPOINTER] Checkpoint saved successfully at: {self.path_to_checkpoint}")
             except PermissionError:
                 self.logger.info(f"[CHECKPOINTER] Permission denied: cannot write to {self.path_to_checkpoint}")

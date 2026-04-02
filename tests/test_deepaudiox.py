@@ -255,8 +255,7 @@ def test_evaluation_loop():
     )
 
     path_to_checkpoint = Path(__file__).resolve().parents[1] / "testing_checkpoint.pt"
-    state_dict = torch.load(path_to_checkpoint, map_location="cpu")
-    model.load_state_dict(state_dict)
+    model = dax.AudioClassifier.from_checkpoint(str(path_to_checkpoint))
 
     evaluator = dax.Evaluator(
         test_dset=test_dataset, model=model, num_workers=4, batch_size=16, class_mapping=class_mapping
@@ -281,18 +280,7 @@ def test_inference(path_to_test_file: str):
     path_to_checkpoint = Path(__file__).resolve().parents[1] / "testing_checkpoint.pt"
     path_wav = Path(__file__).resolve().parents[1] / path_to_test_file
 
-    model = dax.AudioClassifier(
-        num_classes=5,
-        backbone="beats",
-        pooling="gap",
-        freeze_backbone=True,
-        sample_rate=16000,
-        classifier_hidden_layers=None,
-        activation="relu",
-        apply_batch_norm=False,
-        pretrained=True,
-    )
-    model.load_state_dict(torch.load(path_to_checkpoint, map_location="cpu"))
+    model = dax.AudioClassifier.from_checkpoint(str(path_to_checkpoint))
 
     class_mapping = get_class_mapping_from_dir(str(TRAIN_DIR))
 

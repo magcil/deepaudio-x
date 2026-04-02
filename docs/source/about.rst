@@ -40,8 +40,6 @@ audio classifier:
 
 .. code-block:: python
 
-   import torch
-
    from deepaudiox import AudioClassifier, Evaluator, Trainer
    from deepaudiox import audio_classification_dataset_from_dir
    from deepaudiox import get_class_mapping_from_dir
@@ -74,7 +72,7 @@ audio classifier:
 
    trainer.train()
 
-   classifier.load_state_dict(torch.load("checkpoint.pt"))  # Load model
+   classifier = AudioClassifier.from_checkpoint("checkpoint.pt")  # Load model with config restored
 
    # 4) Evaluate on a test set
    evaluator = Evaluator(
