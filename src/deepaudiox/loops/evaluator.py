@@ -9,6 +9,7 @@ from deepaudiox.callbacks.console_logger import ConsoleLogger
 from deepaudiox.callbacks.reporter import Reporter
 from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
 from deepaudiox.modules.baseclasses import BaseAudioClassifier
+from deepaudiox.schemas.types import DeviceName
 from deepaudiox.utils.training_utils import get_device, get_logger, pad_collate_fn
 
 
@@ -50,6 +51,7 @@ class Evaluator:
         class_mapping: dict,
         batch_size: int = 16,
         num_workers: int = 4,
+        device: DeviceName = "cuda",
         device_index: int | None = None,
     ):
         """Initialize the Evaluator.
@@ -60,7 +62,10 @@ class Evaluator:
             class_mapping (dict): A mapping between class names and IDs.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
-            device_index (int | None): The GPU device index to use. If None, uses the default GPU if available.
+            device (DeviceName): The device to use for evaluation. One of ``"cuda"``, ``"mps"``, or ``"cpu"``.
+                Defaults to ``"cuda"``.
+            device_index (int | None): The GPU device index. Only applicable when ``device="cuda"``.
+                If ``None``, uses the default CUDA device.
 
         Example:
             >>> import torch
@@ -78,7 +83,7 @@ class Evaluator:
             >>> evaluator.evaluate()
         """
         self.state = State()
-        self.device = get_device(device_index=device_index)
+        self.device = get_device(device=device, device_index=device_index)
         self.class_mapping = class_mapping
 
         # Configure logger
@@ -90,7 +95,8 @@ class Evaluator:
             batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers,
-            pin_memory=True,
+            pin_memory=self.device.type == "cuda",
+            persistent_workers=num_workers > 0,
             collate_fn=pad_collate_fn,
         )
 

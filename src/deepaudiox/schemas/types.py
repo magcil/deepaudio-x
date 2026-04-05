@@ -5,3 +5,6 @@ BackboneName = Literal["beats", "passt", "mobilenet_05_as", "mobilenet_10_as", "
 
 PoolingName = Literal["gap", "simpool", "ep"]
 """Supported pooling layer names."""
+
+DeviceName = Literal["cuda", "mps", "cpu"]
+"""Supported device names."""

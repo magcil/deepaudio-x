@@ -296,7 +296,8 @@ trainer = Trainer(
     batch_size=32,
     epochs=100,
     num_workers=4,
-    patience=20
+    patience=20,
+    device="cuda",  # "cuda", "mps" (Apple Silicon), or "cpu"
 )
 
 # Start training
@@ -354,13 +355,15 @@ trainer.train()
 - `patience`: Number of epochs with no improvement before early stopping (default: 15)
 - `num_workers`: Number of workers for data loading (default: 4)
 - `path_to_checkpoint`: Path to save the best model checkpoint (default: "checkpoint.pt")
+- `device`: Device to use for training — `"cuda"`, `"mps"` (Apple Silicon GPU), or `"cpu"` (default: `"cuda"`)
+- `device_index`: GPU index to use when `device="cuda"` and multiple GPUs are available (optional)
 
 ### Features
 
 - **Automatic Checkpointing**: Saves the best model based on validation loss
 - **Early Stopping**: Stops training when validation loss plateaus
 - **Progress Tracking**: Displays training progress with loss metrics
-- **Device Agnostic**: Automatically detects and uses GPU if available
+- **Device Selection**: Supports `"cuda"`, `"mps"` (Apple Silicon), and `"cpu"` via the `device` parameter
 
 ## Evaluate
 
@@ -378,7 +381,8 @@ evaluator = Evaluator(
     model=classifier,
     class_mapping=class_mapping,
     batch_size=32,
-    num_workers=4
+    num_workers=4,
+    device="cuda",  # "cuda", "mps" (Apple Silicon), or "cpu"
 )
 
 
@@ -398,7 +402,8 @@ posteriors = evaluator.state.posteriors  # Prediction probabilities
 - `class_mapping`: Dictionary mapping class names to IDs
 - `batch_size`: Number of samples per batch (default: 16)
 - `num_workers`: Number of workers for data loading (default: 4)
-- `device_index`: GPU device index to use (optional, auto-detects by default)
+- `device`: Device to use for evaluation — `"cuda"`, `"mps"` (Apple Silicon GPU), or `"cpu"` (default: `"cuda"`)
+- `device_index`: GPU index to use when `device="cuda"` and multiple GPUs are available (optional)
 
 ### Evaluation Results
 
