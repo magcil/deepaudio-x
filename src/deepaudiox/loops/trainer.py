@@ -13,6 +13,7 @@ from deepaudiox.callbacks.console_logger import ConsoleLogger
 from deepaudiox.callbacks.early_stopper import EarlyStopper
 from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
 from deepaudiox.modules.baseclasses import BaseAudioClassifier
+from deepaudiox.schemas.types import DeviceName
 from deepaudiox.utils.training_utils import get_device, get_logger, pad_collate_fn, random_split_audio_dataset
 
 
@@ -72,6 +73,7 @@ class Trainer:
         num_workers: int = 4,
         batch_size: int = 16,
         path_to_checkpoint: str = "checkpoint.pt",
+        device: DeviceName = "cuda",
         device_index: int | None = None,
     ):
         """Initialize the Trainer.
@@ -91,7 +93,10 @@ class Trainer:
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
             path_to_checkpoint (str, optional): The path to the saved model checpoint. Defaults to "checkpoint.pt".
-            device_index (int | None): The GPU device index to use. If None, uses the default GPU if available.
+            device (DeviceName): The device to use for training. One of ``"cuda"``, ``"mps"``, or ``"cpu"``.
+                Defaults to ``"cuda"``.
+            device_index (int | None): The GPU device index. Only applicable when ``device="cuda"``.
+                If ``None``, uses the default CUDA device.
 
         Example:
             >>> from deepaudiox import AudioClassifier, Trainer
@@ -109,7 +114,7 @@ class Trainer:
         # Configure training state
         self.state = State()
         self.epochs = epochs
-        self.device = get_device(device_index=device_index)
+        self.device = get_device(device=device, device_index=device_index)
 
         # Configure logger
         self.logger = get_logger()
@@ -274,12 +279,15 @@ class Trainer:
             validation_dataset = validation_dset
 
         # Produce DataLoaders
+        pin_memory = self.device.type == "cuda"
+        persistent_workers = num_workers > 0
         train_dloader = DataLoader(
             train_dataset,
             batch_size=batch_size,
             shuffle=True,
             num_workers=num_workers,
-            pin_memory=True,
+            pin_memory=pin_memory,
+            persistent_workers=persistent_workers,
             collate_fn=pad_collate_fn,
         )
 
@@ -288,7 +296,8 @@ class Trainer:
             batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers,
-            pin_memory=True,
+            pin_memory=pin_memory,
+            persistent_workers=persistent_workers,
             collate_fn=pad_collate_fn,
         )
 

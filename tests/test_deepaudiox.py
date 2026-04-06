@@ -18,6 +18,17 @@ VALIDATION_DIR = Path(__file__).parent / "testing_dataset" / "validation"
 TEST_DIR = Path(__file__).parent / "testing_dataset" / "test"
 
 
+def get_test_device() -> str:
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
+TEST_DEVICE = get_test_device()
+
+
 @pytest.fixture(scope="session")
 def file_to_class_mapping():
     return {
@@ -221,6 +232,7 @@ def test_training_loop():
         num_workers=4,
         batch_size=16,
         path_to_checkpoint="testing_checkpoint.pt",
+        device=TEST_DEVICE,
     )
 
     trainer.train()
@@ -258,7 +270,7 @@ def test_evaluation_loop():
     model = dax.AudioClassifier.from_checkpoint(str(path_to_checkpoint))
 
     evaluator = dax.Evaluator(
-        test_dset=test_dataset, model=model, num_workers=4, batch_size=16, class_mapping=class_mapping
+        test_dset=test_dataset, model=model, num_workers=4, batch_size=16, class_mapping=class_mapping, device=TEST_DEVICE
     )
 
     evaluator.evaluate()

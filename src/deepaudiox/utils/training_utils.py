@@ -11,6 +11,7 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Subset
 
 from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
+from deepaudiox.schemas.types import DeviceName
 
 
 def get_logger() -> logging.Logger:
@@ -81,33 +82,57 @@ def get_class_mapping_from_dir(root_dir: str) -> dict[str, int]:
     return class_mapping
 
 
-def get_device(device_index: int | None = None) -> torch.device:
-    """Returns the best available device for PyTorch computations.
+def get_device(device: DeviceName = "cuda", device_index: int | None = None) -> torch.device:
+    """Returns a PyTorch device based on the user's choice.
 
     Args:
-        device_index (int | None): The GPU device index to use. If None, uses the default GPU if available.
+        device (DeviceName): The device to use. One of ``"cuda"``, ``"mps"``, or ``"cpu"``.
+            Defaults to ``"cuda"``.
+        device_index (int | None): The GPU device index. Only applicable when ``device="cuda"``.
+            If ``None``, uses the default CUDA device.
 
     Returns:
         torch.device
+
+    Raises:
+        ValueError: If ``device="cuda"`` but CUDA is not available.
+        ValueError: If ``device="cuda"`` and ``device_index`` is out of range.
+        ValueError: If ``device="mps"`` but MPS is not available.
+        ValueError: If ``device_index`` is provided for a non-CUDA device.
     """
-    if torch.cuda.is_available():
+    if device == "cuda":
+        if not torch.cuda.is_available():
+            raise ValueError("CUDA is not available on this machine.")
         if device_index is not None and (device_index < 0 or device_index >= torch.cuda.device_count()):
             raise ValueError(f"Invalid device_index {device_index}. Available GPU count: {torch.cuda.device_count()}")
         if device_index is not None:
-            device = torch.device(f"cuda:{device_index}")
+            torch_device = torch.device(f"cuda:{device_index}")
             print(f"Using GPU: {torch.cuda.get_device_name(device_index)}")
         else:
-            device = torch.device("cuda")
+            torch_device = torch.device("cuda")
             print(f"Using GPU: {torch.cuda.get_device_name(0)}")
+    elif device == "mps":
+        if not torch.backends.mps.is_available():
+            raise ValueError("MPS is not available on this machine.")
+        if device_index is not None:
+            raise ValueError("device_index is not supported for MPS. Apple Silicon has a single GPU.")
+        torch_device = torch.device("mps")
+        print("Using MPS (Apple Silicon GPU)")
     else:
-        device = torch.device("cpu")
-        print("Using CPU (no GPU available)")
+        if device_index is not None:
+            print("Warning: device_index is ignored when device='cpu'.")
+        torch_device = torch.device("cpu")
+        print("Using CPU")
 
-    return device
+    return torch_device
 
 
 def pad_collate_fn(batch) -> dict:
     """Collate function that pads variable-length audio tensors in a batch.
+
+    Uses ``torch.stack`` when all waveforms in the batch have the same length
+    (e.g. when ``segment_duration`` is set), and falls back to ``pad_sequence``
+    for variable-length batches.
 
     Args:
         batch (list of dict): Each dict contains 'feature', 'y_true', and 'class_name'.
@@ -115,13 +140,14 @@ def pad_collate_fn(batch) -> dict:
     Returns:
         dict[str, torch.Tensor | list[str]]: Batched and padded tensors.
     """
-    # Extract data
     features = [torch.from_numpy(item["feature"]) for item in batch]
     labels = torch.tensor([item["y_true"] for item in batch], dtype=torch.long)
     class_names = [item["class_name"] for item in batch]
 
-    # Stack into a single batch tensor with padding zeros on right to max_len
-    batch_features = pad_sequence(features, batch_first=True)
+    if len({f.shape[0] for f in features}) == 1:
+        batch_features = torch.stack(features)
+    else:
+        batch_features = pad_sequence(features, batch_first=True)
 
     return {"feature": batch_features, "y_true": labels, "class_name": class_names}
 
