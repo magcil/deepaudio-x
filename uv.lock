@@ -30,6 +30,15 @@ wheels = [
 ]
 
 [[package]]
+name = "asttokens"
+version = "3.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/be/a5/8e3f9b6771b0b408517c82d97aed8f2036509bc247d46114925e32fe33f0/asttokens-3.0.1.tar.gz", hash = "sha256:71a4ee5de0bde6a31d64f6b13f2293ac190344478f081c3d1bccfcf5eacb0cb7", size = 62308, upload-time = "2025-11-15T16:43:48.578Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/39/e7eaf1799466a4aef85b6a4fe7bd175ad2b1c6345066aa33f1f58d4b18d0/asttokens-3.0.1-py3-none-any.whl", hash = "sha256:15a3ebc0f43c2d0a50eeafea25e19046c68398e487b9f1f5b517f7c0f40f976a", size = 27047, upload-time = "2025-11-15T16:43:16.109Z" },
+]
+
+[[package]]
 name = "attrs"
 version = "25.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -342,9 +351,11 @@ dependencies = [
 [package.optional-dependencies]
 docs = [
     { name = "docutils" },
+    { name = "ipython", version = "9.10.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "ipython", version = "9.12.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "myst-parser" },
     { name = "nbsphinx" },
-    { name = "nbsphinx-link" },
+    { name = "pypandoc-binary" },
     { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "sphinx-autobuild" },
@@ -364,12 +375,13 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "docutils", marker = "extra == 'docs'", specifier = ">=0.21,<0.22" },
+    { name = "ipython", marker = "extra == 'docs'" },
     { name = "librosa", specifier = ">=0.11.0" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=2.0" },
     { name = "nbsphinx", marker = "extra == 'docs'", specifier = ">=0.9" },
-    { name = "nbsphinx-link", marker = "extra == 'docs'", specifier = ">=1.3" },
     { name = "numpy", specifier = ">=2.3.3" },
     { name = "platformdirs", specifier = ">=4.5.0" },
+    { name = "pypandoc-binary", marker = "extra == 'docs'" },
     { name = "soundfile", specifier = ">=0.13.1" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=7.0" },
     { name = "sphinx-autobuild", marker = "extra == 'docs'" },
@@ -406,6 +418,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ae/ed/aefcc8cd0ba62a0560c3c18c33925362d46c6075480bfa4df87b28e169a9/docutils-0.21.2.tar.gz", hash = "sha256:3a6b18732edf182daa3cd12775bbb338cf5691468f91eeeb109deff6ebfa986f", size = 2204444, upload-time = "2024-04-23T18:57:18.24Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8f/d7/9322c609343d929e75e7e5e6255e614fcc67572cfd083959cdef3b7aad79/docutils-0.21.2-py3-none-any.whl", hash = "sha256:dafca5b9e384f0e419294eb4d2ff9fa826435bf15f15b7bd45723e8ad76811b2", size = 587408, upload-time = "2024-04-23T18:57:14.835Z" },
+]
+
+[[package]]
+name = "executing"
+version = "2.2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/28/c14e053b6762b1044f34a13aab6859bbf40456d37d23aa286ac24cfd9a5d/executing-2.2.1.tar.gz", hash = "sha256:3632cc370565f6648cc328b32435bd120a1e4ebb20c77e3fdde9a13cd1e533c4", size = 1129488, upload-time = "2025-09-01T09:48:10.866Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c1/ea/53f2148663b321f21b5a606bd5f191517cf40b7072c0497d3c92c4a13b1e/executing-2.2.1-py2.py3-none-any.whl", hash = "sha256:760643d3452b4d777d295bb167ccc74c64a81df23fb5e08eff250c425a4b2017", size = 28317, upload-time = "2025-09-01T09:48:08.5Z" },
 ]
 
 [[package]]
@@ -469,6 +490,80 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f2/97/ebf4da567aa6827c909642694d71c9fcf53e5b504f2d96afea02718862f3/iniconfig-2.1.0.tar.gz", hash = "sha256:3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7", size = 4793, upload-time = "2025-03-19T20:09:59.721Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2c/e1/e6716421ea10d38022b952c159d5161ca1193197fb744506875fbb87ea7b/iniconfig-2.1.0-py3-none-any.whl", hash = "sha256:9deba5723312380e77435581c6bf4935c94cbfab9b1ed33ef8d238ea168eb760", size = 6050, upload-time = "2025-03-19T20:10:01.071Z" },
+]
+
+[[package]]
+name = "ipython"
+version = "9.10.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.12'",
+]
+dependencies = [
+    { name = "colorama", marker = "python_full_version < '3.12' and sys_platform == 'win32'" },
+    { name = "decorator", marker = "python_full_version < '3.12'" },
+    { name = "ipython-pygments-lexers", marker = "python_full_version < '3.12'" },
+    { name = "jedi", marker = "python_full_version < '3.12'" },
+    { name = "matplotlib-inline", marker = "python_full_version < '3.12'" },
+    { name = "pexpect", marker = "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "prompt-toolkit", marker = "python_full_version < '3.12'" },
+    { name = "pygments", marker = "python_full_version < '3.12'" },
+    { name = "stack-data", marker = "python_full_version < '3.12'" },
+    { name = "traitlets", marker = "python_full_version < '3.12'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.12'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c5/25/daae0e764047b0a2480c7bbb25d48f4f509b5818636562eeac145d06dfee/ipython-9.10.1.tar.gz", hash = "sha256:e170e9b2a44312484415bdb750492699bf329233b03f2557a9692cce6466ada4", size = 4426663, upload-time = "2026-03-27T09:53:26.244Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/01/09/ba70f8d662d5671687da55ad2cc0064cf795b15e1eea70907532202e7c97/ipython-9.10.1-py3-none-any.whl", hash = "sha256:82d18ae9fb9164ded080c71ef92a182ee35ee7db2395f67616034bebb020a232", size = 622827, upload-time = "2026-03-27T09:53:24.566Z" },
+]
+
+[[package]]
+name = "ipython"
+version = "9.12.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
+]
+dependencies = [
+    { name = "colorama", marker = "python_full_version >= '3.12' and sys_platform == 'win32'" },
+    { name = "decorator", marker = "python_full_version >= '3.12'" },
+    { name = "ipython-pygments-lexers", marker = "python_full_version >= '3.12'" },
+    { name = "jedi", marker = "python_full_version >= '3.12'" },
+    { name = "matplotlib-inline", marker = "python_full_version >= '3.12'" },
+    { name = "pexpect", marker = "python_full_version >= '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "prompt-toolkit", marker = "python_full_version >= '3.12'" },
+    { name = "pygments", marker = "python_full_version >= '3.12'" },
+    { name = "stack-data", marker = "python_full_version >= '3.12'" },
+    { name = "traitlets", marker = "python_full_version >= '3.12'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3a/73/7114f80a8f9cabdb13c27732dce24af945b2923dcab80723602f7c8bc2d8/ipython-9.12.0.tar.gz", hash = "sha256:01daa83f504b693ba523b5a407246cabde4eb4513285a3c6acaff11a66735ee4", size = 4428879, upload-time = "2026-03-27T09:42:45.312Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/59/22/906c8108974c673ebef6356c506cebb6870d48cedea3c41e949e2dd556bb/ipython-9.12.0-py3-none-any.whl", hash = "sha256:0f2701e8ee86e117e37f50563205d36feaa259d2e08d4a6bc6b6d74b18ce128d", size = 625661, upload-time = "2026-03-27T09:42:42.831Z" },
+]
+
+[[package]]
+name = "ipython-pygments-lexers"
+version = "1.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pygments" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ef/4c/5dd1d8af08107f88c7f741ead7a40854b8ac24ddf9ae850afbcf698aa552/ipython_pygments_lexers-1.1.1.tar.gz", hash = "sha256:09c0138009e56b6854f9535736f4171d855c8c08a563a0dcd8022f78355c7e81", size = 8393, upload-time = "2025-01-17T11:24:34.505Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d9/33/1f075bf72b0b747cb3288d011319aaf64083cf2efef8354174e3ed4540e2/ipython_pygments_lexers-1.1.1-py3-none-any.whl", hash = "sha256:a9462224a505ade19a605f71f8fa63c2048833ce50abc86768a0d81d876dc81c", size = 8074, upload-time = "2025-01-17T11:24:33.271Z" },
+]
+
+[[package]]
+name = "jedi"
+version = "0.19.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "parso" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/72/3a/79a912fbd4d8dd6fbb02bf69afd3bb72cf0c729bb3063c6f4498603db17a/jedi-0.19.2.tar.gz", hash = "sha256:4770dc3de41bde3966b02eb84fbcf557fb33cce26ad23da12c742fb50ecb11f0", size = 1231287, upload-time = "2024-11-11T01:41:42.873Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c0/5a/9cac0c82afec3d09ccd97c8b6502d48f165f9124db81b4bcb90b4af974ee/jedi-0.19.2-py2.py3-none-any.whl", hash = "sha256:a8ef22bde8490f57fe5c7681a3c83cb58874daf72b4784de3cce5b6ef6edb5b9", size = 1572278, upload-time = "2024-11-11T01:41:40.175Z" },
 ]
 
 [[package]]
@@ -679,6 +774,18 @@ wheels = [
 ]
 
 [[package]]
+name = "matplotlib-inline"
+version = "0.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "traitlets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c7/74/97e72a36efd4ae2bccb3463284300f8953f199b5ffbc04cbbb0ec78f74b1/matplotlib_inline-0.2.1.tar.gz", hash = "sha256:e1ee949c340d771fc39e241ea75683deb94762c8fa5f2927ec57c83c4dffa9fe", size = 8110, upload-time = "2025-10-23T09:00:22.126Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/af/33/ee4519fa02ed11a94aef9559552f3b17bb863f2ecfe1a35dc7f548cde231/matplotlib_inline-0.2.1-py3-none-any.whl", hash = "sha256:d56ce5156ba6085e00a9d54fead6ed29a9c47e215cd1bba2e976ef39f5710a76", size = 9516, upload-time = "2025-10-23T09:00:20.675Z" },
+]
+
+[[package]]
 name = "mdit-py-plugins"
 version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -859,20 +966,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e7/d1/82081750f8a78ad0399c6ed831d42623b891904e8e7b8a75878225cf1dce/nbsphinx-0.9.8.tar.gz", hash = "sha256:d0765908399a8ee2b57be7ae881cf2ea58d66db3af7bbf33e6eb48f83bea5495", size = 417469, upload-time = "2025-11-28T17:41:02.336Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/03/78/843bcf0cf31f88d2f8a9a063d2d80817b1901657d83d65b89b3aa835732e/nbsphinx-0.9.8-py3-none-any.whl", hash = "sha256:92d95ee91784e56bc633b60b767a6b6f23a0445f891e24641ce3c3f004759ccf", size = 31961, upload-time = "2025-11-28T17:41:00.796Z" },
-]
-
-[[package]]
-name = "nbsphinx-link"
-version = "1.3.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "nbsphinx" },
-    { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e6/d3/aabce2e96a7080b15a19342fa0839573463b9c3a8c57ee8e657a7ce9c176/nbsphinx-link-1.3.1.tar.gz", hash = "sha256:8b5a3f5279ba9e9f81c01309ff5436dfcc14c23f188ec8a04658f871a3860420", size = 16624, upload-time = "2024-09-18T12:20:26.501Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/6e/8f/cd4bb6849fef05dafc02e38b3c9b9e985d266c3ca7cb485c3160ddeb96f2/nbsphinx_link-1.3.1-py3-none-any.whl", hash = "sha256:2188fc42294a38ba253eedd184dea8750ab035fd94fe63e855ff01f911631769", size = 5230, upload-time = "2024-09-18T12:20:45.982Z" },
 ]
 
 [[package]]
@@ -1137,6 +1230,27 @@ wheels = [
 ]
 
 [[package]]
+name = "parso"
+version = "0.8.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/81/76/a1e769043c0c0c9fe391b702539d594731a4362334cdf4dc25d0c09761e7/parso-0.8.6.tar.gz", hash = "sha256:2b9a0332696df97d454fa67b81618fd69c35a7b90327cbe6ba5c92d2c68a7bfd", size = 401621, upload-time = "2026-02-09T15:45:24.425Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b6/61/fae042894f4296ec49e3f193aff5d7c18440da9e48102c3315e1bc4519a7/parso-0.8.6-py2.py3-none-any.whl", hash = "sha256:2c549f800b70a5c4952197248825584cb00f033b29c692671d3bf08bf380baff", size = 106894, upload-time = "2026-02-09T15:45:21.391Z" },
+]
+
+[[package]]
+name = "pexpect"
+version = "4.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ptyprocess" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9e/c3/059298687310d527a58bb01f3b1965787ee3b40dce76752eda8b44e9a2c5/pexpect-4.9.0-py2.py3-none-any.whl", hash = "sha256:7236d1e080e4936be2dc3e326cec0af72acf9212a7e1d060210e70a47e253523", size = 63772, upload-time = "2023-11-25T06:56:14.81Z" },
+]
+
+[[package]]
 name = "pillow"
 version = "12.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1256,6 +1370,36 @@ wheels = [
 ]
 
 [[package]]
+name = "prompt-toolkit"
+version = "3.0.52"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "wcwidth" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a1/96/06e01a7b38dce6fe1db213e061a4602dd6032a8a97ef6c1a862537732421/prompt_toolkit-3.0.52.tar.gz", hash = "sha256:28cde192929c8e7321de85de1ddbe736f1375148b02f2e17edd840042b1be855", size = 434198, upload-time = "2025-08-27T15:24:02.057Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/84/03/0d3ce49e2505ae70cf43bc5bb3033955d2fc9f932163e84dc0779cc47f48/prompt_toolkit-3.0.52-py3-none-any.whl", hash = "sha256:9aac639a3bbd33284347de5ad8d68ecc044b91a762dc39b7c21095fcd6a19955", size = 391431, upload-time = "2025-08-27T15:23:59.498Z" },
+]
+
+[[package]]
+name = "ptyprocess"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/20/e5/16ff212c1e452235a90aeb09066144d0c5a6a8c0834397e03f5224495c4e/ptyprocess-0.7.0.tar.gz", hash = "sha256:5c5d0a3b48ceee0b48485e0c26037c0acd7d29765ca3fbb5cb3831d347423220", size = 70762, upload-time = "2020-12-28T15:15:30.155Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/22/a6/858897256d0deac81a172289110f31629fc4cee19b6f01283303e18c8db3/ptyprocess-0.7.0-py2.py3-none-any.whl", hash = "sha256:4b41f3967fce3af57cc7e94b888626c18bf37a083e3651ca8feeb66d492fef35", size = 13993, upload-time = "2020-12-28T15:15:28.35Z" },
+]
+
+[[package]]
+name = "pure-eval"
+version = "0.2.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/cd/05/0a34433a064256a578f1783a10da6df098ceaa4a57bbeaa96a6c0352786b/pure_eval-0.2.3.tar.gz", hash = "sha256:5f4e983f40564c576c7c8635ae88db5956bb2229d7e9237d03b3c0b0190eaf42", size = 19752, upload-time = "2024-07-21T12:58:21.801Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8e/37/efad0257dc6e593a18957422533ff0f87ede7c9c6ea010a2177d738fb82f/pure_eval-0.2.3-py3-none-any.whl", hash = "sha256:1db8e35b67b3d218d818ae653e27f06c3aa420901fa7b081ca98cbedc874e0d0", size = 11842, upload-time = "2024-07-21T12:58:20.04Z" },
+]
+
+[[package]]
 name = "pycparser"
 version = "2.23"
 source = { registry = "https://pypi.org/simple" }
@@ -1271,6 +1415,20 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b0/77/a5b8c569bf593b0140bde72ea885a803b82086995367bf2037de0159d924/pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887", size = 4968631, upload-time = "2025-06-21T13:39:12.283Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b", size = 1225217, upload-time = "2025-06-21T13:39:07.939Z" },
+]
+
+[[package]]
+name = "pypandoc-binary"
+version = "1.17"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/80/85/681a54111f0948821a5cf87ce30a88bb0a3f6848af5112c912abac4a2b77/pypandoc_binary-1.17-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:734726dc618ef276343e272e1a6b4567e59c2ef9ef41d5533042deac3b0531f1", size = 25553945, upload-time = "2026-03-14T22:38:47.91Z" },
+    { url = "https://files.pythonhosted.org/packages/15/58/8fd107c68522957868c1e785fbea7595608df118e440e424d189668294df/pypandoc_binary-1.17-py3-none-macosx_11_0_arm64.whl", hash = "sha256:fcfd28f347ed998dda28823fc6bc24f9310e7fdf3ddceaf925bf0563a100ab5b", size = 25553944, upload-time = "2026-03-14T22:38:50.74Z" },
+    { url = "https://files.pythonhosted.org/packages/f4/27/ac1078239aae14b94c51975b7f46ad8e099e47d7ae26c175a5486b1c0099/pypandoc_binary-1.17-py3-none-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:d6b620b21c9374e3e48aabd518492bf0776b148442ee28816f6aaf52da3d4387", size = 34460960, upload-time = "2026-03-14T22:38:53.391Z" },
+    { url = "https://files.pythonhosted.org/packages/8d/7f/1e5612b52900ebe590862dabeadf546f739b27527dcd8bfd632f8adac1be/pypandoc_binary-1.17-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9ada156cb980cd54fd6534231788e668c00dbb591cbd24f0be0bd86812eb8788", size = 36867598, upload-time = "2026-03-14T22:38:56.351Z" },
+    { url = "https://files.pythonhosted.org/packages/3b/31/a5a867159c4080e5d368f4a53540a727501a2f31affc297dc8e0fced96a7/pypandoc_binary-1.17-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:2f439dcd211183bb3460253ca4511101df6e1acf4a01f45f5617e1fa2ad24279", size = 36867584, upload-time = "2026-03-14T22:38:59.087Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/2d/6a51cd4e54bdf132c19416801077c34bd40ba182e85d843360d36ae03a2d/pypandoc_binary-1.17-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:f6e6d3e4cfafbe23189a08db3d41f8def260bacd6e7e382bceadab7ba1f17da6", size = 34460949, upload-time = "2026-03-14T22:39:01.71Z" },
+    { url = "https://files.pythonhosted.org/packages/c6/b9/f47b77ba75ed5d47ec85fcc2ecfbf7f78e3a73347f3a09836634d930de98/pypandoc_binary-1.17-py3-none-win_amd64.whl", hash = "sha256:76fae066cd2d7e78fb97f0ec8e9e36f437b07187b689b0b415ca18216f8f898a", size = 40891661, upload-time = "2026-03-14T22:39:04.782Z" },
 ]
 
 [[package]]
@@ -1998,6 +2156,20 @@ wheels = [
 ]
 
 [[package]]
+name = "stack-data"
+version = "0.6.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "asttokens" },
+    { name = "executing" },
+    { name = "pure-eval" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/28/e3/55dcc2cfbc3ca9c29519eb6884dd1415ecb53b0e934862d3559ddcb7e20b/stack_data-0.6.3.tar.gz", hash = "sha256:836a778de4fec4dcd1dcd89ed8abff8a221f58308462e1c4aa2a3cf30148f0b9", size = 44707, upload-time = "2023-09-30T13:58:05.479Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f1/7b/ce1eafaf1a76852e2ec9b22edecf1daa58175c090266e9f6c64afcd81d91/stack_data-0.6.3-py3-none-any.whl", hash = "sha256:d5558e0c25a4cb0853cddad3d77da9891a08cb85dd9f9f91b9f8cd66e511e695", size = 24521, upload-time = "2023-09-30T13:58:03.53Z" },
+]
+
+[[package]]
 name = "standard-aifc"
 version = "3.13.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2348,6 +2520,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/bd/95/615e72cd27b85b61eec764a5ca51bd94d40b5adea5ff47567d9ebc4d275a/watchfiles-1.1.1-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "sha256:89eef07eee5e9d1fda06e38822ad167a044153457e6fd997f8a858ab7564a336", size = 396117, upload-time = "2025-10-14T15:06:11.28Z" },
     { url = "https://files.pythonhosted.org/packages/c9/81/e7fe958ce8a7fb5c73cc9fb07f5aeaf755e6aa72498c57d760af760c91f8/watchfiles-1.1.1-pp311-pypy311_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ce19e06cbda693e9e7686358af9cd6f5d61312ab8b00488bc36f5aabbaf77e24", size = 450493, upload-time = "2025-10-14T15:06:12.321Z" },
     { url = "https://files.pythonhosted.org/packages/6e/d4/ed38dd3b1767193de971e694aa544356e63353c33a85d948166b5ff58b9e/watchfiles-1.1.1-pp311-pypy311_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3e6f39af2eab0118338902798b5aa6664f46ff66bc0280de76fca67a7f262a49", size = 457546, upload-time = "2025-10-14T15:06:13.372Z" },
+]
+
+[[package]]
+name = "wcwidth"
+version = "0.6.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/35/a2/8e3becb46433538a38726c948d3399905a4c7cabd0df578ede5dc51f0ec2/wcwidth-0.6.0.tar.gz", hash = "sha256:cdc4e4262d6ef9a1a57e018384cbeb1208d8abbc64176027e2c2455c81313159", size = 159684, upload-time = "2026-02-06T19:19:40.919Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/68/5a/199c59e0a824a3db2b89c5d2dade7ab5f9624dbf6448dc291b46d5ec94d3/wcwidth-0.6.0-py3-none-any.whl", hash = "sha256:1a3a1e510b553315f8e146c54764f4fb6264ffad731b3d78088cdb1478ffbdad", size = 94189, upload-time = "2026-02-06T19:19:39.646Z" },
 ]
 
 [[package]]
