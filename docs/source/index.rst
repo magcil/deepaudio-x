@@ -31,11 +31,13 @@ the public Python interface. For more details and updates, see the
 `DeepAudio-X GitHub repository <https://github.com/magcil/deepaudio-x>`_.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 4
+   :hidden:
    :caption: Contents:
 
    about
    installation
    api-reference
+   tutorials/index
    contributing
    citation

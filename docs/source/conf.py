@@ -7,6 +7,12 @@ import sys
 from datetime import datetime
 from importlib import metadata
 
+try:
+    import pypandoc
+    os.environ["PATH"] = os.path.dirname(pypandoc.get_pandoc_path()) + os.pathsep + os.environ["PATH"]
+except Exception:
+    pass
+
 # -- Path setup --------------------------------------------------------------
 
 ROOT = os.path.abspath(os.path.join(__file__, "../../.."))
@@ -44,8 +50,10 @@ extensions = [
     "sphinx.ext.mathjax", 
     "sphinx.ext.coverage",
     "nbsphinx",
-    "nbsphinx_link"
 ]
+
+nbsphinx_execute = "never"
+nbsphinx_codecell_lexer = "ipython3"
 
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
@@ -68,6 +76,6 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 html_theme_options = {
     "collapse_navigation": True,
-    "navigation_depth": 2,
+    "navigation_depth": 3,
 }
 html_css_files = ["custom.css"]
