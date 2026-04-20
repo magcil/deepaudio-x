@@ -44,11 +44,12 @@ class Checkpointer(BaseCallback):
         if trainer.state.lowest_loss > latest_validation_loss:
             decrease_percentage = (trainer.state.lowest_loss - latest_validation_loss) / trainer.state.lowest_loss * 100
 
-            self.logger.info(
-                f"[CHECKPOINTER] Validation loss decreased: "
-                f"({trainer.state.lowest_loss:.6f} --> {latest_validation_loss:.6f}), "
-                f"{GREEN}(-{decrease_percentage:.2f}%){ENDC}."
-            )
+            if trainer.verbose:
+                self.logger.info(
+                    f"[CHECKPOINTER] Validation loss decreased: "
+                    f"({trainer.state.lowest_loss:.6f} --> {latest_validation_loss:.6f}), "
+                    f"{GREEN}(-{decrease_percentage:.2f}%){ENDC}."
+                )
 
             trainer.state.lowest_loss = latest_validation_loss
 
@@ -61,7 +62,8 @@ class Checkpointer(BaseCallback):
                     },
                     self.path_to_checkpoint,
                 )
-                self.logger.info(f"[CHECKPOINTER] Checkpoint saved successfully at: {self.path_to_checkpoint}")
+                if trainer.verbose:
+                    self.logger.info(f"[CHECKPOINTER] Checkpoint saved successfully at: {self.path_to_checkpoint}")
             except PermissionError:
                 self.logger.info(f"[CHECKPOINTER] Permission denied: cannot write to {self.path_to_checkpoint}")
             except FileNotFoundError:
