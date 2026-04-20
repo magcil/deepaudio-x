@@ -5,7 +5,6 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from deepaudiox.callbacks.console_logger import ConsoleLogger
 from deepaudiox.callbacks.reporter import Reporter
 from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
 from deepaudiox.modules.baseclasses import BaseAudioClassifier
@@ -36,11 +35,12 @@ class Evaluator:
 
     Attributes:
         state (State): Stores testing variables.
+        verbose (bool): Whether to log the evaluation report after testing.
         device (str): The device used for testing.
         class_mapping (dict): A mapping between class names and IDs.
         logger (logging.Logger): A module used for logging messages.
         test_dloader (torch.DataLoader): The DataLoader of the testing set.
-        model (BaseAudioClassifier): An AudioClassifier module inhereting from BaseAudioClassifier.
+        model (BaseAudioClassifier): An AudioClassifier module inheriting from BaseAudioClassifier.
         callbacks (list): A list of callbacks used throughout the testing lifecycle.
     """
 
@@ -53,12 +53,13 @@ class Evaluator:
         num_workers: int = 4,
         device: DeviceName = "cuda",
         device_index: int | None = None,
+        verbose: bool = True,
     ):
         """Initialize the Evaluator.
 
         Args:
             test_dset (AudioClassificationDataset): The testing dataset.
-            model (BaseAudioClassifier): An AudioClassifier module inhereting from BaseAudioClassifier.
+            model (BaseAudioClassifier): An AudioClassifier module inheriting from BaseAudioClassifier.
             class_mapping (dict): A mapping between class names and IDs.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
@@ -66,6 +67,8 @@ class Evaluator:
                 Defaults to ``"cuda"``.
             device_index (int | None): The GPU device index. Only applicable when ``device="cuda"``.
                 If ``None``, uses the default CUDA device.
+            verbose (bool): If True, prints the classification report, confusion matrix, and average
+                posteriors after evaluation. "Evaluation has finished." is always printed. Defaults to True.
 
         Example:
             >>> import torch
@@ -83,6 +86,7 @@ class Evaluator:
             >>> evaluator.evaluate()
         """
         self.state = State()
+        self.verbose = verbose
         self.device = get_device(device=device, device_index=device_index)
         self.class_mapping = class_mapping
 
@@ -106,7 +110,7 @@ class Evaluator:
         self.model.eval()
 
         # Configure callbacks
-        self.callbacks = [ConsoleLogger(logger=self.logger), Reporter(logger=self.logger)]
+        self.callbacks = [Reporter(logger=self.logger)]
 
     @torch.inference_mode()
     def evaluate(self) -> None:
@@ -116,6 +120,10 @@ class Evaluator:
         predicted labels, and posterior probabilities into ``self.state``, then
         triggers the registered callbacks via ``on_testing_end``.
 
+        Always prints "Evaluation has finished." regardless of ``verbose``.
+        The ``Reporter`` callback (classification report, confusion matrix, average
+        posteriors) is only executed when ``verbose=True``.
+
         After this method returns, ``self.state`` holds:
             - ``y_true`` (np.ndarray): Ground-truth class indices, shape (N,).
             - ``y_pred`` (np.ndarray): Predicted class indices, shape (N,).
@@ -124,7 +132,6 @@ class Evaluator:
         Note:
             The model is expected to already be in eval mode (set in ``__init__``).
             Runs under ``torch.inference_mode()`` — gradients are fully disabled.
-            Callbacks (``ConsoleLogger``, ``Reporter``) are executed once after the loop.
         """
         # Lists to accumulate evaluation results, i.e., true_labels, prediction_labels, and posteriors
         y_true_batches, y_pred_batches, posterior_batches = [], [], []
@@ -149,6 +156,8 @@ class Evaluator:
         self.state.y_pred = np.concatenate(y_pred_batches)
         self.state.posteriors = np.concatenate(posterior_batches)
 
-        # Execute callbacks at the end of testing
-        for cb in self.callbacks:
-            cb.on_testing_end(self)
+        self.logger.info("Evaluation has finished.")
+
+        if self.verbose:
+            for cb in self.callbacks:
+                cb.on_testing_end(self)

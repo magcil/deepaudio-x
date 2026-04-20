@@ -1,3 +1,4 @@
+import time
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -9,7 +10,6 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from deepaudiox.callbacks.checkpointer import Checkpointer
-from deepaudiox.callbacks.console_logger import ConsoleLogger
 from deepaudiox.callbacks.early_stopper import EarlyStopper
 from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
 from deepaudiox.modules.baseclasses import BaseAudioClassifier
@@ -46,15 +46,16 @@ class Trainer:
     Attributes:
         state (State): Stores training variables.
         epochs (int): The maximum number of training epochs.
+        verbose (bool): Whether to log epoch-level artifacts.
         device (str): The device used for training.
         logger (logging.Logger): A module used for logging messages.
         train_dloader (torch.DataLoader): The DataLoader of the training set.
         validation_dloader (torch.DataLoader): The DataLoader of the validation set.
         model (BaseAudioClassifier): The BaseAudioClassifier to be trained.
         optimizer (torch.optim.Optimizer): The optimizer of the training process.
-        lr_scheduler (torch.optim.Optimizer): The scheduler of the training process.
+        scheduler (LRScheduler): The learning rate scheduler of the training process.
         loss_function (nn.Module): The loss function used for optimization.
-        callbacks (list): A list of callbacks used throught the training lifecycle.
+        callbacks (list): A list of callbacks used throughout the training lifecycle.
 
     """
 
@@ -75,6 +76,7 @@ class Trainer:
         path_to_checkpoint: str = "checkpoint.pt",
         device: DeviceName = "cuda",
         device_index: int | None = None,
+        verbose: bool = True,
     ):
         """Initialize the Trainer.
 
@@ -97,6 +99,8 @@ class Trainer:
                 Defaults to ``"cuda"``.
             device_index (int | None): The GPU device index. Only applicable when ``device="cuda"``.
                 If ``None``, uses the default CUDA device.
+            verbose (bool): If True, logs epoch-level artifacts (loss, time). If False, only
+                start/end messages and the final training summary are printed. Defaults to True.
 
         Example:
             >>> from deepaudiox import AudioClassifier, Trainer
@@ -114,6 +118,8 @@ class Trainer:
         # Configure training state
         self.state = State()
         self.epochs = epochs
+        self.verbose = verbose
+        self.path_to_checkpoint = path_to_checkpoint
         self.device = get_device(device=device, device_index=device_index)
 
         # Configure logger
@@ -137,10 +143,10 @@ class Trainer:
 
         # Configure callbacks
         self.callbacks = [
-            ConsoleLogger(logger=self.logger),
             Checkpointer(path_to_checkpoint=path_to_checkpoint, logger=self.logger),
             EarlyStopper(patience=patience, logger=self.logger),
         ]
+        self._epoch_start_time: float = 0.0
 
     def train_step(self) -> float:
         """Run one pass over the training set.
@@ -188,10 +194,10 @@ class Trainer:
     def epoch_step(self) -> tuple[float, float]:
         """Run one complete training epoch.
 
-        Executes ``on_epoch_start`` callbacks, calls ``train_step()`` and
-        ``val_step()``, updates the LR scheduler and ``self.state``, then
-        executes ``on_epoch_end`` callbacks (which may trigger early stopping
-        or checkpointing).
+        Logs the epoch header and metrics when ``verbose=True``, calls ``train_step()``
+        and ``val_step()``, updates the LR scheduler and
+        ``self.state``, then executes ``on_epoch_end`` callbacks (which may trigger
+        early stopping or checkpointing).
 
         Note:
             ``self.state.current_epoch`` must be set by the caller before
@@ -220,6 +226,10 @@ class Trainer:
             ...     if trainer.state.early_stop:
             ...         break
         """
+        self._epoch_start_time = time.time()
+        if self.verbose:
+            self.logger.info(f"[Epoch {self.state.current_epoch}/{self.epochs}]")
+
         for cb in self.callbacks:
             cb.on_epoch_start(self)
 
@@ -234,13 +244,28 @@ class Trainer:
         self.state.train_loss.append(train_loss)
         self.state.validation_loss.append(val_loss)
 
+        if self.verbose:
+            elapsed = time.time() - self._epoch_start_time
+            self.logger.info(
+                f"Epoch {self.state.current_epoch} | "
+                f"Train Loss: {train_loss:.4f} | "
+                f"Val. Loss: {val_loss:.4f} | "
+                f"Time: {elapsed:.2f}s"
+            )
+
         for cb in self.callbacks:
             cb.on_epoch_end(self)
 
         return train_loss, val_loss
 
     def train(self) -> None:
-        """Perform the full training process."""
+        """Perform the full training process.
+
+        Epoch-level output is controlled by ``verbose``. The training summary
+        (best epoch, losses, checkpoint path) is always printed on completion.
+        """
+        self.logger.info("Training has started.")
+
         for cb in self.callbacks:
             cb.on_train_start(self)
 
@@ -252,6 +277,21 @@ class Trainer:
 
         for cb in self.callbacks:
             cb.on_train_end(self)
+
+        best_idx = int(np.argmin(self.state.validation_loss))
+        best_val_loss = self.state.validation_loss[best_idx]
+        best_train_loss = self.state.train_loss[best_idx]
+        best_epoch = best_idx + 1
+        sep = "─" * 52
+        self.logger.info(
+            f"\n{sep}\n"
+            f" Training Complete\n"
+            f"  Best Epoch    : {best_epoch}\n"
+            f"  Train Loss    : {best_train_loss:.6f}\n"
+            f"  Val. Loss     : {best_val_loss:.6f}\n"
+            f"  Checkpoint    : {self.path_to_checkpoint}\n"
+            f"{sep}"
+        )
 
     def _setup_dataloaders(
         self,
