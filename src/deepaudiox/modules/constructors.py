@@ -176,16 +176,15 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
             waveforms (torch.Tensor): Input waveforms of shape (B, T).
 
         Returns:
-            torch.Tensor: Model-specific feature map, either (B, N, D) or (B, D, H, W).
+            torch.Tensor: Model-specific input features.
         """
         return self.backbone.extract_features(waveforms)
 
-    def forward(self, x: torch.Tensor, padding_mask: torch.Tensor | None = None) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass through the backbone.
 
         Args:
             x (torch.Tensor): Input waveforms of shape (B, T).
-            padding_mask (torch.Tensor or None): Optional padding mask (unused).
 
         Returns:
             torch.Tensor: Backbone feature map of shape (B, N, D) or (B, D, H, W).
@@ -200,12 +199,11 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
         """
         return self.backbone.forward_pipeline(x)
 
-    def forward_with_pooling(self, x: torch.Tensor, padding_mask: torch.Tensor | None = None) -> torch.Tensor:
+    def forward_with_pooling(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass through backbone and pooling (with optional normalization).
 
         Args:
             x (torch.Tensor): Input waveforms of shape (B, T).
-            padding_mask (torch.Tensor or None): Optional padding mask (unused).
 
         Returns:
             torch.Tensor: Pooled tensor of shape (B, D).
