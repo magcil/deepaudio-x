@@ -159,7 +159,7 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
             >>> backbone = Backbone.from_checkpoint("checkpoint.pt")
             >>> print(backbone.config)
         """
-        ckpt = torch.load(path, weights_only=False)
+        ckpt = torch.load(path, weights_only=True, map_location="cpu")
         if ckpt["config"].get("backbone") is None:
             raise ValueError(
                 "Cannot reconstruct model from checkpoint: a custom BaseBackbone instance was used. "
@@ -322,7 +322,7 @@ class AudioClassifierConstructor(BaseAudioClassifier, BackbonePoolingResolverMix
             >>> model = AudioClassifier.from_checkpoint("checkpoint.pt")
             >>> print(model.config)
         """
-        ckpt = torch.load(path, weights_only=False)
+        ckpt = torch.load(path, weights_only=True, map_location="cpu")
         if ckpt["config"].get("backbone") is None:
             raise ValueError(
                 "Cannot reconstruct model from checkpoint: a custom BaseBackbone instance was used. "
