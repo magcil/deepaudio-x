@@ -159,7 +159,7 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
             >>> backbone = Backbone.from_checkpoint("checkpoint.pt")
             >>> print(backbone.config)
         """
-        ckpt = torch.load(path, weights_only=False)
+        ckpt = torch.load(path, weights_only=True, map_location="cpu")
         if ckpt["config"].get("backbone") is None:
             raise ValueError(
                 "Cannot reconstruct model from checkpoint: a custom BaseBackbone instance was used. "
@@ -176,16 +176,15 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
             waveforms (torch.Tensor): Input waveforms of shape (B, T).
 
         Returns:
-            torch.Tensor: Model-specific feature map, either (B, N, D) or (B, D, H, W).
+            torch.Tensor: Model-specific input features.
         """
         return self.backbone.extract_features(waveforms)
 
-    def forward(self, x: torch.Tensor, padding_mask: torch.Tensor | None = None) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass through the backbone.
 
         Args:
             x (torch.Tensor): Input waveforms of shape (B, T).
-            padding_mask (torch.Tensor or None): Optional padding mask (unused).
 
         Returns:
             torch.Tensor: Backbone feature map of shape (B, N, D) or (B, D, H, W).
@@ -200,12 +199,11 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
         """
         return self.backbone.forward_pipeline(x)
 
-    def forward_with_pooling(self, x: torch.Tensor, padding_mask: torch.Tensor | None = None) -> torch.Tensor:
+    def forward_with_pooling(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass through backbone and pooling (with optional normalization).
 
         Args:
             x (torch.Tensor): Input waveforms of shape (B, T).
-            padding_mask (torch.Tensor or None): Optional padding mask (unused).
 
         Returns:
             torch.Tensor: Pooled tensor of shape (B, D).
@@ -322,7 +320,7 @@ class AudioClassifierConstructor(BaseAudioClassifier, BackbonePoolingResolverMix
             >>> model = AudioClassifier.from_checkpoint("checkpoint.pt")
             >>> print(model.config)
         """
-        ckpt = torch.load(path, weights_only=False)
+        ckpt = torch.load(path, weights_only=True, map_location="cpu")
         if ckpt["config"].get("backbone") is None:
             raise ValueError(
                 "Cannot reconstruct model from checkpoint: a custom BaseBackbone instance was used. "
