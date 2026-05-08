@@ -51,7 +51,7 @@ class Evaluator:
         class_mapping: dict,
         batch_size: int = 16,
         num_workers: int = 4,
-        device: DeviceName = "cuda",
+        device: DeviceName = "cpu",
         device_index: int | None = None,
         verbose: bool = True,
     ):
@@ -64,7 +64,7 @@ class Evaluator:
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
             device (DeviceName): The device to use for evaluation. One of ``"cuda"``, ``"mps"``, or ``"cpu"``.
-                Defaults to ``"cuda"``.
+                Defaults to ``"cpu"``.
             device_index (int | None): The GPU device index. Only applicable when ``device="cuda"``.
                 If ``None``, uses the default CUDA device.
             verbose (bool): If True, prints the classification report, confusion matrix, and average

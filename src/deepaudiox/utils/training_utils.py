@@ -82,12 +82,12 @@ def get_class_mapping_from_dir(root_dir: str) -> dict[str, int]:
     return class_mapping
 
 
-def get_device(device: DeviceName = "cuda", device_index: int | None = None) -> torch.device:
+def get_device(device: DeviceName = "cpu", device_index: int | None = None) -> torch.device:
     """Returns a PyTorch device based on the user's choice.
 
     Args:
         device (DeviceName): The device to use. One of ``"cuda"``, ``"mps"``, or ``"cpu"``.
-            Defaults to ``"cuda"``.
+            Defaults to ``"cpu"``.
         device_index (int | None): The GPU device index. Only applicable when ``device="cuda"``.
             If ``None``, uses the default CUDA device.
 
@@ -102,7 +102,7 @@ def get_device(device: DeviceName = "cuda", device_index: int | None = None) -> 
     """
     if device == "cuda":
         if not torch.cuda.is_available():
-            raise ValueError("CUDA is not available on this machine.")
+            raise ValueError("CUDA is not available on this machine. Use device='cpu' or device='mps' instead.")
         if device_index is not None and (device_index < 0 or device_index >= torch.cuda.device_count()):
             raise ValueError(f"Invalid device_index {device_index}. Available GPU count: {torch.cuda.device_count()}")
         if device_index is not None:
@@ -113,7 +113,7 @@ def get_device(device: DeviceName = "cuda", device_index: int | None = None) -> 
             print(f"Using GPU: {torch.cuda.get_device_name(0)}")
     elif device == "mps":
         if not torch.backends.mps.is_available():
-            raise ValueError("MPS is not available on this machine.")
+            raise ValueError("MPS is not available on this machine. Use device='cpu' instead.")
         if device_index is not None:
             raise ValueError("device_index is not supported for MPS. Apple Silicon has a single GPU.")
         torch_device = torch.device("mps")
@@ -122,7 +122,7 @@ def get_device(device: DeviceName = "cuda", device_index: int | None = None) -> 
         if device_index is not None:
             print("Warning: device_index is ignored when device='cpu'.")
         torch_device = torch.device("cpu")
-        print("Using CPU")
+        print("Using CPU.")
 
     return torch_device
 

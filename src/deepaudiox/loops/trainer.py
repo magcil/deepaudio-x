@@ -9,6 +9,7 @@ from torch.optim.lr_scheduler import LRScheduler, ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from deepaudiox.callbacks.base_callback import BaseCallback
 from deepaudiox.callbacks.checkpointer import Checkpointer
 from deepaudiox.callbacks.early_stopper import EarlyStopper
 from deepaudiox.datasets.audio_classification_dataset import AudioClassificationDataset
@@ -35,6 +36,7 @@ class State:
     train_loss: list[float] = field(default_factory=list)
     validation_loss: list[float] = field(default_factory=list)
     early_stop: bool = False
+    current_patience: int = 0
 
 
 class Trainer:
@@ -70,11 +72,11 @@ class Trainer:
         loss_function: nn.Module | None = None,
         train_ratio: float = 0.8,
         epochs: int = 100,
-        patience: int = 15,
+        patience: int | None = None,
         num_workers: int = 4,
         batch_size: int = 16,
         path_to_checkpoint: str = "checkpoint.pt",
-        device: DeviceName = "cuda",
+        device: DeviceName = "cpu",
         device_index: int | None = None,
         verbose: bool = True,
     ):
@@ -91,12 +93,12 @@ class Trainer:
             loss_function (nn.Module | None): The loss function used for training. Uses CrossEntropy if None.
             train_ratio (float, optional): The ratio of the train split when validation_dset is None. Defaults to 0.8.
             epochs (int, optional): The maximum number of training epochs. Defaults to 100.
-            patience (int, optional): The maximum number of epochs with no decrease in loss. Defaults to 15.
+            patience (int | None): Epochs to wait without loss improvement before stopping. Disabled if None.
             num_workers (int, optional): The number of workers for Python Data Loaders. Defaults to 4.
             batch_size (int, optional): The batch size for Python Data Loaders. Defaults to 16.
             path_to_checkpoint (str, optional): The path to the saved model checpoint. Defaults to "checkpoint.pt".
             device (DeviceName): The device to use for training. One of ``"cuda"``, ``"mps"``, or ``"cpu"``.
-                Defaults to ``"cuda"``.
+                Defaults to ``"cpu"``.
             device_index (int | None): The GPU device index. Only applicable when ``device="cuda"``.
                 If ``None``, uses the default CUDA device.
             verbose (bool): If True, logs epoch-level artifacts (loss, time). If False, only
@@ -141,11 +143,11 @@ class Trainer:
         self.scheduler = lr_scheduler or ReduceLROnPlateau(self.optimizer, "min")
         self.loss_function = loss_function or nn.CrossEntropyLoss()
 
-        # Configure callbacks
-        self.callbacks = [
-            Checkpointer(path_to_checkpoint=path_to_checkpoint, logger=self.logger),
-            EarlyStopper(patience=patience, logger=self.logger),
-        ]
+        # Configure callbacks — Checkpointer must precede EarlyStopper (updates lowest_loss first)
+        self.callbacks: list[BaseCallback] = [Checkpointer(path_to_checkpoint=path_to_checkpoint, logger=self.logger)]
+        if patience:
+            self.callbacks.append(EarlyStopper(patience=patience, logger=self.logger))
+
         self._epoch_start_time: float = 0.0
 
     def train_step(self) -> float:
