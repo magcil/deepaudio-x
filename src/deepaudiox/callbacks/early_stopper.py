@@ -54,4 +54,7 @@ class EarlyStopper(BaseCallback):
             trainer.state.early_stop = True
             self.logger.info("[EARLY STOPPING] Patience exceeded, early stoping ...")
 
+        # Update current patience in trainer's state
+        trainer.state.current_patience = self.elapsed_epochs
+
         return
