@@ -270,7 +270,12 @@ def test_evaluation_loop():
     model = dax.AudioClassifier.from_checkpoint(str(path_to_checkpoint))
 
     evaluator = dax.Evaluator(
-        test_dset=test_dataset, model=model, num_workers=4, batch_size=16, class_mapping=class_mapping, device=TEST_DEVICE
+        test_dset=test_dataset, 
+        model=model, 
+        num_workers=4,
+        batch_size=16,
+        class_mapping=class_mapping, 
+        device=TEST_DEVICE
     )
 
     evaluator.evaluate()

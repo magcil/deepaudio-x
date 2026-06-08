@@ -49,7 +49,7 @@ class BackbonePoolingResolverMixin:
                 downloader = Downloader()
                 ckpt_path = downloader.download_checkpoint(backbone)
                 ckpt = load_checkpoint(ckpt_path)
-                model.load_state_dict(ckpt)
+                model.load_state_dict(ckpt, strict=False)
         else:
             model = backbone
 
@@ -165,7 +165,7 @@ class BackboneConstructor(nn.Module, BackbonePoolingResolverMixin):
                 "Cannot reconstruct model from checkpoint: a custom BaseBackbone instance was used. "
                 "Instantiate the model manually and call model.load_state_dict(torch.load(path)['state_dict'])."
             )
-        model = cls(**ckpt["config"])
+        model = cls(**{**ckpt["config"], "pretrained": False})
         model.load_state_dict(ckpt["state_dict"])
         return model
 
@@ -326,7 +326,7 @@ class AudioClassifierConstructor(BaseAudioClassifier, BackbonePoolingResolverMix
                 "Cannot reconstruct model from checkpoint: a custom BaseBackbone instance was used. "
                 "Instantiate the model manually and call model.load_state_dict(torch.load(path)['state_dict'])."
             )
-        model = cls(**ckpt["config"])
+        model = cls(**{**ckpt["config"], "pretrained": False})
         model.load_state_dict(ckpt["state_dict"])
         return model
 
