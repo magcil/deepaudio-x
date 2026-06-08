@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from huggingface_hub import hf_hub_download
+import huggingface_hub
+from huggingface_hub import hf_hub_download, try_to_load_from_cache
+
+huggingface_hub.logging.set_verbosity_error()
 
 from deepaudiox.schemas.types import BackboneName
 
@@ -37,4 +40,6 @@ class Downloader:
             Path to the downloaded model file.
         """
         filename = self.BACKBONE_FILENAMES[backbone]
+        if try_to_load_from_cache(repo_id=HF_REPO_ID, filename=filename) is None:
+            print(f"Downloading pretrained weights for '{backbone}' from HuggingFace Hub ({HF_REPO_ID})...")
         return Path(hf_hub_download(repo_id=HF_REPO_ID, filename=filename))
