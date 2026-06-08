@@ -1,20 +1,17 @@
 from pathlib import Path
 
-import requests
-from platformdirs import user_cache_dir
-from tqdm import tqdm
+from huggingface_hub import hf_hub_download
 
 from deepaudiox.schemas.types import BackboneName
 
-# Repository URL where the pretrained backbone models are hosted
-BACKBONE_REPO_URL = "https://github.com/magcil/pretrained-ssl-audio-backbones/raw/refs/heads/main/models/"
+HF_REPO_ID = "magcil/deepaudiox-backbones"
 
-BACKBONE_URLS = {
-    "beats": BACKBONE_REPO_URL + "BEATs_iter3_plus_AS2M.pt",
-    "passt": BACKBONE_REPO_URL + "passt-s-kd-ap.486.pt",
-    "mobilenet_05_as": BACKBONE_REPO_URL + "mn05_as_mAP_443.pt",
-    "mobilenet_10_as": BACKBONE_REPO_URL + "mn10_as_mAP_471.pt",
-    "mobilenet_40_as": BACKBONE_REPO_URL + "mn40_as_mAP_484.pt",
+BACKBONE_FILENAMES = {
+    "beats": "BEATs_iter3_plus_AS2M.pt",
+    "passt": "passt-s-kd-ap.486.pt",
+    "mobilenet_05_as": "mn05_as_mAP_443.pt",
+    "mobilenet_10_as": "mn10_as_mAP_471.pt",
+    "mobilenet_40_as": "mn40_as_mAP_484.pt",
 }
 
 
@@ -22,21 +19,12 @@ class Downloader:
     """Downloads a checkpoint (.pt or .pth file) with pretrained weights for the backbone.
 
     Attributes:
-        BACKBONES_URLS (dict): A dictionary mapping backbone names to their respective download URLs.
-        cache_dir (Path): Directory path where downloaded models are cached.
-
-    Cache dirs:
-            - Linux: ~/.cache/deepaudiox
-            - macOS: ~/Library/Caches/deepaudiox
-            - Windows: C:\\Users\\<Username>\\AppData\\Local\\deepaudiox\\Cache
+        BACKBONE_FILENAMES (dict): A dictionary mapping backbone names to their filenames on HF Hub.
     """
 
     def __init__(self):
         """Initializes the Downloader instance."""
-        self.BACKBONES_URLS = BACKBONE_URLS
-
-        self.cache_dir = Path(user_cache_dir("deepaudiox"))
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.BACKBONE_FILENAMES = BACKBONE_FILENAMES
 
     def download_checkpoint(self, backbone: BackboneName) -> Path:
         """Downloads the pretrained backbone weights if not already cached.
@@ -48,36 +36,5 @@ class Downloader:
         Returns:
             Path to the downloaded model file.
         """
-        url = self.BACKBONES_URLS[backbone]
-        model_path = self.cache_dir / url.split("/")[-1]
-        if model_path.exists():
-            return model_path
-        else:
-            r = requests.get(url, stream=True)
-            r.raise_for_status()
-            total_size = int(r.headers.get("content-length", 0))
-            total_mb = total_size / (1024 * 1024)
-            chunk_size = 1024
-
-            progress = tqdm(
-                total=total_size,
-                unit="B",
-                unit_scale=True,
-                unit_divisor=1024,
-                desc=f"Downloading pretrained backbone(Saving in {self.cache_dir}) {total_mb:.2f} MB",
-            )
-
-            try:
-                with open(model_path, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=chunk_size):
-                        if chunk:
-                            f.write(chunk)
-                            progress.update(len(chunk))
-
-                progress.close()
-                print(f"Model stored as {url.split('/')[-1]} in {model_path}")
-
-                return model_path
-
-            except OSError as e:
-                raise RuntimeError(f"Failed to write file to {model_path}: {e}") from e
+        filename = self.BACKBONE_FILENAMES[backbone]
+        return Path(hf_hub_download(repo_id=HF_REPO_ID, filename=filename))
