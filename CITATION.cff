@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "DeepAudioX: A PyTorch-based audio classification framework"
+authors:
+  - family-names: Nikou
+    given-names: Christos
+    affiliation: 'MagCIL, Institute of Informatics and Telecommunications, NCSR "Demokritos"'
+  - family-names: Vlachos
+    given-names: Stefanos
+    affiliation: 'MagCIL, Institute of Informatics and Telecommunications, NCSR "Demokritos"'
+  - family-names: Vakalaki
+    given-names: Ellie
+    affiliation: 'MagCIL, Institute of Informatics and Telecommunications, NCSR "Demokritos"'
+  - family-names: Giannakopoulos
+    given-names: Theodoros
+    affiliation: 'MagCIL, Institute of Informatics and Telecommunications, NCSR "Demokritos"'
+repository-code: "https://github.com/magcil/deepaudio-x"
+url: "https://magcil.github.io"
+year: 2026

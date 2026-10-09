@@ -13,6 +13,8 @@
 </p>
 
 
+> Developed at [**MagCIL**](https://magcil.github.io), the Multimodal Analysis Group of the Institute of Informatics and Telecommunications, [NCSR "Demokritos"](https://www.demokritos.gr/), Athens, Greece.
+
 DeepAudioX is a PyTorch-based library that provides **simple, flexible pipelines for audio classification** using **pretrained audio foundation models** as feature extractors.
 
 It is designed to let users train, evaluate, and run inference on **custom audio datasets** with only a few lines of code, while still allowing advanced customization when needed.
@@ -537,3 +539,25 @@ If you use this library in academic work, please cite:
 Contributions are welcome! Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to set up the development environment, run tests, and submit changes.
 
 ---
+
+## About MagCIL
+
+This repository comes from [MagCIL](https://magcil.github.io), the Multimodal Analysis Group of the
+Institute of Informatics and Telecommunications at the National Centre for Scientific Research
+"Demokritos" in Athens, Greece. We work on multimodal deep learning for audio, speech, music and
+video, from fundamental research to deployed systems.
+
+- Group website: <https://magcil.github.io>
+- Publications: <https://magcil.github.io/pub.html>
+- All our open-source code and data: <https://magcil.github.io/code.html>
+- Work with us, in industry projects or research consortia: <https://magcil.github.io/collaborate.html>
+
+Other tools from the group:
+
+- [`pyAudioAnalysis`](https://github.com/tyiannak/pyAudioAnalysis) &mdash; audio feature extraction, classification, segmentation and applications
+- [`deep_audio_features`](https://github.com/tyiannak/deep_audio_features) &mdash; training and using CNNs for audio classification (PyTorch)
+- [`deepaudio-lab`](https://github.com/magcil/deepaudio-lab) &mdash; a no-code platform for training, evaluating and deploying audio classifiers
+- [`amvoc`](https://github.com/tyiannak/amvoc) &mdash; analysis of mouse vocal communication
+- [`paura`](https://github.com/tyiannak/paura) &mdash; real-time audio recording and analysis
+
+The full list is at <https://github.com/magcil>.
