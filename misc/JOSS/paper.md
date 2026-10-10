@@ -22,7 +22,7 @@ authors:
     orcid: 0000-0003-1634-824X
     affiliation: 1
 affiliations:
- - name: Multimedia Analysis Group of the Computational Intelligence Laboratory (MagCIL), Institute of Informatics and Telecommunications, NCSR DEMOKRITOS
+ - name: Multimodal Analysis Group of the Computational Intelligence Laboratory (MagCIL), Institute of Informatics and Telecommunications, NCSR DEMOKRITOS
    index: 1
 date: 8 March 2026
 bibliography: paper.bib
